@@ -14,9 +14,9 @@ int inline eq(int a,int b) {
 extern "CCHR" {
   constraint gcd(int);
 
-  function subtract(int,int);
-  function geq(int,int);
-  function eq(int,int);
+  function subtract;
+  function geq;
+  function eq;
 
   gcd(N) <=> eq(N,0) | true;
   gcd(N) / gcd(M) <=> geq(M,N) | gcd(sub(M,N));

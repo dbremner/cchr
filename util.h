@@ -10,5 +10,6 @@
 
 int lread_wrapper(char *buf, FILE *in, int *line, int level);
 void print_spaces(int level,FILE *out);
+int starts_with(char **haystack, const char *needle);
 
 #endif

@@ -1,9 +1,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "parse.h"
 #include "util.h"
+
+int starts_with(char **haystack, const char *needle) {
+  int len=strlen(needle);
+  if (!strncmp(*haystack,needle,len)) {
+    if ((isalnum((*haystack)[len-1]) || (*haystack)[len-1] == '_') !=
+    (isalnum((*haystack)[len]) || (*haystack)[len] == '_')) {
+      *haystack+=len;
+      while (isspace(**haystack)) (*haystack)++;
+      return 1;
+    }
+  }
+  return 0;
+}
 
 void print_spaces(int level,FILE *out) {
   while (level--) fputc(' ',out);

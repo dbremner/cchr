@@ -4,6 +4,14 @@
 
 #include "util.h"
 #include "cchr.h"
+#include "model.h"
+
+typedef struct {
+  char *name;
+} type_def_t;
+
+typedef struct 
+
 
 int process_cchr(FILE *in, FILE *out, int *line, int level) {
   char buf[MAXLINELEN];
@@ -15,6 +23,7 @@ int process_cchr(FILE *in, FILE *out, int *line, int level) {
       fprintf(stderr,"CCHR doesn't support subblocks on line %i",*line);
       return 1;
     }
+    // 
   }
   return 0;
 }

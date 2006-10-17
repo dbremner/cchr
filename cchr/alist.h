@@ -22,5 +22,7 @@
   (var)._d[(var)._n]=val; \
   (var)._n++; \
 } while(0);
+#define alist_len(var) ((var)._n)
+#define alist_free(var) do { free((var)._d); (var)._d=NULL; (var)._n=0; (var)._a=0; } while(0);
 
 #endif

@@ -14,5 +14,13 @@
     (var)._d=realloc((var)._d,sizeof(*((var)._d))*(var)._a); \
   } \
 } while(0);
+#define alist_add(var,val) do { \
+  if ((var)._n+1>(var)._a) { \
+    (var)._a=((((var)._n+1)*5)/4)+3; \
+    (var)._d=realloc((var)._d,sizeof(*((var)._d))*(var)._a); \
+  } \
+  (var)._d[(var)._n]=val; \
+  (var)._n++; \
+} while(0);
 
 #endif

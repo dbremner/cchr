@@ -19,16 +19,12 @@ typedef struct {
   alist_declare(rule_t *,removedby);
 } constraint_t;
 
-typedef struct {
-  constraint_t *con;
-  expr_t **args;
-} constraint_occ_t;
 
 struct _rule_t_struct {
   char *name;
-  alist_declare(constraint_occ_t *,kept);
-  alist_declare(constraint_occ_t *,removed);
-  alist_declare(constraint_occ_t *,added);
+  alist_declare(expr_t *,kept);
+  alist_declare(expr_t *,removed);
+  alist_declare(expr_t *,added);
   alist_declare(char *,vars);
   expr_t *guard;
 };
@@ -43,6 +39,7 @@ typedef struct {
 #define EXPR_TYPE_VAR 0
 #define EXPR_TYPE_EXT 1
 #define EXPR_TYPE_CALL 2
+#define EXPR_TYPE_CONS 3
 
 struct _expr_t_struct {
   int type;
@@ -50,12 +47,19 @@ struct _expr_t_struct {
     char *var;
     char *ext;
     struct {
-      expr_t func;
+      expr_t *func;
       expr_t **args;
       int nargs;
     } call;
-  }
+    struct {
+      constraint_t *con;
+      expr_t **args;
+    } cons;
+  } data;
 };
+
+expr_t *parse_expr(cchr_t *chr, rule_t *rule, char **pos);
+void dump_expr(expr_t *expr,FILE *out);
 
 int process_cchr(FILE *in, FILE *out, int *line, int level) {
   char buf[MAXLINELEN];
@@ -141,7 +145,10 @@ int process_cchr(FILE *in, FILE *out, int *line, int level) {
         strncpy(rule->name,pos,len); rule->name[len]=0;
         pos+=(len+spc);
       }
-      
+      expr_t *expr=parse_expr(&cchr,rule,&pos);
+      printf("parsed expr: %s=[",rule->name ? rule->name : "<unnamed>");
+      dump_expr(expr,stdout);
+      printf("]\n");
     }
   }
   model_add(&(cchr.model),cchr.rules._d);
@@ -151,51 +158,81 @@ int process_cchr(FILE *in, FILE *out, int *line, int level) {
   return 0; 
 }
 
+expr_t **parse_exprlist(cchr_t *chr, rule_t *rule, char **pos, int *nargs) {
+  alist_declare(expr_t *,args);
+  alist_init(args);
+  do {
+    while (isspace(**pos)) (*pos)++;
+    if (**pos == ')' || **pos==0) break;
+    expr_t *rt=parse_expr(chr,rule,pos);
+    if (rt==NULL) {alist_free(args); fprintf(stderr,"(arg NULL)\n"); return NULL;}
+    while (isspace(**pos)) (*pos)++;
+    alist_add(args,rt);
+    if (**pos == ')' || **pos==0) break;
+    if (**pos != ',') {alist_free(args); fprintf(stderr,"(weird unexptected '%c')\n",**pos); return NULL;}
+    (*pos)++;
+  } while(1);
+  *nargs=alist_len(args);
+  alist_add(args,NULL);
+  expr_t **ret=alist_ptr(args,0);
+  model_add(&(chr->model),ret);
+  return ret;
+}
+
+/* ret.data.call.nargs=alist_len(args);
+   ret.data.call.args=alist_ptr(args,0);
+   if (**pos == ')') (*pos)++;
+      ret.data.call.func=inner;
+
+*/
+
 expr_t *parse_expr(cchr_t *chr, rule_t *rule, char **pos) {
   expr_t ret;
   while (isspace(**pos)) (*pos)++;
   int len=0;
-  while (isalpha(*pos[len]) || *pos[len]=='_') len++;
-  while (isalnum(*pos[len]) || *pos[len]=='_') len++;
+  while (isalpha((*pos)[len]) || (*pos)[len]=='_') len++;
+  while (isalnum((*pos)[len]) || (*pos)[len]=='_') len++;
   int spc=0;
-  while (isspace(*pos[len+spc])) spc++;
+  while (isspace((*pos)[len+spc])) spc++;
   int call=0;
-  if (*pos[len+spc] == '(') call=1;
+  if ((*pos)[len+spc] == '(') call=1;
   int n=0;
   while (n<alist_len(chr->exts)) {
-    if (strlen(alist_get(chr->exts,n))==len && !strncmp(alist_get(chr->exts),pos,len)) break;
+    if (strlen(alist_get(chr->exts,n))==len && !strncmp(alist_get(chr->exts,n),*pos,len)) break;
     n++;
   }
   if (n<alist_len(chr->exts)) {
     ret.type=EXPR_TYPE_EXT;
-    ret.ext=alist_get(chr->exts,n);
+    ret.data.ext=alist_get(chr->exts,n);
     (*pos)+=(len+spc+1);
     if (call) {
       expr_t *inner=model_malloc(&(chr->model),sizeof(expr_t));
       *inner=ret;
       ret.type=EXPR_TYPE_CALL;
-      alist_declare(expr_t *,args);
-      alist_init(args);
-      do {
-        while (isspace(**pos)) (*pos)++;
-        if (**pos == ')' || **pos==0) break;
-        expr_t *ret=parse_expr(chr,rule,pos);
-        if (ret==NULL) {alist_free(args); return NULL;}
-        while (isspace(**pos)) (*pos)++;
-        alist_add(args,ret);
-        if (**pos == ')' || **pos==0) break;
-        if (**pos != ',') {alist_free(args); return NULL;}
-      } while(1);
-      ret.call.nargs=alist_len(args);
-      alist_add(args,NULL);
-      ret.call.args=alist_ptr(args,0);
-      model_add(&(chr->model),ret.call);
-      ret.call.func=inner;
+      if ((ret.data.call.args=parse_exprlist(chr,rule,pos,&(ret.data.call.nargs)))==NULL) return NULL;
       if (**pos == ')') (*pos)++;
+      ret.data.call.func=inner;
     }
   } else {
-    if (!call && isupper(pos[0])) {
-      
+    if (!call && isupper((*pos)[0])) {
+      ret.type=EXPR_TYPE_VAR;
+      int j=0;
+      while (j<alist_len(rule->vars)) {
+        if (strlen(alist_get(rule->vars,j))==len && !strncmp(alist_get(rule->vars,j),*pos,len)) break;
+        j++;
+      }
+      if (j<alist_len(rule->vars)) {
+        ret.data.var=alist_get(rule->vars,j);
+      } else {
+        char *vnam=model_malloc(&(chr->model),len+1);
+        strncpy(vnam,*pos,len); vnam[len]=0;
+        alist_add(rule->vars,vnam);
+        ret.data.var=vnam;
+      }
+      (*pos)+=(len+spc);
+    } else {
+      fprintf(stderr,"(<%s> neither var or ext)\n",*pos);
+      return NULL;
     }
   }
   expr_t *rr=model_malloc(&(chr->model),sizeof(expr_t));
@@ -203,6 +240,24 @@ expr_t *parse_expr(cchr_t *chr, rule_t *rule, char **pos) {
   return rr;
 }
 
-void dump_expr(expr_t *expr) {
-  
+void dump_expr(expr_t *expr,FILE *out) {
+  switch (expr->type) {
+    case EXPR_TYPE_VAR:
+      fprintf(out,"var_%s",expr->data.var);
+      break;
+    case EXPR_TYPE_EXT:
+      fprintf(out,"ext_%s",expr->data.ext);
+      break;
+    case EXPR_TYPE_CALL:
+      dump_expr(expr->data.call.func,out);
+      fprintf(out,"(");
+      int j=0;
+      while (j<expr->data.call.nargs) {
+        if (j) fprintf(out,",");
+        dump_expr(expr->data.call.args[j],out);
+        j++;
+      }
+      fprintf(out,")");
+      break;
+  }
 }

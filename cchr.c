@@ -49,7 +49,11 @@ struct _expr_t_struct {
   union {
     char *var;
     char *ext;
-    expr_t **call;
+    struct {
+      expr_t func;
+      expr_t **args;
+      int nargs;
+    } call;
   }
 };
 
@@ -119,8 +123,25 @@ int process_cchr(FILE *in, FILE *out, int *line, int level) {
         alist_add(cchr.exts,str);
         pos+=len;
       }
-    } else {
-      // CCHR simpagation rule
+    } else { // CCHR simpagation rule
+      rule_t *rule=malloc(sizeof(rule_t));
+      rule->name=NULL;
+      alist_init(rule->kept);
+      alist_init(rule->removed);
+      alist_init(rule->added);
+      rule->guard=NULL;
+      while (isspace(*pos)) pos++;
+      int len=0;
+      while (isalpha(pos[len]) || pos[len]=='_') len++;
+      while (isalnum(pos[len]) || pos[len]=='_') len++;
+      int spc=0;
+      while (isspace(pos[len+spc])) spc++;
+      if (pos[len+spc]=='@') {
+        rule->name=model_malloc(&(cchr.model),len+1);
+        strncpy(rule->name,pos,len); rule->name[len]=0;
+        pos+=(len+spc);
+      }
+      
     }
   }
   model_add(&(cchr.model),cchr.rules._d);
@@ -130,3 +151,58 @@ int process_cchr(FILE *in, FILE *out, int *line, int level) {
   return 0; 
 }
 
+expr_t *parse_expr(cchr_t *chr, rule_t *rule, char **pos) {
+  expr_t ret;
+  while (isspace(**pos)) (*pos)++;
+  int len=0;
+  while (isalpha(*pos[len]) || *pos[len]=='_') len++;
+  while (isalnum(*pos[len]) || *pos[len]=='_') len++;
+  int spc=0;
+  while (isspace(*pos[len+spc])) spc++;
+  int call=0;
+  if (*pos[len+spc] == '(') call=1;
+  int n=0;
+  while (n<alist_len(chr->exts)) {
+    if (strlen(alist_get(chr->exts,n))==len && !strncmp(alist_get(chr->exts),pos,len)) break;
+    n++;
+  }
+  if (n<alist_len(chr->exts)) {
+    ret.type=EXPR_TYPE_EXT;
+    ret.ext=alist_get(chr->exts,n);
+    (*pos)+=(len+spc+1);
+    if (call) {
+      expr_t *inner=model_malloc(&(chr->model),sizeof(expr_t));
+      *inner=ret;
+      ret.type=EXPR_TYPE_CALL;
+      alist_declare(expr_t *,args);
+      alist_init(args);
+      do {
+        while (isspace(**pos)) (*pos)++;
+        if (**pos == ')' || **pos==0) break;
+        expr_t *ret=parse_expr(chr,rule,pos);
+        if (ret==NULL) {alist_free(args); return NULL;}
+        while (isspace(**pos)) (*pos)++;
+        alist_add(args,ret);
+        if (**pos == ')' || **pos==0) break;
+        if (**pos != ',') {alist_free(args); return NULL;}
+      } while(1);
+      ret.call.nargs=alist_len(args);
+      alist_add(args,NULL);
+      ret.call.args=alist_ptr(args,0);
+      model_add(&(chr->model),ret.call);
+      ret.call.func=inner;
+      if (**pos == ')') (*pos)++;
+    }
+  } else {
+    if (!call && isupper(pos[0])) {
+      
+    }
+  }
+  expr_t *rr=model_malloc(&(chr->model),sizeof(expr_t));
+  *rr=ret;
+  return rr;
+}
+
+void dump_expr(expr_t *expr) {
+  
+}

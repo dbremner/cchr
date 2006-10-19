@@ -1,5 +1,9 @@
 CC := gcc
 
+#CFLAGS := -std=c99 -m32 -O3 -g0 -Wall -march=i686 -pipe
+#LDFLAGS := -m32 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
+#OUTDIR := i686
+
 CFLAGS := -std=c99 -m64 -O0 -ggdb3 -Wall -march=athlon64 -save-temps
 LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 OUTDIR := amd64-debug

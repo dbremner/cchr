@@ -1,11 +1,3 @@
-/****************************************************************************\
-* RAIDRACE - A speed-optimized raytracer in C                                *
-* Written as a project for the course 'Computer Graphics' H0331a, KULeuven   *
-*                                                                            *
-* Copyright 2006 Pieter Wuille                                               *
-*                                                                            *
-\****************************************************************************/
-
 #ifndef _model_h_
 #define _model_h_ 1
 

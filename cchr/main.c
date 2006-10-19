@@ -5,15 +5,18 @@
 #include "cchr.h"
 #include "util.h"
 
-int static process_file(FILE* in,FILE* out, int *line, int level);
+int static process_stream(FILE* in,FILE* out, int *line, int level);
 int static process_block(FILE *in, FILE *out, int *line, int level, char *code);
 
+/* main function: translates CCHR on stdin to C on stdout */
 int main(int argc,char **argv) {
   int line=0;
-  process_file(stdin,stdout,&line,0);
+  process_stream(stdin,stdout,&line,0);
   return 0;
 }
 
+/* translate a block of input (enclosed by { }) */
+/* detects 'extern "CCHR"' blocks, and calls process_cchr to handle these */
 int static process_block(FILE *in, FILE *out, int *line, int level, char *code) {
   if (!strcmp(code,"extern \"CCHR\"")) {
     process_cchr(in,out,line,level);
@@ -23,14 +26,15 @@ int static process_block(FILE *in, FILE *out, int *line, int level, char *code) 
     fputc('\n',out);
     print_spaces(level,out);
     fputs("{\n",out);
-    if (process_file(in,out,line,level+2)) return(1);
+    if (process_stream(in,out,line,level+2)) return(1);
     print_spaces(level,out);
     fputs("}\n",out);
   }
   return 0;
 }
 
-int static process_file(FILE* in,FILE* out,int *line, int level) {
+/* translate input to output, calls process_block to translate {}-enclosed blocks */
+int static process_stream(FILE* in,FILE* out,int *line, int level) {
   char buf[MAXLINELEN];
   if (level==0) *line=1;
   while(1) {

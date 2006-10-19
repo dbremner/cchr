@@ -14,11 +14,9 @@ int inline eq(int a,int b) {
 extern "CCHR" {
   constraint gcd(int);
   
-  extern sub,geq,eq;
+  extern sub,geq,eq,true,zero;
 
-  sub(geq(N,eq));
-  
-/*  gcd(N) <=> eq(N,0) | true;
-  gcd(N) \ gcd(M) <=> geq(M,N) | gcd(sub(M,N)); */
+  gcd1 @ gcd(N) <=> eq(N,zero) | true;
+  gcd2 @ gcd(N) \ gcd(M) <=> geq(M,N) | gcd(sub(M,N));
 
 }

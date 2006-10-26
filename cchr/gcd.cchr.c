@@ -85,19 +85,18 @@ void cchr_fire_gcd(int pid,int arg1) {
       return;
     }
   }
-  /* <2> gcd(J) \ _gcd(I)_ <=> J >= I | gcd(J-I) */
+  /* <2> gcd(I) \ _gcd(J)_ <=> J >= I | gcd(J-I) */
   {
     int pid2=0;
     while (pid2<alist_len(_global_runtime.store)) {
       if (alist_get(_global_runtime.store,pid2) &&
       (alist_get(_global_runtime.store,pid2)->type == CCHR_CONS_TYPE_GCD) &&
         (pid2 != pid) &&
-        (alist_get(_global_runtime.store,pid2)->data.gcd.arg1 >= arg1)) {
+        (arg1 >= alist_get(_global_runtime.store,pid2)->data.gcd.arg1)) {
 	int pid2_arg1=alist_get(_global_runtime.store,pid2)->data.gcd.arg1;
-	printf("rule 2 on (%i,%i)\n",pid2_arg1,arg1);
+	printf("rule 2 on (%i,%i)\n",arg1,pid2_arg1);
         if (pid>=0) cchr_kill(pid);
-	//cchr_kill(pid2);
-	cchr_add_gcd(pid2_arg1-arg1);
+	cchr_add_gcd(arg1 % pid2_arg1);
 	return;
       }
       pid2++;
@@ -106,21 +105,21 @@ void cchr_fire_gcd(int pid,int arg1) {
   /* make sure entry is created */
   if (pid<0) ent=cchr_make_entry(CCHR_CONS_TYPE_GCD);
   ent->data.gcd.arg1=arg1;
-  /* <3> _gcd(J)_ \ gcd(I) <=> J>=I | gcd(J-I) */
+  /* <3> _gcd(I)_ \ gcd(J) <=> J>=I | gcd(J-I) */
   {
     int pid2=0;
     while (pid2<alist_len(_global_runtime.store)) {
       if (alist_get(_global_runtime.store,pid2) &&
         (alist_get(_global_runtime.store,pid2)->type == CCHR_CONS_TYPE_GCD) &&
         (pid2 != pid) &&
-	(arg1 >= alist_get(_global_runtime.store,pid2)->data.gcd.arg1)) {
+	(alist_get(_global_runtime.store,pid2)->data.gcd.arg1>=arg1)) {
 	int pid2_arg1=alist_get(_global_runtime.store,pid2)->data.gcd.arg1;
-	printf("rule 3 on (%i,%i)\n",arg1,pid2_arg1);
+	printf("rule 3 on (%i,%i)\n",pid2_arg1,arg1);
 	cchr_kill(pid2);
 	if (pid<0) pid=cchr_store(ent);
 	int oldgen=alist_get(_global_runtime.store,pid)->gen_num;
 	int oldid=alist_get(_global_runtime.store,pid)->id;
-	cchr_add_gcd(arg1-pid2_arg1);
+	cchr_add_gcd(pid2_arg1 % arg1);
 	if (alist_get(_global_runtime.store,pid)==NULL ||
 	  (alist_get(_global_runtime.store,pid)->id != oldid) ||
 	  (alist_get(_global_runtime.store,pid)->gen_num != oldgen)) {

@@ -53,6 +53,7 @@ void cchr_destroy_entry(cchr_entry_t *entry) {
 
 int cchr_store(cchr_entry_t *entry) {
   int j=0;
+  printf("storing gcd(%i)\n",entry->data.gcd.arg1);
   while (j<alist_len(_global_runtime.store)) {
     if (!alist_get(_global_runtime.store,j)) break;
     j++;
@@ -62,10 +63,12 @@ int cchr_store(cchr_entry_t *entry) {
   } else {
     alist_add(_global_runtime.store,entry);
   }
+  printf("stored gcd(%i)\n",alist_get(_global_runtime.store,j)->data.gcd.arg1);
   return j;
 }
 
 void cchr_kill(int pid) {
+  printf("killing gcd(%i)\n",alist_get(_global_runtime.store,pid)->data.gcd.arg1);
   free(alist_get(_global_runtime.store,pid));
   alist_get(_global_runtime.store,pid)=NULL;
 }
@@ -82,6 +85,7 @@ void cchr_fire_gcd(int pid,int arg1) {
     if (arg1==0) {
       printf("rule 1 on (%i)\n",arg1);
       if (pid>=0) cchr_kill(pid);
+      printf("end rule 1 on (%i)\n",arg1);
       return;
     }
   }
@@ -97,6 +101,7 @@ void cchr_fire_gcd(int pid,int arg1) {
 	printf("rule 2 on (%i,%i)\n",arg1,pid2_arg1);
         if (pid>=0) cchr_kill(pid);
 	cchr_add_gcd(arg1 % pid2_arg1);
+	printf("end rule 2 on (%i,%i)\n",arg1,pid2_arg1);
 	return;
       }
       pid2++;
@@ -120,6 +125,7 @@ void cchr_fire_gcd(int pid,int arg1) {
 	int oldgen=alist_get(_global_runtime.store,pid)->gen_num;
 	int oldid=alist_get(_global_runtime.store,pid)->id;
 	cchr_add_gcd(pid2_arg1 % arg1);
+	printf("end rule 3 on (%i,%i)\n",pid2_arg1,arg1);
 	if (alist_get(_global_runtime.store,pid)==NULL ||
 	  (alist_get(_global_runtime.store,pid)->id != oldid) ||
 	  (alist_get(_global_runtime.store,pid)->gen_num != oldgen)) {
@@ -129,13 +135,14 @@ void cchr_fire_gcd(int pid,int arg1) {
       pid2++;
     }
   }
-  cchr_store(ent);
+  if (pid<0) cchr_store(ent);
+  printf("end adding gcd(%i)\n",arg1);
 }
 
 int main(void) {
   cchr_runtime_init();
   cchr_add_gcd(65535);
-  cchr_add_gcd(978563);
+  cchr_add_gcd(978565);
   int j=0;
   while (j<alist_len(_global_runtime.store)) {
     cchr_entry_t *ent=alist_get(_global_runtime.store,j);

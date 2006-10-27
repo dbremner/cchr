@@ -144,6 +144,7 @@ int main(void) {
   cchr_add_gcd(65535);
   cchr_add_gcd(978565);
   int j=0;
+  printf("size=%lu\n",sizeof(cchr_entry_t));
   while (j<alist_len(_global_runtime.store)) {
     cchr_entry_t *ent=alist_get(_global_runtime.store,j);
     if (ent && ent->type == CCHR_CONS_TYPE_GCD) {

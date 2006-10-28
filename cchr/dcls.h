@@ -20,13 +20,26 @@ typedef uint32_t dcls_pid_t;
 #define dcls_declare(type,var) struct { dcls_pid_t _s,_fe; struct { type _data; dcls_pid_t _prev,_next;  } *_d;} var;
 
 /* initialize a DCLS var */
-#define dcls_init(var) do {\
-  (var)._s=1; \
-  (var)._d=malloc(sizeof((var)._d[0])); \
-  (var)._d[0]._next=0; \
-  (var)._d[0]._prev=0; \
+#define dcls_init(var,types) do {\
+  (var)._s=(types); \
+  (var)._d=malloc(sizeof((var)._d[0])*(types)); \
+  for (int j=0; j<(types); j++) { \
+    (var)._d[j]._next=j; \
+    (var)._d[j]._prev=j; \
+  } \
   (var)._fe=DCLS_EMPTY_PID; \
 } while(0);
+
+#define dcls_get(var,pid) (((var)._d[(pid)])._data)
+#define dcls_ptr(var,pid) (&(dcls_get(var,pid)))
+
+#define dcls_iter_first(var,type) ((var)._d[(type)]._next)
+#define dcls_iter_hasnext(var,pid,type) ((pid) != (type))
+#define dcls_iter_next(var,pid) ((var)._d[(pid)]._next)
+
+#define dcls_iter(var,pid,type) for (dcls_pid_t pid=dcls_iter_first((var),(type)); dcls_iter_hasnext((var),(type),pid); pid=dcls_iter_next((var),pid) )
+
+#define dcls_used(var,pid) ((var)._d[(pid)]._prev != DCLS_EMPTY_PID)
 
 /* ensure a DCLS var has size positions (including the filled marked) */
 #define dcls_ensure(var,size) do {\
@@ -53,7 +66,7 @@ typedef uint32_t dcls_pid_t;
 
 /* bring a position into the empty set */
 /* @pre: position was allocated (in filled set or not) */
-#define dcls_free(var,pid) do { \
+#define dcls_empty(var,pid) do { \
   if ((var)._d[(pid)]._prev!=DCLS_EMPTY_PID) {\
     dcls_pid_t _prev=(var)._d[(pid)]._prev; \
     dcls_pid_t _next=(var)._d[(pid)]._next; \
@@ -67,11 +80,18 @@ typedef uint32_t dcls_pid_t;
 
 /* bring a position into the filled set */
 /* @pre: position was allocated (not in filled or empty set) */
-#define dcls_used(var,pid) do { \
-  (var)._d[(pid)]._next=(var)._d[0].next; \
-  (var)._d[(pid)]._prev=0; \
-  (var)._d[(var)._d[0].next]._prev=(pid); \
-  (var)._d[0]._next=(pid); \
+#define dcls_add_begin(var,pid,type) do { \
+  (var)._d[(pid)]._next=(var)._d[(type)]._next; \
+  (var)._d[(pid)]._prev=(type); \
+  (var)._d[(var)._d[(type)]._next]._prev=(pid); \
+  (var)._d[(type)]._next=(pid); \
+} while(0);
+
+#define dcls_add_end(var,pid,type) do { \
+  (var)._d[(pid)]._prev=(var)._d[(type)]._prev; \
+  (var)._d[(pid)]._next=(type); \
+  (var)._d[(var)._d[(type)]._prev]._next=(pid); \
+  (var)._d[(type)]._prev=(pid); \
 } while(0);
 
 #define dcls_free(var) do { \

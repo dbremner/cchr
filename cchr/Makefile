@@ -32,3 +32,9 @@ $(OUTDIR)/model.o: model.c *.h
 
 $(OUTDIR)/gcd.cchr.bin: gcd.cchr.c model.c *.h
 	$(CC) $(CFLAGS) gcd.cchr.c model.c -o $(OUTDIR)/gcd.cchr.bin
+
+$(OUTDIR)/gcd.cchr.v1.bin: gcd.cchr.v1.c model.c *.h
+	$(CC) $(CFLAGS) gcd.cchr.v1.c model.c -o $(OUTDIR)/gcd.cchr.v1.bin
+
+$(OUTDIR)/gcd.v0.bin: gcd.v0.c
+	$(CC) $(CFLAGS) gcd.v0.c -o $(OUTDIR)/gcd.v0.bin

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "alist.h"
 #include "model.h"
@@ -8,7 +9,7 @@
 enum cchr_cons_type { CCHR_CONS_TYPE_GCD };
 
 typedef struct {
-  int arg1;
+  uint64_t arg1;
 } cchr_cons_gcd_t;
 
 typedef struct {
@@ -29,7 +30,7 @@ typedef struct {
 
 cchr_runtime_t static _global_runtime;
 
-void cchr_fire_gcd(int pid,int arg1);
+void cchr_fire_gcd(int pid,uint64_t arg1);
 
 void cchr_runtime_init() {
   alist_init(_global_runtime.store);
@@ -53,7 +54,7 @@ void cchr_destroy_entry(cchr_entry_t *entry) {
 
 int cchr_store(cchr_entry_t *entry) {
   int j=0;
-  printf("storing gcd(%i)\n",entry->data.gcd.arg1);
+  //printf("storing gcd(%i)\n",entry->data.gcd.arg1);
   while (j<alist_len(_global_runtime.store)) {
     if (!alist_get(_global_runtime.store,j)) break;
     j++;
@@ -63,29 +64,29 @@ int cchr_store(cchr_entry_t *entry) {
   } else {
     alist_add(_global_runtime.store,entry);
   }
-  printf("stored gcd(%i)\n",alist_get(_global_runtime.store,j)->data.gcd.arg1);
+  //printf("stored gcd(%i)\n",alist_get(_global_runtime.store,j)->data.gcd.arg1);
   return j;
 }
 
 void cchr_kill(int pid) {
-  printf("killing gcd(%i)\n",alist_get(_global_runtime.store,pid)->data.gcd.arg1);
+  //printf("killing gcd(%i)\n",alist_get(_global_runtime.store,pid)->data.gcd.arg1);
   free(alist_get(_global_runtime.store,pid));
   alist_get(_global_runtime.store,pid)=NULL;
 }
 
-void cchr_add_gcd(int arg1) {
-  printf("adding gcd(%i)\n",arg1);
+void cchr_add_gcd(uint64_t arg1) {
+  //printf("adding gcd(%i)\n",arg1);
   cchr_fire_gcd(-1,arg1);
 }
 
-void cchr_fire_gcd(int pid,int arg1) {
+void cchr_fire_gcd(int pid,uint64_t arg1) {
   cchr_entry_t *ent=NULL; /* before being stored, after being created */
   /* <1> gcd(0) <=> true */
   {
     if (arg1==0) {
-      printf("rule 1 on (%i)\n",arg1);
+      //printf("rule 1 on (%i)\n",arg1);
       if (pid>=0) cchr_kill(pid);
-      printf("end rule 1 on (%i)\n",arg1);
+      //printf("end rule 1 on (%i)\n",arg1);
       return;
     }
   }
@@ -97,11 +98,11 @@ void cchr_fire_gcd(int pid,int arg1) {
       (alist_get(_global_runtime.store,pid2)->type == CCHR_CONS_TYPE_GCD) &&
         (pid2 != pid) &&
         (arg1 >= alist_get(_global_runtime.store,pid2)->data.gcd.arg1)) {
-	int pid2_arg1=alist_get(_global_runtime.store,pid2)->data.gcd.arg1;
-	printf("rule 2 on (%i,%i)\n",arg1,pid2_arg1);
+	uint64_t pid2_arg1=alist_get(_global_runtime.store,pid2)->data.gcd.arg1;
+	//printf("rule 2 on (%i,%i)\n",arg1,pid2_arg1);
         if (pid>=0) cchr_kill(pid);
-	cchr_add_gcd(arg1 % pid2_arg1);
-	printf("end rule 2 on (%i,%i)\n",arg1,pid2_arg1);
+	cchr_add_gcd(arg1 - pid2_arg1);
+	//printf("end rule 2 on (%i,%i)\n",arg1,pid2_arg1);
 	return;
       }
       pid2++;
@@ -118,14 +119,14 @@ void cchr_fire_gcd(int pid,int arg1) {
         (alist_get(_global_runtime.store,pid2)->type == CCHR_CONS_TYPE_GCD) &&
         (pid2 != pid) &&
 	(alist_get(_global_runtime.store,pid2)->data.gcd.arg1>=arg1)) {
-	int pid2_arg1=alist_get(_global_runtime.store,pid2)->data.gcd.arg1;
-	printf("rule 3 on (%i,%i)\n",pid2_arg1,arg1);
+	uint64_t pid2_arg1=alist_get(_global_runtime.store,pid2)->data.gcd.arg1;
+	//printf("rule 3 on (%i,%i)\n",pid2_arg1,arg1);
 	cchr_kill(pid2);
 	if (pid<0) pid=cchr_store(ent);
 	int oldgen=alist_get(_global_runtime.store,pid)->gen_num;
 	int oldid=alist_get(_global_runtime.store,pid)->id;
-	cchr_add_gcd(pid2_arg1 % arg1);
-	printf("end rule 3 on (%i,%i)\n",pid2_arg1,arg1);
+	cchr_add_gcd(pid2_arg1 - arg1);
+	//printf("end rule 3 on (%i,%i)\n",pid2_arg1,arg1);
 	if (alist_get(_global_runtime.store,pid)==NULL ||
 	  (alist_get(_global_runtime.store,pid)->id != oldid) ||
 	  (alist_get(_global_runtime.store,pid)->gen_num != oldgen)) {
@@ -136,19 +137,19 @@ void cchr_fire_gcd(int pid,int arg1) {
     }
   }
   if (pid<0) cchr_store(ent);
-  printf("end adding gcd(%i)\n",arg1);
+  //printf("end adding gcd(%i)\n",arg1);
 }
 
 int main(void) {
   cchr_runtime_init();
-  cchr_add_gcd(65535);
-  cchr_add_gcd(978565);
+  cchr_add_gcd(10ULL);
+  cchr_add_gcd(17856535355ULL);
   int j=0;
-  printf("size=%lu\n",sizeof(cchr_entry_t));
+  printf("size=%u\n",(unsigned int)(sizeof(cchr_entry_t)));
   while (j<alist_len(_global_runtime.store)) {
     cchr_entry_t *ent=alist_get(_global_runtime.store,j);
     if (ent && ent->type == CCHR_CONS_TYPE_GCD) {
-      printf("gcd(%i)\n",ent->data.gcd.arg1);
+      printf("gcd(%llu)\n",(unsigned long long)(ent->data.gcd.arg1));
     }
     j++;
   }

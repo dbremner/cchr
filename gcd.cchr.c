@@ -15,7 +15,6 @@ typedef struct {
 typedef struct {
   enum cchr_cons_type type;
   int id;
-  enum { CCHR_STATE_NOTYET, CCHR_STATE_STORED, CCHR_STATE_REMOVED } state;
   int gen_num;
   union {
     cchr_cons_gcd_t gcd;
@@ -43,7 +42,6 @@ dcls_pid_t static inline cchr_make_entry(enum cchr_cons_type type) {
   dcls_pid_t ret;
   dcls_alloc(_global_runtime.store,ret);
   dcls_get(_global_runtime.store,ret).id=_global_runtime.nextid++;
-  dcls_get(_global_runtime.store,ret).state=CCHR_STATE_NOTYET;
   dcls_get(_global_runtime.store,ret).gen_num=0;
   dcls_get(_global_runtime.store,ret).type=type;
   return ret;

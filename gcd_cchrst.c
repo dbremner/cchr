@@ -1,0 +1,16 @@
+#include <stdint.h>
+
+#include "cchrtr.h"
+
+CCHRTR_DEF_TYPES_BEGIN
+  CCHRTR_TYPE(gcd_1)
+CCHRTR_DEF_TYPES_END
+
+#define ARGTYPES_gcd_1(DEF,SEP) DEF(arg1,uint64_t)
+
+CCHRTR_DEF(gcd_1)
+
+CCHRTR_DEF_DATASTRUCT
+
+CCHRTR_CONS_BEGIN(gcd_1)
+  CCHRTR_CONS_SIMPL

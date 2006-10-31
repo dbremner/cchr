@@ -45,7 +45,7 @@ dcls_pid_t static inline cchr_make_entry(enum cchr_cons_type type) {
   dcls_get(_global_runtime.store,ret).gen_num=0;
   dcls_get(_global_runtime.store,ret).type=type;
   return ret;
-}
+}(
 
 void static inline cchr_store(dcls_pid_t pid) {
   dcls_add_begin(_global_runtime.store,pid,dcls_get(_global_runtime.store,pid).type);

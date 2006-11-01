@@ -1,5 +1,83 @@
 #ifndef _cchr_csm_h_
 #define _cchr_csm_h_
 
+#include <stdlib.h>
+
+#include "dcls.h"
+
+#define CSM_START_SEP1_ ,
+#define CSM_START_DEF1_(NAME) CCHR_CONS_TYPE_ ## NAME
+
+#define CSM_START_SEP2_
+#define CSM_START_DEF2_(NAME) \
+  typedef struct { \
+    ARGLIST_##NAME(CSM_START_DEF2_1_,CSM_START_SEP2_1) \
+  } cchr_cons_ ## NAME ## _t;
+
+#define CSM_START_SEP2_1_
+#define CSM_START_DEF2_1_(NAME,TYPE) TYPE NAME;
+
+#define CSM_START_SEP3_
+#define CSM_START_DEF3_(NAME) cchr_cons_ ## NAME ## _t NAME;
+
+#define CSM_START_SEP4_
+#define CSM_START_DEF4_(NAME) void static inline cchr_fire_##NAME(dcls_pid_t, ARGLIST_##NAME(CSM_START_DEF4_1_,CSM_START_SEP4_1_));
+
+#define CSM_START_SEP4_1_ ,
+#define CSM_START_DEF4_1_(NAME,TYPE) TYPE NAME
+
+#define CSM_START_SEP5_
+#define CSM_START_DEF5_(NAME) \
+  void static inline cchr_fire_##NAME(dcls_pid_t pid, ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
+    int doadd=(pid==DCLS_EMPTY_PID); \
+begin: \
+  RULELIST_##NAME(CSM_START_SEP5_2_,CSM_START_DEF5_2_) \
+  }
+
+#define CSM_START_SEP5_1_ ,
+#define CSM_START_DEF5_1_(NAME,TYPE) TYPE NAME
+
+#define CSM_START_SEP5_2_
+#define CSM_START_DEF5_2_(NAME) { CODELIST_##NAME }
+
+#define CSM_START \
+  enum cchr_cons_type { CONSLIST(CSM_START_DEF1_,CSM_START_SEP1_) , CCHR_CONS_COUNT }; \
+  CONSLIST(CSM_START_DEF2_,CSM_START_SEP2_) \
+  typedef struct { \
+    enum cchr_cons_type type; \
+    int id; \
+    int gen_num; \
+    union { \
+      CONSLIST(CSM_START_DEF3_,CSM_START_SEP3_) \
+    } data; \
+  } cchr_entry_t; \
+  typedef struct { \
+    dcls_declare(cchr_entry_t,store); \
+    int nextid; \
+  } cchr_runtime_t; \
+  cchr_runtime_t static _global_runtime; \
+  void static cchr_runtime_init() { \
+    dcls_init(_global_runtime.store,CCHR_CONS_COUNT); \
+    _global_runtime.nextid=1; \
+  } \
+  dcls_pid_t static inline cchr_make_entry(enum cchr_cons_type type) { \
+    dcls_pid_t ret; \
+    dcls_alloc(_global_runtime.store,ret); \
+    dcls_get(_global_runtime.store,ret).id=_global_runtime.nextid++; \
+    dcls_get(_global_runtime.store,ret).gen_num=0; \
+    dcls_get(_global_runtime.store,ret).type=type; \
+    return ret; \
+  } \
+  void static inline cchr_store(dcls_pid_t pid) { \
+    dcls_add_begin(_global_runtime.store,pid,dcls_get(_global_runtime.store,pid).type); \
+  } \
+  void static inline cchr_kill(dcls_pid_t pid) { \
+    dcls_empty(_global_runtime.store,pid); \
+  } \
+  CONSLIST(CSM_START_DEF4_,CSM_START_SEP4) \
+  CONSLIST(CSM_START_DEF5_,CSM_START_SEP5) \
+  
+
+
 
 #endif

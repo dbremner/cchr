@@ -78,6 +78,17 @@ begin: \
   CONSLIST(CSM_START_DEF5_,CSM_START_SEP5) \
   
 
+#define CSM_ARG(NAME) (NAME)
+#define CSM_ENSURE(EXP,CODE) do { if (EXP) { CODE } } while(0);
+#define CSM_SELFDIFF(VAR) (pid != pid_##VAR)
+#define CSM_DIFF(VAR1,VAR2) (pid##VAR1 != pid##VAR2)
+#define CSM_KILLSELF do { if (!doadd) cchr_kill(pid); } while(0);
+#define CSM_KILL(VAR) do { cchr_kill(pid_##VAR; } while(0);
+#define CSM_LOOP(TYPE,VAR,CODE) do { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE) { CODE } } while(0);
+#define CSM_END do { return; } while(0);
+#define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.##TYPE##.NAME)
+
+
 
 
 #endif

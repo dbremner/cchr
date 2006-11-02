@@ -34,6 +34,7 @@
     int oldgen; \
 begin: \
     RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
+    CSM_NEEDSELF \
   }
 
 #define CSM_START_SEP5_1_ ,
@@ -86,13 +87,16 @@ begin: \
 #define CSM_DIFFSELF(VAR) (pid != pid_##VAR)
 #define CSM_DIFF(VAR1,VAR2) (pid##VAR1 != pid##VAR2)
 #define CSM_KILLSELF { if (!doadd) cchr_kill(pid); }
-#define CSM_KILL(VAR) { cchr_kill(pid_##VAR; }
-#define CSM_LOOP(TYPE,VAR,CODE) dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE) { CODE }
+#define CSM_KILL(VAR) { cchr_kill(pid_##VAR); }
+#define CSM_LOOP(TYPE,VAR,CODE) { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE) { CODE } }
 #define CSM_END { return; }
 #define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
-#define CSM_MAKE(TYPE) { if (doadd) { pid=cchr_make_entry(CCHR_CONS_TYPE_##TYPE); ARGLIST_##TYPE(CSM_MAKE_DEF1_,CSM_MAKE_SEP1_) } oldid=dcls_get(_global_runtime.store,pid).id; oldgen=dcls_get(_global_runtime.store,pid).gen_num; }
+#define CSM_MAKE(TYPE) { if (doadd) { pid=cchr_make_entry(CCHR_CONS_TYPE_##TYPE);ARGLIST_##TYPE(CSM_MAKE_DEF1_,CSM_MAKE_SEP1_)}oldid=dcls_get(_global_runtime.store,pid).id; oldgen=dcls_get(_global_runtime.store,pid).gen_num; }
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid) && dcls_get(_global_runtime.store,pid).id == oldid)
-#define CSM_REGENSELF (dcls_get(_global_runtime.store,pid).gen_num != oldgen)\
+#define CSM_REGENSELF (dcls_get(_global_runtime.store,pid).gen_num != oldgen)
+#define CSM_ADD(CON,...) { cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); }
+#define CSM_ADDU(CON) { cchr_fire_##CON(); }
+#define CSM_NEEDSELF { if (doadd) {cchr_store(pid); doadd=0;} }
 
 #define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid).data.CON.NAME = arg_##NAME ;
 #define CSM_MAKE_SEP1_ 

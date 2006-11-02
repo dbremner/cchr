@@ -15,27 +15,29 @@
   } cchr_cons_ ## NAME ## _t;
 
 #define CSM_START_SEP2_1_
-#define CSM_START_DEF2_1_(NAME,TYPE) TYPE NAME;
+#define CSM_START_DEF2_1_(CON,NAME,TYPE) TYPE NAME;
 
 #define CSM_START_SEP3_
 #define CSM_START_DEF3_(NAME) cchr_cons_ ## NAME ## _t NAME;
 
 #define CSM_START_SEP4_
-#define CSM_START_DEF4_(NAME) void static inline cchr_fire_##NAME(dcls_pid_t, ARGLIST_##NAME(CSM_START_DEF4_1_,CSM_START_SEP4_1_));
+#define CSM_START_DEF4_(NAME) void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_START_DEF4_1_,CSM_START_SEP4_1_));
 
 #define CSM_START_SEP4_1_ ,
-#define CSM_START_DEF4_1_(NAME,TYPE) TYPE NAME
+#define CSM_START_DEF4_1_(CON,NAME,TYPE) TYPE NAME
 
 #define CSM_START_SEP5_
 #define CSM_START_DEF5_(NAME) \
   void static inline cchr_fire_##NAME(dcls_pid_t pid, ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
     int doadd=(pid==DCLS_EMPTY_PID); \
+    int oldid; \
+    int oldgen; \
 begin: \
-  RULELIST_##NAME(CSM_START_SEP5_2_,CSM_START_DEF5_2_) \
+    RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
   }
 
 #define CSM_START_SEP5_1_ ,
-#define CSM_START_DEF5_1_(NAME,TYPE) TYPE NAME
+#define CSM_START_DEF5_1_(CON,NAME,TYPE) TYPE arg_##NAME
 
 #define CSM_START_SEP5_2_
 #define CSM_START_DEF5_2_(NAME) { CODELIST_##NAME }
@@ -78,17 +80,21 @@ begin: \
   CONSLIST(CSM_START_DEF5_,CSM_START_SEP5) \
   
 
-#define CSM_ARG(NAME) (NAME)
-#define CSM_ENSURE(EXP,CODE) do { if (EXP) { CODE } } while(0);
-#define CSM_SELFDIFF(VAR) (pid != pid_##VAR)
+#define CSM_ARG(TYPE,NAME) (arg_##NAME)
+
+#define CSM_IF(EXP,CODE) { if (EXP) { CODE } }
+#define CSM_DIFFSELF(VAR) (pid != pid_##VAR)
 #define CSM_DIFF(VAR1,VAR2) (pid##VAR1 != pid##VAR2)
-#define CSM_KILLSELF do { if (!doadd) cchr_kill(pid); } while(0);
-#define CSM_KILL(VAR) do { cchr_kill(pid_##VAR; } while(0);
-#define CSM_LOOP(TYPE,VAR,CODE) do { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE) { CODE } } while(0);
-#define CSM_END do { return; } while(0);
-#define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.##TYPE##.NAME)
+#define CSM_KILLSELF { if (!doadd) cchr_kill(pid); }
+#define CSM_KILL(VAR) { cchr_kill(pid_##VAR; }
+#define CSM_LOOP(TYPE,VAR,CODE) dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE) { CODE }
+#define CSM_END { return; }
+#define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
+#define CSM_MAKE(TYPE) { if (doadd) { pid=cchr_make_entry(CCHR_CONS_TYPE_##TYPE); ARGLIST_##TYPE(CSM_MAKE_DEF1_,CSM_MAKE_SEP1_) } oldid=dcls_get(_global_runtime.store,pid).id; oldgen=dcls_get(_global_runtime.store,pid).gen_num; }
+#define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid) && dcls_get(_global_runtime.store,pid).id == oldid)
+#define CSM_REGENSELF (dcls_get(_global_runtime.store,pid).gen_num != oldgen)\
 
-
-
+#define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid).data.CON.NAME = arg_##NAME ;
+#define CSM_MAKE_SEP1_ 
 
 #endif

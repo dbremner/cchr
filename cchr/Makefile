@@ -1,16 +1,16 @@
-CC := gcc
+CC := gcc -Wall -pipe -std=c99
 
-CFLAGS := -std=c99 -m32 -O3 -g0 -Wall -march=i686 -pipe
-LDFLAGS := -m32 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
-OUTDIR := i686
+#CFLAGS := -m32 -O3 -g0-march=i686
+#LDFLAGS := -m32 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
+#OUTDIR := i686
 
-#CFLAGS := -std=c99 -m64 -O0 -ggdb3 -Wall -march=athlon64 -save-temps
+#CFLAGS := m64 -O0 -ggdb3 -march=athlon64
 #LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 #OUTDIR := amd64-debug
 
-#CFLAGS := -std=c99 -m64 -O3 -g0 -Wall -march=athlon64 -pipe
-#LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
-#OUTDIR := amd64
+CFLAGS := -O3 -ggdb3 -march=athlon64 -m64
+LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+OUTDIR := amd64
 
 $(OUTDIR)/cchr: $(OUTDIR)/parse.o $(OUTDIR)/main.o $(OUTDIR)/cchr.o $(OUTDIR)/model.o $(OUTDIR)/util.o
 	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parse.o $(OUTDIR)/cchr.o $(OUTDIR)/model.o $(OUTDIR)/util.o $(OUTDIR)/main.o
@@ -35,6 +35,11 @@ $(OUTDIR)/gcd.cchr.bin: gcd.cchr.c model.c *.h
 
 $(OUTDIR)/gcd.cchr.v1.bin: gcd.cchr.v1.c model.c *.h
 	$(CC) $(CFLAGS) gcd.cchr.v1.c model.c -o $(OUTDIR)/gcd.cchr.v1.bin
+	
+
+$(OUTDIR)/gcd.csm.bin: gcd.csm.c *.h
+	cpp -P <gcd.csm.c | indent -kr >gcd.csm.2.c
+	$(CC) $(CFLAGS) gcd.csm.2.c -o $(OUTDIR)/gcd.csm.bin
 
 $(OUTDIR)/gcd.v0.bin: gcd.v0.c
 	$(CC) $(CFLAGS) gcd.v0.c -o $(OUTDIR)/gcd.v0.bin

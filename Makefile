@@ -8,7 +8,7 @@ CC := gcc -Wall -pipe -std=c99
 #LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 #OUTDIR := amd64-debug
 
-CFLAGS := -O3 -ggdb3 -march=athlon64 -m64
+CFLAGS := -O3 -ggdb3 -march=athlon-xp -m32
 LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 OUTDIR := amd64
 

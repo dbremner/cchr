@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 typedef uint32_t dcls_pid_t;
-#define DCLS_EMPTY_PID (0xFFFFFFFF)
+#define DCLS_EMPTY_PID ((dcls_pid_t)(-1))
 
 /**
  * _d : points to dynamic array

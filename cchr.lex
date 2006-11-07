@@ -5,13 +5,16 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "y.tab.h"
 
 int line_number = 0;
 
 void yyerror(char *message);
 
-#define LIT_RETURN(VAL) {yylval.
+#define LIT_RETURN(TYPE) {yylval.lit=malloc(yyleng+1); memcpy(yylval.lit,yytext,yyleng); yylval.lit[yyleng]=0; return TYPE}
+
 %}
 
 %option noyywrap
@@ -27,9 +30,9 @@ alpha_num         ({alpha}|{digit})
 hex_digit         [0-9A-F]
 identifier        {alpha}{alpha_num}*
 unsigned_integer  {digit}+
-hex_integer       ${hex_digit}{hex_digit}*
+hex_integer       -?{0x|OX}{hex_digit}{hex_digit}*
 exponent          e[+-]?{digit}+
-integer           [+-]?{unsigned_integer}
+integer           -?{unsigned_integer}
 real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 
 %%
@@ -44,61 +47,36 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 <LCOMMENT>\n      {line_number++; BEGIN(INITIAL);}
 <LCOMMENT>.       {}
 
-constraint        return(TOK_CONSTRAINT);
-extern            return(TOK_EXTERN);
-true              return(TOK_TRUE);
-"{"               return(TOK_LCBRAC);
-"}"               return(TOK_RCBRAC);
-";"               return(TOK_SEMI);
-","               return(TOK_COMMA);
-"@"               return(TOK_AT);
-"<=>"             return(TOK_SIMP);
-"=>"              return(TOK_PROP);
-"|"               return(TOK_SPIPE);
-"||"              return(TOK_DPIPE);
-"&"               return(TOK_SAND);
-"&&"              return(TOK_DAND);
-"-"               return(TOK_MINUS);
-"+"               return(TOK_PLUS);
-"*"               return(TOK_MULT);
-"/"               return(TOK_DIV);
-"\\"              return(TOK_BSLASH);
-"^"               return(TOK_CARET);
-"."               return(TOK_DOT);
-"->"              return(TOK_ARROW);
-"("               return(TOK_LRBRAC);
-")"               return(TOK_RRBRAC);
-"="               return(TOK_ASSIGN);
-"=="              return(TOK_EQUALS);
-">="              return(TOK_GREQ);
-">"               return(TOK_GR);
-"<="              return(TOK_SMEQ);
-"<"               return(TOK_SM);
-"!="              return(TOK_NEQ);
-"!"               return(TOK_NOT);
-">>"              return(TOK_RSHIFT);
-"<<"              return(TOK_LSHIFT);
+constraint        LIT_RETURN(TOK_CONSTRAINT);
+extern            LIT_RETURN(TOK_EXTERN);
+true              LIT_RETURN(TOK_TRUE);
+"{"               LIT_RETURN(TOK_LCBRAC);
+"}"               LIT_RETURN(TOK_RCBRAC);
+";"               LIT_RETURN(TOK_SEMI);
+","               LIT_RETURN(TOK_COMMA);
+"@"               LIT_RETURN(TOK_AT);
+"<=>"             LIT_RETURN(TOK_SIMP);
+"=>"              LIT_RETURN(TOK_PROP);
+"|"               LIT_RETURN(TOK_SPIPE);
+"\\"              LIT_RETURN(TOK_BSLASH);
+"("               LIT_RETURN(TOK_LRBRAC);
+")"               LIT_RETURN(TOK_RRBRAC);
 
-{integer}         {yylval.ival=strreturn(UNSIGNED_INTEGER);
-{real}               return(REAL);
-{hex_integer}        return(HEX_INTEGER);
-{string}             return{STRING};
-{bad_string}         yyerror("Unterminated string");
+{integer}         LIT_RETURN(TOK_CONST)
+{real}            LIT_RETURN(TOK_CONST)
+{hex_integer}     LIT_RETURN(TOK_CONST)
+{identifier}      LIT_RETURN(TOK_SYMB)
 
-{identifier}         return(IDENTIFIER);
+{white_space}     /* do nothing */
 
-[*/+\-,^.;:()\[\]]   return(yytext[0]);
-
-{white_space}        /* do nothing */
-\n                   line_number += 1;
-.                    yyerror("Illegal input");
+.                 yyerror("Illegal input");
 
 %%
 
 void yyerror(char *message)
 {
    fprintf(stderr,"Error: \"%s\" in line %d. Token = %s\n",
-           message,line_number,yytext);
+           message,yylineno,yytext);
    exit(1);
 }
 

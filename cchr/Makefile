@@ -1,16 +1,16 @@
 CC := gcc -Wall -pipe -std=c99
 
-#CFLAGS := -m32 -O3 -g0-march=i686
-#LDFLAGS := -m32 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
-#OUTDIR := i686
+CFLAGS := -m32 -O3 -ggdb3 -march=i686
+LDFLAGS := -m32 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+OUTDIR := i686
 
 #CFLAGS := m64 -O0 -ggdb3 -march=athlon64
 #LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 #OUTDIR := amd64-debug
 
-CFLAGS := -O3 -ggdb3 -march=athlon-xp -m32
-LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
-OUTDIR := amd64
+#CFLAGS := -O3 -ggdb3 -march=athlon64 -m64
+#LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+#OUTDIR := amd64
 
 $(OUTDIR)/cchr: $(OUTDIR)/parse.o $(OUTDIR)/main.o $(OUTDIR)/cchr.o $(OUTDIR)/model.o $(OUTDIR)/util.o
 	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parse.o $(OUTDIR)/cchr.o $(OUTDIR)/model.o $(OUTDIR)/util.o $(OUTDIR)/main.o

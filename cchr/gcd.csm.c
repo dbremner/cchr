@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "cchr_csm.h"
 
 #define CONSLIST(DEF,SEP) DEF(gcd_1)
 #define ARGLIST_gcd_1(DEF,SEP) DEF(gcd_1,arg1,uint64_t)
@@ -37,7 +36,7 @@
     ) \
   )
 
-CSM_START
+#include "cchr_csm.h"
 
 int main(void) {
   cchr_runtime_init();

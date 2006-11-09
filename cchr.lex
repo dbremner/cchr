@@ -7,13 +7,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "parsestr.h"
 #include "y.tab.h"
 
 int line_number = 0;
 
 void yyerror(char *message);
 
-#define LIT_RETURN(TYPE) {yylval.lit=malloc(yyleng+1); memcpy(yylval.lit,yytext,yyleng); yylval.lit[yyleng]=0; return TYPE}
+#define LIT_RETURN(TYPE) {yylval.lit=malloc(yyleng+1); memcpy(yylval.lit,yytext,yyleng); yylval.lit[yyleng]=0; return TYPE;}
 
 %}
 
@@ -30,9 +31,10 @@ alpha_num         ({alpha}|{digit})
 hex_digit         [0-9A-F]
 identifier        {alpha}{alpha_num}*
 unsigned_integer  {digit}+
-hex_integer       -?{0x|OX}{hex_digit}{hex_digit}*
+hex_integer       -?(0x|OX){hex_digit}{hex_digit}*
 exponent          e[+-]?{digit}+
 integer           -?{unsigned_integer}
+i                 {unsigned_integer}
 real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 
 %%
@@ -62,6 +64,8 @@ true              LIT_RETURN(TOK_TRUE);
 "("               LIT_RETURN(TOK_LRBRAC);
 ")"               LIT_RETURN(TOK_RRBRAC);
 
+"+"|"-"|"*"|"/"|"->"|"<<"|">>"|"<"|">"|"="|"=="|"<="|">="                     LIT_RETURN(TOK_OP)
+"^"|"~"|"&"|"&&"|"||"|"+="|"*="|"/="|"-="|">>="|"<<="|"&="|"|="|"||="|"&&="   LIT_RETURN(TOK_OP)
 {integer}         LIT_RETURN(TOK_CONST)
 {real}            LIT_RETURN(TOK_CONST)
 {hex_integer}     LIT_RETURN(TOK_CONST)

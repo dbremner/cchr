@@ -37,7 +37,15 @@ typedef uint32_t dcls_pid_t;
 #define dcls_iter_hasnext(var,pid,type) ((pid) != (type))
 #define dcls_iter_next(var,pid) ((var)._d[(pid)]._next)
 
-#define dcls_iter(var,pid,type) for (dcls_pid_t pid=dcls_iter_first((var),(type)); dcls_iter_hasnext((var),(type),pid); pid=dcls_iter_next((var),pid) )
+#define dcls_iter(var,pid,type,code) { \
+  dcls_pid_t pid=dcls_iter_first((var),(type)); \
+  while (dcls_iter_hasnext(var,pid,type)) { \
+  	dcls_pid_t _nextpid=dcls_iter_next(var,pid); { \
+  	  code \
+  	}\
+  	(pid)=_nextpid;\
+  } \
+}
 
 #define dcls_used(var,pid) ((var)._d[(pid)]._prev != DCLS_EMPTY_PID)
 

@@ -117,7 +117,7 @@ begin:
 int main(void) {
   cchr_runtime_init();
   cchr_fire_gcd(DCLS_EMPTY_PID,10ULL);
-  cchr_fire_gcd(DCLS_EMPTY_PID,17856535355ULL);
+  cchr_fire_gcd(DCLS_EMPTY_PID,25ULL);
   printf("size=%u\n",(unsigned int)(sizeof(cchr_entry_t)));
   dcls_iter(_global_runtime.store,j,CCHR_CONS_TYPE_GCD) {
     cchr_entry_t *ent=dcls_ptr(_global_runtime.store,j);

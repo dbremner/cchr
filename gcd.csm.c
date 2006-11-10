@@ -28,10 +28,11 @@
   CSM_LOOP(gcd_1,J, \
     CSM_IF(CSM_DIFFSELF(J), \
       CSM_IF(CSM_LARG(gcd_1,J,arg1) >= CSM_ARG(gcd_1,arg1), \
+        CSM_SETLOCAL(J_arg1,CSM_LARG(gcd_1,J,arg1)) \
         CSM_KILL(J) \
-	CSM_NEEDSELF \
-        CSM_ADD(gcd_1,CSM_LARG(gcd_1,J,arg1)-CSM_ARG(gcd_1,arg1)) \
-	CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF,CSM_END) \
+	    CSM_NEEDSELF \
+        CSM_ADD(gcd_1,CSM_GETLOCAL(J_arg1)-CSM_ARG(gcd_1,arg1)) \
+	    CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF,CSM_END) \
       ) \
     ) \
   )

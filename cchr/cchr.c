@@ -1,379 +1,450 @@
+#ifndef lint
+/*static char yysccsid[] = "from: @(#)yaccpar	1.9 (Berkeley) 02/21/93";*/
+static char yyrcsid[] = "$Id: skeleton.c,v 1.2 1997/06/23 02:51:17 tdukes Exp $";
+#endif
+#define YYBYACC 1
+#define YYMAJOR 1
+#define YYMINOR 9
+#define yyclearin (yychar=(-1))
+#define yyerrok (yyerrflag=0)
+#define YYRECOVERING (yyerrflag!=0)
+#define YYPREFIX "yy"
+#line 7 "cchr.y"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <string.h>
 
-#include "util.h"
-#include "cchr.h"
-#include "model.h"
-#include "alist.h"
+#include "parsestr.h"
 
-typedef struct _expr_t_struct expr_t;
-typedef struct _rule_t_struct rule_t;
-
-typedef struct {
-  char *name;
-  int nargs;
-  char **types;
-  alist_declare(rule_t *,keptby);
-  alist_declare(rule_t *,removedby);
-} constraint_t;
-
-
-struct _rule_t_struct {
-  char *name;
-  expr_t **kept;
-  expr_t **removed;
-  expr_t **body;
-  alist_declare(char *,vars);
-  expr_t *guard;
+#line 15 "cchr.y"
+typedef union {
+  char *lit;
+  expr_t expr;
+} YYSTYPE;
+#line 25 "y.tab.c"
+#define TOK_CONSTRAINT 257
+#define TOK_EXTERN 258
+#define TOK_TRUE 259
+#define TOK_LCBRAC 260
+#define TOK_RCBRAC 261
+#define TOK_SEMI 262
+#define TOK_COMMA 263
+#define TOK_AT 264
+#define TOK_SIMP 265
+#define TOK_PROP 266
+#define TOK_SPIPE 267
+#define TOK_BSLASH 268
+#define TOK_LRBRAC 269
+#define TOK_RRBRAC 270
+#define TOK_CONST 271
+#define TOK_SYMB 272
+#define TOK_OP 273
+#define YYERRCODE 256
+short yylhs[] = {                                        -1,
+    0,    0,    2,    2,    2,    1,    1,    1,    1,    1,
 };
-
-typedef struct {
-  alist_declare(rule_t *,rules);
-  alist_declare(constraint_t *,cons);
-  alist_declare(char *,exts);
-  model_t model;
-} cchr_t;
-
-#define EXPR_TYPE_NONE (-1)
-#define EXPR_TYPE_VAR 0
-#define EXPR_TYPE_EXT 1
-#define EXPR_TYPE_CALL 2
-#define EXPR_TYPE_CONS 3
-
-
-struct _expr_t_struct {
-  int type;
-  union {
-    char *var;
-    char *ext;
-    struct {
-      expr_t *func;
-      expr_t **args;
-      int nargs;
-    } call;
-    struct {
-      constraint_t *con;
-      expr_t **args;
-    } cons;
-  } data;
+short yylen[] = {                                         2,
+    2,    0,    1,    1,    3,    1,    1,    1,    1,    2,
 };
+short yydefred[] = {                                      2,
+    0,    6,    7,    2,    8,    4,    9,    0,    1,    0,
+    0,    5,
+};
+short yydgoto[] = {                                       1,
+    8,    9,
+};
+short yysindex[] = {                                      0,
+ -252,    0,    0,    0,    0,    0,    0, -249,    0, -263,
+ -249,    0,
+};
+short yyrindex[] = {                                      0,
+    0,    0,    0,    0,    0,    0,    0,    1,    0,    0,
+    5,    0,
+};
+short yygindex[] = {                                     -2,
+   15,    0,
+};
+#define YYTABLESIZE 277
+short yytable[] = {                                       2,
+    3,   10,    0,    3,   10,    4,   12,    5,    6,    7,
+    2,    0,    0,    2,    3,    0,    4,    3,    5,    6,
+    7,    5,   11,    7,    0,   11,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    3,
+    3,    0,    3,   10,   10,    0,   10,
+};
+short yycheck[] = {                                     263,
+    0,    4,   -1,  267,    0,  269,  270,  271,  272,  273,
+  263,   -1,   -1,  263,  267,   -1,  269,  267,  271,  272,
+  273,  271,    8,  273,   -1,   11,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
+   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  269,
+  270,   -1,  272,  269,  270,   -1,  272,
+};
+#define YYFINAL 1
+#ifndef YYDEBUG
+#define YYDEBUG 0
+#endif
+#define YYMAXTOKEN 273
+#if YYDEBUG
+char *yyname[] = {
+"end-of-file",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"TOK_CONSTRAINT","TOK_EXTERN",
+"TOK_TRUE","TOK_LCBRAC","TOK_RCBRAC","TOK_SEMI","TOK_COMMA","TOK_AT","TOK_SIMP",
+"TOK_PROP","TOK_SPIPE","TOK_BSLASH","TOK_LRBRAC","TOK_RRBRAC","TOK_CONST",
+"TOK_SYMB","TOK_OP",
+};
+char *yyrule[] = {
+"$accept : tokenlist",
+"tokenlist : tokenlist token",
+"tokenlist :",
+"token : literal",
+"token : TOK_SYMB",
+"token : TOK_LRBRAC tokenlist TOK_RRBRAC",
+"literal : TOK_COMMA",
+"literal : TOK_SPIPE",
+"literal : TOK_CONST",
+"literal : TOK_OP",
+"literal : literal literal",
+};
+#endif
+#ifdef YYSTACKSIZE
+#undef YYMAXDEPTH
+#define YYMAXDEPTH YYSTACKSIZE
+#else
+#ifdef YYMAXDEPTH
+#define YYSTACKSIZE YYMAXDEPTH
+#else
+#define YYSTACKSIZE 500
+#define YYMAXDEPTH 500
+#endif
+#endif
+int yydebug;
+int yynerrs;
+int yyerrflag;
+int yychar;
+short *yyssp;
+YYSTYPE *yyvsp;
+YYSTYPE yyval;
+YYSTYPE yylval;
+short yyss[YYSTACKSIZE];
+YYSTYPE yyvs[YYSTACKSIZE];
+#define yystacksize YYSTACKSIZE
+#line 55 "cchr.y"
 
-expr_t *parse_expr(cchr_t *chr, rule_t *rule, char **pos);
-expr_t **parse_exprlist(cchr_t *chr, rule_t *rule, char **pos, int *nargs);
-void dump_expr(expr_t *expr,FILE *out);
-
-int process_cchr(FILE *in, FILE *out, int *line, int level) {
-  char buf[MAXLINELEN];
-  cchr_t cchr;
-  alist_init(cchr.rules);
-  alist_init(cchr.cons);
-  alist_init(cchr.exts);
-  model_init(&(cchr.model));
-  while(1) {
-    int ret=lread_wrapper(buf,in,line,level);
-    if (ret==LREAD_ERROR) return 1;
-    if (ret==LREAD_EOB) break;
-    if (ret==LREAD_BOB) {
-      fprintf(stderr,"CCHR doesn't support subblocks on line %i",*line);
-      return 1;
-    }
-    char *pos=buf;
-    if (starts_with(&pos,"constraint")) {
-      while (*pos) {
-        while (isspace(*pos) || *pos==',') pos++;
-        int len=0;
-        while (isalpha(pos[len]) || pos[len]=='_') len++;
-        while (isalnum(pos[len]) || pos[len]=='_') len++;
-        if (len==0) break;
-        char *str=model_malloc(&(cchr.model),len+1);
-        strncpy(str,pos,len); str[len]=0;
-        pos+=len;
-        alist_declare(char*,itypes);
-        alist_init(itypes);
-        while (isspace(*pos)) pos++;
-        if (*pos == '(') {
-          pos++;
-          while (*pos) {
-            while (isspace(*pos) || *pos==',') pos++;
-            int ilen=0;
-            if (*pos == ')' || *pos==0) break;
-            while (pos[ilen] != ',' && pos[ilen] != 0 && pos[ilen] != ')') ilen++;
-            while (isspace(pos[ilen-1])) ilen--;
-            char *istr=model_malloc(&(cchr.model),len+1);
-            strncpy(istr,pos,ilen); istr[ilen]=0;
-            alist_add(itypes,istr);
-            pos+=ilen;
-          }
-          pos++;
-        }
-        constraint_t *co=model_malloc(&(cchr.model),sizeof(constraint_t));
-        co->name=str;
-        co->nargs=itypes._n;
-        co->types=itypes._d;
-        alist_init(co->keptby);
-        alist_init(co->removedby); /* TODO: model_add these lists after parsing rules */
-        model_add(&(cchr.model),co->types);
-        alist_add(cchr.cons,co);
-      }
-    }
-    else if (starts_with(&pos,"extern")) {
-      while (*pos) {
-        while (isspace(*pos) || *pos==',') pos++;
-        int len=0;
-        while (isalpha(pos[len]) || pos[len]=='_') len++;
-        while (isalnum(pos[len]) || pos[len]=='_') len++;
-        if (len==0) break;
-        char *str=model_malloc(&(cchr.model),len+1);
-        strncpy(str,pos,len); str[len]=0;
-        alist_add(cchr.exts,str);
-        pos+=len;
-      }
-    } else { // CCHR simpagation rule
-      rule_t *rule=malloc(sizeof(rule_t));
-      rule->name=NULL;
-      alist_init(rule->vars);
-      rule->guard=NULL;
-      while (isspace(*pos)) pos++;
-      int len=0;
-      while (isalpha(pos[len]) || pos[len]=='_') len++;
-      while (isalnum(pos[len]) || pos[len]=='_') len++;
-      int spc=0;
-      while (isspace(pos[len+spc])) spc++;
-      if (pos[len+spc]=='@') {
-        rule->name=model_malloc(&(cchr.model),len+1);
-        strncpy(rule->name,pos,len); rule->name[len]=0;
-        pos+=(len+spc+1);
-      }
-      int nkept=0;
-      expr_t **expr_kept=parse_exprlist(&cchr,rule,&pos,&nkept);
-      if (expr_kept==NULL) return 1; // invalid expression
-      while (isspace(*pos)) pos++;
-      int nremoved=0;
-      expr_t ** expr_removed=NULL;
-      if (strlen(pos)>=1 && (pos[0]=='/' || pos[0]=='\\')) {
-        pos++;
-        expr_removed=parse_exprlist(&cchr,rule,&pos,&nremoved);
-        if (!expr_removed) return 1;
-        while (isspace(*pos)) pos++;
-      }
-      if (strlen(pos)>=3 && !strncmp(pos,"==>",3)) {
-        if (expr_removed) {
-          fprintf(stderr,"cannot put have removed constraints in a propagation (==>) rule\n");
-          return 1;
-        }
-        pos+=3;
-      } else if (strlen(pos)>=3 && !strncmp(pos,"<=>",3)) {
-        if (!expr_removed) {
-          expr_removed=expr_kept;
-          nremoved=nkept;
-          expr_kept=NULL;
-          nkept=0;
-        }
-        pos+=3;
-      } else {
-        fprintf(stderr,"unexpected string: [%s]\n",pos);
-      }
-      int nbody;
-      expr_t **expr_body=parse_exprlist(&cchr,rule,&pos,&nbody);
-      expr_t *guard=NULL;
-      if (!expr_body) return 1;
-      while (isspace(*pos)) pos++;
-      if (strlen(pos)>=1 && pos[0]=='|') {
-        if (nbody>1) {
-          fprintf(stderr,"cannot have more than one constraint in guard\n");
-          return 1;
-        }
-        if (nbody==1) guard=expr_body[0];
-        pos++;
-        expr_body=parse_exprlist(&cchr,rule,&pos,&nbody);
-        if (!expr_body) return 1;
-      }
-      /*fprintf(out,"cchr_%s: ",rule->name);
-      int j=0;
-      while (j<nkept) {
-        if (j) fprintf(out,",");
-        dump_expr(expr_kept[j],out);
-        j++;
-      }
-      fprintf(out," \\ ");
-      j=0;
-      while (j<nremoved) {
-        if (j) fprintf(out,",");
-        dump_expr(expr_removed[j],out);
-        j++;
-      }
-      fprintf(out," <=> ");
-      if (guard) {
-        dump_expr(guard,out);
-        fprintf(out," | ");
-      }
-      j=0;
-      while (j<nbody) {
-        if (j) fprintf(out,",");
-        dump_expr(expr_body[j],out);
-        j++;
-      }
-      fprintf(out,"\n");*/
-      model_add(&(cchr.model),rule->vars._d);
-      rule->kept=expr_kept;
-      rule->removed=expr_removed;
-      rule->body=expr_body;
-      rule->guard=guard;
-      
-    }
-  }
-  model_add(&(cchr.model),cchr.rules._d);
-  model_add(&(cchr.model),cchr.cons._d);
-  model_add(&(cchr.model),cchr.exts._d);
-  model_destroy(&(cchr.model));
-  return 0; 
+void yyerror(char *message)
+{
+  printf("%s\n",message);
+  return 0;
 }
 
-expr_t **parse_exprlist(cchr_t *chr, rule_t *rule, char **pos, int *nargs) {
-  alist_declare(expr_t *,args);
-  alist_init(args);
-  do {
-    while (isspace(**pos)) (*pos)++;
-    if (**pos == ')' || **pos==0) break;
-    expr_t *rt=parse_expr(chr,rule,pos);
-    if (rt==NULL) {alist_free(args); fprintf(stderr,"(arg %i NULL)\n",alist_len(args)); return NULL;}
-    while (isspace(**pos)) (*pos)++;
-    alist_add(args,rt);
-    if (**pos != ',') break;
-    (*pos)++;
-  } while(1);
-  *nargs=alist_len(args);
-  alist_add(args,NULL);
-  expr_t **ret=alist_ptr(args,0);
-  model_add(&(chr->model),ret);
-  return ret;
+int main(int argc, char *argv[])
+{
+  yyparse();
+  return(0);
 }
 
-/* ret.data.call.nargs=alist_len(args);
-   ret.data.call.args=alist_ptr(args,0);
-   if (**pos == ')') (*pos)++;
-      ret.data.call.func=inner;
 
-*/
 
-expr_t *parse_expr(cchr_t *chr, rule_t *rule, char **pos) {
-  expr_t ret;
-  ret.type=EXPR_TYPE_NONE;
-  while (isspace(**pos)) (*pos)++;
-  char *npos=*pos;
-  int len=0;
-  while (isalpha((*pos)[len]) || (*pos)[len]=='_') len++;
-  while (isalnum((*pos)[len]) || (*pos)[len]=='_') len++;
-  int spc=0;
-  if (len==0) return NULL;
-  while (isspace((*pos)[len+spc])) spc++;
-  (*pos)+=(len+spc);
-  expr_t **args=NULL;
-  //printf("['%.*s': parsing args...]\n",len,npos);
-  int nargs=0;
-  if ((**pos) == '(') {
-    (*pos)++;
-    args=parse_exprlist(chr,rule,pos,&nargs);
-    if (args==NULL) return NULL;
-    if (**pos == ')') (*pos)++;
-    //printf("['%.*s': parsed %i args]\n",len,npos,nargs);
-  } else {
-    //printf("['%.*s': no args]\n",len,npos);
-  }
-  //printf("[after '%.*s': <%s>]\n",len,npos,*pos);
-  if (ret.type==EXPR_TYPE_NONE) {
-    int k=0;
-    while (k<alist_len(chr->cons)) {
-      if (nargs==alist_get(chr->cons,k)->nargs && strlen(alist_get(chr->cons,k)->name)==len && !strncmp(alist_get(chr->cons,k)->name,npos,len)) break;
-      k++;
-    }
-    if (k<alist_len(chr->cons)) {
-      //printf("['%.*s': seems constraint]\n",len,npos);
-      ret.type=EXPR_TYPE_CONS;
-      ret.data.cons.con=alist_get(chr->cons,k);
-      ret.data.cons.args=args;
-    }
-  }
-  if (ret.type==EXPR_TYPE_NONE) {
-    int n=0;
-    while (n<alist_len(chr->exts)) {
-      if (strlen(alist_get(chr->exts,n))==len && !strncmp(alist_get(chr->exts,n),npos,len)) break;
-      n++;
-    }
-    if (n<alist_len(chr->exts)) {
-      //printf("['%.*s': seems external]\n",len,npos);
-      ret.type=EXPR_TYPE_EXT;
-      ret.data.ext=alist_get(chr->exts,n);
-      if (args) {
-        expr_t *inner=model_malloc(&(chr->model),sizeof(expr_t));
-        *inner=ret;
-        ret.type=EXPR_TYPE_CALL;
-        ret.data.call.func=inner;
-        ret.data.call.args=args;
-        ret.data.call.nargs=nargs;
-      }
-    }
-  }
-  if (ret.type==EXPR_TYPE_NONE && !args && isupper((npos)[0])) {
-    //printf("['%.*s': seems var]\n",len,npos);
-    ret.type=EXPR_TYPE_VAR;
-    int j=0;
-    //printf("['%.*s': searching through %i existing vars]\n",len,npos,alist_len(rule->vars));
-    while (j<alist_len(rule->vars)) {
-      if (strlen(alist_get(rule->vars,j))==len && !strncmp(alist_get(rule->vars,j),npos,len)) break;
-      j++;
-    }
-    if (j<alist_len(rule->vars)) {
-      ret.data.var=alist_get(rule->vars,j);
-    } else {
-      char *vnam=model_malloc(&(chr->model),len+1);
-      strncpy(vnam,npos,len); vnam[len]=0;
-      alist_add(rule->vars,vnam);
-      ret.data.var=vnam;
-    }
-  }
-  if (ret.type==EXPR_TYPE_NONE) {
-    fprintf(stderr,"(<%s> neither var,ext or cons)\n",npos);
-    return NULL;
-  }
-  //printf("['%.*s': allocating type %i]\n",len,npos,ret.type);
-  expr_t *rr=model_malloc(&(chr->model),sizeof(expr_t));
-  *rr=ret;
-  return rr;
+
+
+
+
+
+#line 204 "y.tab.c"
+#define YYABORT goto yyabort
+#define YYREJECT goto yyabort
+#define YYACCEPT goto yyaccept
+#define YYERROR goto yyerrlab
+#ifdef __cplusplus
+extern "C" { 
+char * getenv();
+int yylex();
+int yyparse();
 }
 
-void dump_expr(expr_t *expr,FILE *out) {
-  switch (expr->type) {
-    case EXPR_TYPE_VAR:
-      fprintf(out,"var_%s",expr->data.var);
-      break;
-    case EXPR_TYPE_EXT:
-      fprintf(out,"ext_%s",expr->data.ext);
-      break;
-    case EXPR_TYPE_CALL:
-      dump_expr(expr->data.call.func,out);
-      fprintf(out,".call(");
-      int j=0;
-      while (j<expr->data.call.nargs) {
-        if (j) fprintf(out,",");
-        dump_expr(expr->data.call.args[j],out);
-        j++;
-      }
-      fprintf(out,")");
-      break;
-    case EXPR_TYPE_CONS:
-      fprintf(out,"con_%s(",expr->data.cons.con->name);
-      int k=0;
-      while (k<expr->data.cons.con->nargs) {
-        if (k) fprintf(out,",");
-        dump_expr(expr->data.cons.args[k],out);
-        k++;
-      }
-      fprintf(out,")");
-      break;
-    default:
-      fprintf(out,"unk_%i",expr->type);
-  }
+#endif
+int
+#if defined(__STDC__)
+yyparse(void)
+#else
+yyparse()
+#endif
+{
+    register int yym, yyn, yystate;
+#if YYDEBUG
+    register char *yys;
+#ifndef __cplusplus
+    extern char *getenv();
+#endif
+
+    if (yys = getenv("YYDEBUG"))
+    {
+        yyn = *yys;
+        if (yyn >= '0' && yyn <= '9')
+            yydebug = yyn - '0';
+    }
+#endif
+
+    yynerrs = 0;
+    yyerrflag = 0;
+    yychar = (-1);
+
+    yyssp = yyss;
+    yyvsp = yyvs;
+    *yyssp = yystate = 0;
+
+yyloop:
+    if ((yyn = yydefred[yystate]) != 0) goto yyreduce;
+    if (yychar < 0)
+    {
+        if ((yychar = yylex()) < 0) yychar = 0;
+#if YYDEBUG
+        if (yydebug)
+        {
+            yys = 0;
+            if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
+            if (!yys) yys = "illegal-symbol";
+            printf("%sdebug: state %d, reading %d (%s)\n",
+                    YYPREFIX, yystate, yychar, yys);
+        }
+#endif
+    }
+    if ((yyn = yysindex[yystate]) && (yyn += yychar) >= 0 &&
+            yyn <= YYTABLESIZE && yycheck[yyn] == yychar)
+    {
+#if YYDEBUG
+        if (yydebug)
+            printf("%sdebug: state %d, shifting to state %d\n",
+                    YYPREFIX, yystate, yytable[yyn]);
+#endif
+        if (yyssp >= yyss + yystacksize - 1)
+        {
+            goto yyoverflow;
+        }
+        *++yyssp = yystate = yytable[yyn];
+        *++yyvsp = yylval;
+        yychar = (-1);
+        if (yyerrflag > 0)  --yyerrflag;
+        goto yyloop;
+    }
+    if ((yyn = yyrindex[yystate]) && (yyn += yychar) >= 0 &&
+            yyn <= YYTABLESIZE && yycheck[yyn] == yychar)
+    {
+        yyn = yytable[yyn];
+        goto yyreduce;
+    }
+    if (yyerrflag) goto yyinrecovery;
+    yyerror("syntax error");
+#ifdef lint
+    goto yyerrlab;
+#endif
+yyerrlab:
+    ++yynerrs;
+yyinrecovery:
+    if (yyerrflag < 3)
+    {
+        yyerrflag = 3;
+        for (;;)
+        {
+            if ((yyn = yysindex[*yyssp]) && (yyn += YYERRCODE) >= 0 &&
+                    yyn <= YYTABLESIZE && yycheck[yyn] == YYERRCODE)
+            {
+#if YYDEBUG
+                if (yydebug)
+                    printf("%sdebug: state %d, error recovery shifting\
+ to state %d\n", YYPREFIX, *yyssp, yytable[yyn]);
+#endif
+                if (yyssp >= yyss + yystacksize - 1)
+                {
+                    goto yyoverflow;
+                }
+                *++yyssp = yystate = yytable[yyn];
+                *++yyvsp = yylval;
+                goto yyloop;
+            }
+            else
+            {
+#if YYDEBUG
+                if (yydebug)
+                    printf("%sdebug: error recovery discarding state %d\n",
+                            YYPREFIX, *yyssp);
+#endif
+                if (yyssp <= yyss) goto yyabort;
+                --yyssp;
+                --yyvsp;
+            }
+        }
+    }
+    else
+    {
+        if (yychar == 0) goto yyabort;
+#if YYDEBUG
+        if (yydebug)
+        {
+            yys = 0;
+            if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
+            if (!yys) yys = "illegal-symbol";
+            printf("%sdebug: state %d, error recovery discards token %d (%s)\n",
+                    YYPREFIX, yystate, yychar, yys);
+        }
+#endif
+        yychar = (-1);
+        goto yyloop;
+    }
+yyreduce:
+#if YYDEBUG
+    if (yydebug)
+        printf("%sdebug: state %d, reducing by rule %d (%s)\n",
+                YYPREFIX, yystate, yyn, yyrule[yyn]);
+#endif
+    yym = yylen[yyn];
+    yyval = yyvsp[1-yym];
+    switch (yyn)
+    {
+case 1:
+#line 33 "cchr.y"
+{ yyval.expr.list=yyvsp[-1].expr.list; alist_addall(yyval.expr.list,yyvsp[0].expr.list); alist_free(yyvsp[0].expr.list); }
+break;
+case 2:
+#line 34 "cchr.y"
+{ alist_init(yyval.expr.list); }
+break;
+case 3:
+#line 37 "cchr.y"
+{ alist_init(yyval.expr.list); token_t *tok; alist_new(yyval.expr.list,tok); tok->data=yyvsp[0].lit; tok->type=TOKEN_TYPE_LIT; }
+break;
+case 4:
+#line 38 "cchr.y"
+{ alist_init(yyval.expr.list); token_t *tok; alist_new(yyval.expr.list,tok); tok->data=yyvsp[0].lit; tok->type=TOKEN_TYPE_SYMB; }
+break;
+case 5:
+#line 39 "cchr.y"
+{ alist_init(yyval.expr.list); token_t *tok; alist_new(yyval.expr.list,tok); tok->data=malloc(sizeof(yyvsp[-2].lit)+1); strcpy(tok->data,yyvsp[-2].lit); tok->type=TOKEN_TYPE_LIT; alist_addall(yyval.expr.list,yyvsp[-1].expr.list); alist_new(yyval.expr.list,tok); tok->data=malloc(sizeof(yyvsp[0].lit)+1); strcpy(tok->data,yyvsp[0].lit); tok->type=TOKEN_TYPE_LIT; alist_free(yyvsp[-1].expr.list); }
+break;
+case 6:
+#line 44 "cchr.y"
+{ yyval.lit = yyvsp[0].lit; }
+break;
+case 7:
+#line 45 "cchr.y"
+{ yyval.lit = yyvsp[0].lit; }
+break;
+case 8:
+#line 46 "cchr.y"
+{ yyval.lit = yyvsp[0].lit; }
+break;
+case 9:
+#line 47 "cchr.y"
+{ yyval.lit = yyvsp[0].lit; }
+break;
+case 10:
+#line 48 "cchr.y"
+{ yyval.lit=malloc(strlen(yyvsp[-1].lit)+strlen(yyvsp[0].lit)+2); strcpy(yyval.lit,yyvsp[-1].lit); strcat(yyval.lit," "); strcat(yyval.lit,yyvsp[0].lit); free(yyvsp[-1].lit); free(yyvsp[0].lit); }
+break;
+#line 395 "y.tab.c"
+    }
+    yyssp -= yym;
+    yystate = *yyssp;
+    yyvsp -= yym;
+    yym = yylhs[yyn];
+    if (yystate == 0 && yym == 0)
+    {
+#if YYDEBUG
+        if (yydebug)
+            printf("%sdebug: after reduction, shifting from state 0 to\
+ state %d\n", YYPREFIX, YYFINAL);
+#endif
+        yystate = YYFINAL;
+        *++yyssp = YYFINAL;
+        *++yyvsp = yyval;
+        if (yychar < 0)
+        {
+            if ((yychar = yylex()) < 0) yychar = 0;
+#if YYDEBUG
+            if (yydebug)
+            {
+                yys = 0;
+                if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
+                if (!yys) yys = "illegal-symbol";
+                printf("%sdebug: state %d, reading %d (%s)\n",
+                        YYPREFIX, YYFINAL, yychar, yys);
+            }
+#endif
+        }
+        if (yychar == 0) goto yyaccept;
+        goto yyloop;
+    }
+    if ((yyn = yygindex[yym]) && (yyn += yystate) >= 0 &&
+            yyn <= YYTABLESIZE && yycheck[yyn] == yystate)
+        yystate = yytable[yyn];
+    else
+        yystate = yydgoto[yym];
+#if YYDEBUG
+    if (yydebug)
+        printf("%sdebug: after reduction, shifting from state %d \
+to state %d\n", YYPREFIX, *yyssp, yystate);
+#endif
+    if (yyssp >= yyss + yystacksize - 1)
+    {
+        goto yyoverflow;
+    }
+    *++yyssp = yystate;
+    *++yyvsp = yyval;
+    goto yyloop;
+yyoverflow:
+    yyerror("yacc stack overflow");
+yyabort:
+    return (1);
+yyaccept:
+    return (0);
 }

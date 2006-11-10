@@ -1,7 +1,7 @@
 CC := gcc -Wall -pipe -std=c99
 
-CFLAGS := -m32 -O3 -ggdb3 -march=i686
-LDFLAGS := -m32 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+CFLAGS := -m64 -O0 -ggdb3
+LDFLAGS := -m64 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 OUTDIR := i686
 
 #CFLAGS := m64 -O0 -ggdb3 -march=athlon64

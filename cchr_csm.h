@@ -88,7 +88,7 @@ begin: \
 #define CSM_DIFF(VAR1,VAR2) (pid##VAR1 != pid##VAR2)
 #define CSM_KILLSELF { if (!doadd) cchr_kill(pid); }
 #define CSM_KILL(VAR) { cchr_kill(pid_##VAR); }
-#define CSM_LOOP(TYPE,VAR,CODE) { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE) { CODE } }
+#define CSM_LOOP(TYPE,VAR,CODE) { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{CODE}) }
 #define CSM_END { return; }
 #define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
 #define CSM_MAKE(TYPE) { if (doadd) { pid=cchr_make_entry(CCHR_CONS_TYPE_##TYPE);ARGLIST_##TYPE(CSM_MAKE_DEF1_,CSM_MAKE_SEP1_)}oldid=dcls_get(_global_runtime.store,pid).id; oldgen=dcls_get(_global_runtime.store,pid).gen_num; }

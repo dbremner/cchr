@@ -1,22 +1,8 @@
 
-int inline sub(int a,int b) {
-  return a-b;
-}
-
-int inline geq(int a,int b) {
-  return a>=b;
-}
-
-int inline eq(int a,int b) {
-  return a==b;
-}
-
 extern "CCHR" {
   constraint gcd(int);
   
-  extern sub,geq,eq,true,zero;
-
-  gcd1 @ gcd(N) <=> eq(N,zero) | true;
-  gcd2 @ gcd(N) \ gcd(M) <=> geq(M,N) | gcd(sub(M,N));
+  gcd1 @ gcd(N) <=> N==0 | true;
+  gcd2 @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
 
 }

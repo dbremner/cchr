@@ -5,14 +5,35 @@
 
 #define TOKEN_TYPE_LIT 0
 #define TOKEN_TYPE_SYMB 1
+#define TOKEN_TYPE_FUNC 2
+
+typedef struct _expr_t_struct;
 
 typedef struct {
-  char *data;
   int type;
+  char *data;
+  alist_declare(expr_t,args);
 } token_t;
 
-typedef struct {
+struct _expr_t_struct {
   alist_declare(token_t,list);
-} expr_t;
+}
+
+typedef struct {
+  char *name;
+  alist_declare(char*,list);
+} constr_t;
+
+typedef struct {
+  char *name;
+  alist_declare(expr_t,kept);
+  alist_declare(expr_t,removed);
+  expr_t guard;
+  alist_declare(expr_t,added);
+} rule_t;
+
+typedef struct {
+  alist_declare(constr_t,constrs);
+} cchr_t;
 
 #endif

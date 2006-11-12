@@ -7,12 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "parsestr.h"
 #include "y.tab.h"
 
-int line_number = 0;
-
 void yyerror(char *message);
+void strip_sl(char *c);
 
 #define LIT_RETURN(TYPE) {yylval.lit=malloc(yyleng+1); memcpy(yylval.lit,yytext,yyleng); yylval.lit[yyleng]=0; return TYPE;}
 
@@ -20,11 +20,12 @@ void yyerror(char *message);
 
 %option noyywrap
 %option yylineno
+%option nounput
 
 %x BCOMMENT
 %X LCOMMENT
 
-white_space       [ \t]*
+white_space       [ \t\n]*
 digit             [0-9]
 alpha             [A-Za-z_]
 alpha_num         ({alpha}|{digit})
@@ -41,12 +42,10 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 
 "/*"              BEGIN(BCOMMENT);
 <BCOMMENT>"*/"    BEGIN(INITIAL);
-<BCOMMENT>\n      line_number++;
 <BCOMMENT><<EOF>> yyerror("EOF in comment");
 <BCOMMENT>.       {}
 
 "//"              BEGIN(LCOMMENT);
-<LCOMMENT>\n      {line_number++; BEGIN(INITIAL);}
 <LCOMMENT>.       {}
 
 constraint        LIT_RETURN(TOK_CONSTRAINT);
@@ -58,7 +57,7 @@ true              LIT_RETURN(TOK_TRUE);
 ","               LIT_RETURN(TOK_COMMA);
 "@"               LIT_RETURN(TOK_AT);
 "<=>"             LIT_RETURN(TOK_SIMP);
-"=>"              LIT_RETURN(TOK_PROP);
+"==>"              LIT_RETURN(TOK_PROP);
 "|"               LIT_RETURN(TOK_SPIPE);
 "\\"              LIT_RETURN(TOK_BSLASH);
 "("               LIT_RETURN(TOK_LRBRAC);
@@ -69,7 +68,9 @@ true              LIT_RETURN(TOK_TRUE);
 {integer}         LIT_RETURN(TOK_CONST)
 {real}            LIT_RETURN(TOK_CONST)
 {hex_integer}     LIT_RETURN(TOK_CONST)
+{identifier}{white_space}"("      {strip_sl(yytext); LIT_RETURN(TOK_FUNC);}
 {identifier}      LIT_RETURN(TOK_SYMB)
+{identifier}{white_space}"@"	  {strip_sl(yytext); LIT_RETURN(TOK_SYMBAT); }
 
 {white_space}     /* do nothing */
 
@@ -84,4 +85,10 @@ void yyerror(char *message)
    exit(1);
 }
 
+void strip_sl(char *c) {
+  int len=strlen(c)-1;
+  if (len<0) return;
+  while (len>0 && isspace(c[len-1])) len--;
+  c[len]=0;
+}
 

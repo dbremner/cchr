@@ -20,10 +20,10 @@ $(INTDIR)/cchr.lex.c: $(INTDIR)/cchr.tab.h cchr.lex
 	flex -o $(INTDIR)/cchr.lex.c cchr.lex
 
 $(OUTDIR)/cchr.tab.o: $(INTDIR)/cchr.tab.c parsestr.h
-	$(CC) $(CFLAGS) -I $(INTDIR) -I . $(INTDIR)/cchr.tab.c -c -o $(OUTDIR)/cchr.tab.o
+	$(CC) $(CFLAGS) -I . $(INTDIR)/cchr.tab.c -c -o $(OUTDIR)/cchr.tab.o
 
 $(OUTDIR)/cchr.lex.o: $(INTDIR)/cchr.tab.h $(INTDIR)/cchr.lex.c parsestr.h
-	$(CC) $(CFLAGS) -I $(INTDIR) -I . $(INTDIR)/cchr.lex.c -c -o $(OUTDIR)/cchr.lex.o
+	$(CC) $(CFLAGS) -I . $(INTDIR)/cchr.lex.c -c -o $(OUTDIR)/cchr.lex.o
 
 $(OUTDIR)/cchr.parse: $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o
 	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr.parse $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o

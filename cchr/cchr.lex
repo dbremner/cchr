@@ -22,6 +22,7 @@ void strip_sl(char *c);
 %option yylineno
 %option nounput
 %option batch
+%option never-interactive
 
 %x BCOMMENT
 %X LCOMMENT

@@ -1,4 +1,0 @@
-constraint gcd(int);
-
-gcd1 @ gcd(0) <=> true;
-gcd2 @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);

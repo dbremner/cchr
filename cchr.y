@@ -23,10 +23,10 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
   exprlist_t elist;
 }
 
-%token <lit> TOK_CONSTRAINT TOK_EXTERN TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT
-%token <lit> TOK_CONST TOK_SYMB TOK_OP TOK_BOGUS
+%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT
+%token <lit> TOK_CONST TOK_SYMB TOK_OP
 
-%type  <lit> literal type
+%type  <lit> literal type rname
 
 %type <constr> typelistc typelist constr
 
@@ -34,7 +34,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
 
 %type <token> arglist
 
-%type <cchr> constrlist stmt main input
+%type <cchr> constrlist stmt main input rule
 
 %type <elist> exprlist
 
@@ -83,25 +83,26 @@ exprlist : TOK_TRUE { alist_init($$.list); }
 arglist : etokenlist %prec PRE_ENDALIST { $$.type = TOKEN_TYPE_FUNC; alist_init($$.args); $$.data=NULL; alist_add($$.args,$1); }
 		 | arglist TOK_COMMA etokenlist { $$=$1; alist_add($$.args,$3); }
 
-literal : TOK_COMMA                     { $$ = $1; }
-        | TOK_CONST                     { $$ = $1; }
-        | TOK_OP                        { $$ = $1; }
-        | TOK_AT                        { $$ = $1; }
+literal : TOK_COMMA
+        | TOK_CONST
+        | TOK_OP
+        | TOK_AT
         ;
 
+rname : TOK_SYMBAT { $$=$1; }
+      | { $$=NULL; }
+      ;
+
+rule : rname exprlist TOK_BSLASH exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,&$6,&$8); }
+	 | rname exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,&$4,&$6); }
+	 | rname exprlist TOK_PROP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,&$4,&$6); }
+     | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,NULL,&$6); }
+	 | rname exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,NULL,&$4); }
+	 | rname exprlist TOK_PROP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,NULL,&$4); }
+	 ;
+
 stmt : TOK_CONSTRAINT constrlist TOK_SEMI { $$=$2; }
-	 | TOK_SYMBAT exprlist TOK_BSLASH exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,&$6,&$8); }
-	 | TOK_SYMBAT exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,&$4,&$6); }
-	 | TOK_SYMBAT exprlist TOK_PROP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,&$4,&$6); }
-	 | TOK_SYMBAT exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,NULL,&$6); }
-	 | TOK_SYMBAT exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,NULL,&$4); }
-	 | TOK_SYMBAT exprlist TOK_PROP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,NULL,&$4); }
-	 | exprlist TOK_BSLASH exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,NULL,&$1,&$3,&$5,&$7); }
-	 | exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,NULL,NULL,&$1,&$3,&$5); }
-	 | exprlist TOK_PROP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,NULL,&$1,NULL,&$3,&$5); }
-	 | exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,NULL,&$1,&$3,NULL,&$5); }
-	 | exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,NULL,NULL,&$1,NULL,&$3); }
-	 | exprlist TOK_PROP exprlist TOK_SEMI { cchr_genrule(&$$,NULL,&$1,NULL,NULL,&$3); }
+	 | rule
 	 ;
 
 constrlist : constr { cchr_init(&$$); alist_add($$.constrs,$1); }

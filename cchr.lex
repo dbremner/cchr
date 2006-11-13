@@ -9,7 +9,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "parsestr.h"
-#include "y.tab.h"
+#include "cchr.tab.h"
 
 void yyerror(char *message);
 void strip_sl(char *c);
@@ -21,6 +21,7 @@ void strip_sl(char *c);
 %option noyywrap
 %option yylineno
 %option nounput
+%option batch
 
 %x BCOMMENT
 %X LCOMMENT
@@ -49,7 +50,6 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 <LCOMMENT>.       {}
 
 constraint        LIT_RETURN(TOK_CONSTRAINT);
-extern            LIT_RETURN(TOK_EXTERN);
 true              LIT_RETURN(TOK_TRUE);
 "{"               LIT_RETURN(TOK_LCBRAC);
 "}"               LIT_RETURN(TOK_RCBRAC);

@@ -11,10 +11,11 @@
 #include "parsestr.h"
 #include "cchr.tab.h"
 
-void yyerror(char *message);
+void static yyerror(char *message,yyscan_t scanner);
+
 void strip_sl(char *c);
 
-#define LIT_RETURN(TYPE) {yylval.lit=malloc(yyleng+1); memcpy(yylval.lit,yytext,yyleng); yylval.lit[yyleng]=0; return TYPE;}
+#define LIT_RETURN(TYPE) {yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
 
 %}
 
@@ -23,6 +24,9 @@ void strip_sl(char *c);
 %option nounput
 %option batch
 %option never-interactive
+%option bison-bridge
+%option bison-locations
+%option reentrant
 
 %x BCOMMENT
 %X LCOMMENT
@@ -44,11 +48,12 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 
 "/*"              BEGIN(BCOMMENT);
 <BCOMMENT>"*/"    BEGIN(INITIAL);
-<BCOMMENT><<EOF>> yyerror("EOF in comment");
+<BCOMMENT><<EOF>> yyerror("EOF in comment",yyscanner);
 <BCOMMENT>.       {}
 
 "//"              BEGIN(LCOMMENT);
 <LCOMMENT>.       {}
+<LCOMMENT>"\n"	  BEGIN(INITIAL);
 
 constraint        LIT_RETURN(TOK_CONSTRAINT);
 true              LIT_RETURN(TOK_TRUE);
@@ -58,7 +63,7 @@ true              LIT_RETURN(TOK_TRUE);
 ","               LIT_RETURN(TOK_COMMA);
 "@"               LIT_RETURN(TOK_AT);
 "<=>"             LIT_RETURN(TOK_SIMP);
-"==>"              LIT_RETURN(TOK_PROP);
+"==>"             LIT_RETURN(TOK_PROP);
 "|"               LIT_RETURN(TOK_SPIPE);
 "\\"              LIT_RETURN(TOK_BSLASH);
 "("               LIT_RETURN(TOK_LRBRAC);
@@ -75,15 +80,14 @@ true              LIT_RETURN(TOK_TRUE);
 
 {white_space}     /* do nothing */
 
-.                 yyerror("Illegal input");
+.                 return TOK_ERROR;
 
 %%
 
-void yyerror(char *message)
+void static yyerror(char *message,yyscan_t scanner)
 {
    fprintf(stderr,"Error: \"%s\" in line %d. Token = %s\n",
-           message,yylineno,yytext);
-   exit(1);
+           message,yyget_lineno(scanner),yyget_text(scanner));
 }
 
 void strip_sl(char *c) {

@@ -8,7 +8,7 @@
 
 handler gcd.
 
-constraints gcd/1.
+:- chr_constraint gcd(+int).
 
 gcd(0) <=> true.
 gcd(N) \ gcd(M) <=> N=<M | L is M-N, gcd(L).

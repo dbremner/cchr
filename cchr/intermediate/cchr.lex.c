@@ -544,7 +544,7 @@ void static yyerror(char *message,yyscan_t scanner);
 
 void strip_sl(char *c);
 
-#define LIT_RETURN(TYPE) {yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
+#define LIT_RETURN(TYPE) {yylloc->first_line=yyget_lineno(yyscanner); yylloc->last_line=yyget_lineno(yyscanner); yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
 
 
 

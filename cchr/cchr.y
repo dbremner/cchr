@@ -29,7 +29,6 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
 
 %locations
 %pure-parser
-%error-verbose
 %parse-param { yyscan_t scanner }
 
 %union {
@@ -325,7 +324,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
 }
 
 int static yyerror(YYLTYPE *loc,yyscan_t scanner,char *msg) {
-  fprintf(stderr,"Parse error: on %i:%i-%i:%i: %s\n",loc->first_line,loc->first_column,loc->last_line,loc->last_column,msg);
+  fprintf(stderr,"Parse error on line %i: %s\n",loc->last_line,msg);
   return 1;
 }
 

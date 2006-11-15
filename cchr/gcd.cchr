@@ -8,3 +8,5 @@ gcd(N) \ gcd(M)
 <=> M>=N | gcd(M-N);
 
 /* kwak */
+
+kk

@@ -1,0 +1,2 @@
+20061114: - afwerking parser/lexer errorline reporting
+          - bezoek begeleider, tegen volgende week proberen output te hebben

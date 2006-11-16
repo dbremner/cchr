@@ -43,6 +43,7 @@ typedef struct {
 typedef struct {
   alist_declare(constr_t,constrs);
   alist_declare(rule_t,rules);
+  alist_declare(char*,exts);
 } cchr_t;
 
 void static destruct_cchr_t (cchr_t *cchr);
@@ -89,6 +90,8 @@ void static destruct_cchr_t (cchr_t *cchr) {
   alist_free(cchr->constrs);
   for (int i=0; i<alist_len(cchr->rules); i++) destruct_rule_t(alist_ptr(cchr->rules,i));
   alist_free(cchr->rules);
+  for (int i=0; i<alist_len(cchr->exts); i++) free(alist_get(cchr->exts,i));
+  alist_free(cchr->exts);
 }
 
 #endif

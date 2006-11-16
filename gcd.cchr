@@ -7,6 +7,6 @@ gcd2 @
 gcd(N) \ gcd(M) 
 <=> M>=N | gcd(M-N);
 
+extern
+   this;
 /* kwak */
-
-kk

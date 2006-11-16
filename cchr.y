@@ -21,7 +21,8 @@ int static yyerror(YYLTYPE *loc,yyscan_t scanner,char *msg);
 
 void cchr_init(cchr_t *cchr);
 void cchr_merge(cchr_t *out,cchr_t *in);
-void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,expr_t *guard,exprlist_t *body);
+void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
+                  expr_t *guard,exprlist_t *body);
 
 #endif
 
@@ -40,14 +41,14 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
   exprlist_t elist;
 }
 
-%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT
-%token <lit> TOK_CONST TOK_SYMB TOK_OP
+%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN
+
 %token TOK_ERROR
 
 %type  <lit> literal type rname
 
 
-%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname
+%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname TOK_EXTERN
 
 %type <constr> typelistc typelist constr
 %destructor { destruct_constr_t(&$$); } typelistc typelist constr
@@ -58,8 +59,8 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
 %type <token> arglist
 %destructor { destruct_token_t(&$$); } arglist
 
-%type <cchr> constrlist stmt main input rule
-%destructor { destruct_cchr_t(&$$); } constrlist stmt main input rule
+%type <cchr> constrlist stmt main input rule extlist
+%destructor { destruct_cchr_t(&$$); } constrlist stmt main input rule extlist
 
 %type <elist> exprlist
 %destructor { destruct_exprlist_t(&$$); } exprlist
@@ -150,6 +151,9 @@ exprlist : TOK_TRUE { free($1); alist_init($$.list); }
 arglist : etokenlist %prec PRE_ENDALIST { $$.type = TOKEN_TYPE_FUNC; alist_init($$.args); $$.data=NULL; alist_add($$.args,$1); }
 		 | arglist TOK_COMMA etokenlist { $$=$1; alist_add($$.args,$3); free($2); }
 
+extlist : TOK_SYMB { cchr_init(&$$); alist_add($$.exts,$1); }
+         | extlist TOK_COMMA TOK_SYMB { $$=$1; alist_add($$.exts,$3); free($2); }
+	 
 literal : TOK_COMMA
         | TOK_CONST
         | TOK_OP
@@ -161,16 +165,19 @@ rname : TOK_SYMBAT { $$=$1; }
       ;
 
 rule : rname exprlist TOK_BSLASH exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,&$6,&$8); free($3); free($5); free($7); free($9); }
-	 | rname exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,&$4,&$6); free($3); free($5); free($7); }
-	 | rname exprlist TOK_PROP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,&$4,&$6); free($3); free($5); free($7); }
-         | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,NULL,&$6); free($3); free($5); free($7); }
-	 | rname exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,NULL,&$4); free($3); free($5); }
-	 | rname exprlist TOK_PROP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,NULL,&$4); free($3); free($5); }
-	 ;
+     | rname exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,&$4,&$6); free($3); free($5); free($7); }
+     | rname exprlist TOK_PROP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,&$4,&$6); free($3); free($5); free($7); }
+     | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,NULL,&$6); free($3); free($5); free($7); }
+     | rname exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,NULL,&$4); free($3); free($5); }
+     | rname exprlist TOK_PROP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,NULL,&$4); free($3); free($5); }
+     ;
+
 
 stmt : TOK_CONSTRAINT constrlist TOK_SEMI { $$=$2; free($1); free($3); }
-	 | rule
-	 ;
+     | TOK_EXTERN extlist TOK_SEMI { $$=$2; free($1); free($3); }
+     | rule
+     ;
+
 
 constrlist : constr { cchr_init(&$$); alist_add($$.constrs,$1); }
 		   | constrlist TOK_COMMA constr { $$=$1; alist_add($$.constrs,$3); free($2); }
@@ -281,6 +288,12 @@ void dumpCHR(cchr_t *cchr,int level) {
     dumpRule(alist_ptr(cchr->rules,k),level);
     k++;
   }
+  printIndent(level); fprintf(stderr,"nExts=%i;\n",alist_len(cchr->exts));
+  int l=0;
+  while (l<alist_len(cchr->exts)) {
+    printIndent(level); fprintf(stderr,"ext[%i]='%s'\n",l,alist_get(cchr->exts,l));
+    l++;
+  }
   level--;
   printIndent(level); fprintf(stderr,"}\n");
 }
@@ -288,13 +301,16 @@ void dumpCHR(cchr_t *cchr,int level) {
 void cchr_init(cchr_t *cchr) {
   alist_init(cchr->constrs);
   alist_init(cchr->rules);
+  alist_init(cchr->exts);
 }
 
 void cchr_merge(cchr_t *out,cchr_t *in) {
   alist_addall(out->constrs,in->constrs);
   alist_addall(out->rules,in->rules);
+  alist_addall(out->exts,in->exts);
   alist_free(in->constrs);
   alist_free(in->rules);
+  alist_free(in->exts);
 }
 
 void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,expr_t *guard,exprlist_t *body) {

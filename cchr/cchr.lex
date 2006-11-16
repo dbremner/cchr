@@ -55,8 +55,9 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 <LCOMMENT>.       {}
 <LCOMMENT>"\n"	  BEGIN(INITIAL);
 
-constraint        LIT_RETURN(TOK_CONSTRAINT);
-true              LIT_RETURN(TOK_TRUE);
+"constraint"      LIT_RETURN(TOK_CONSTRAINT);
+"true"            LIT_RETURN(TOK_TRUE);
+"extern"	  LIT_RETURN(TOK_EXTERN);
 "{"               LIT_RETURN(TOK_LCBRAC);
 "}"               LIT_RETURN(TOK_RCBRAC);
 ";"               LIT_RETURN(TOK_SEMI);

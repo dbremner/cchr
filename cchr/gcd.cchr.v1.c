@@ -79,6 +79,8 @@ void cchr_add_gcd(uint64_t arg1) {
   cchr_fire_gcd(-1,arg1);
 }
 
+uint64_t static counter=0;
+
 void cchr_fire_gcd(int pid,uint64_t arg1) {
   cchr_entry_t *ent=NULL; /* before being stored, after being created */
   /* <1> gcd(0) <=> true */
@@ -102,6 +104,7 @@ void cchr_fire_gcd(int pid,uint64_t arg1) {
 	//printf("rule 2 on (%i,%i)\n",arg1,pid2_arg1);
         if (pid>=0) cchr_kill(pid);
 	cchr_add_gcd(arg1 - pid2_arg1);
+	counter++;
 	//printf("end rule 2 on (%i,%i)\n",arg1,pid2_arg1);
 	return;
       }
@@ -142,8 +145,8 @@ void cchr_fire_gcd(int pid,uint64_t arg1) {
 
 int main(void) {
   cchr_runtime_init();
-  cchr_add_gcd(10ULL);
   cchr_add_gcd(17856535355ULL);
+  cchr_add_gcd(10ULL);
   int j=0;
   printf("size=%u\n",(unsigned int)(sizeof(cchr_entry_t)));
   while (j<alist_len(_global_runtime.store)) {

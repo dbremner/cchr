@@ -73,7 +73,7 @@ begin:
       if ((pid2 != pid) && (arg1 >= dcls_get(_global_runtime.store,pid2).data.gcd.arg1)) {
 	uint64_t pid2_arg1=dcls_get(_global_runtime.store,pid2).data.gcd.arg1;
 	//printf("rule 2 on (%llu,%llu)\n",(unsigned long long)arg1,(unsigned long long)pid2_arg1);
-        if (!doadd) dcls_empty(_global_runtime.store,pid);
+        if (!doadd) cchr_kill(pid);
         /* staartrecursie */
         pid=DCLS_EMPTY_PID;
         arg1=arg1-pid2_arg1;

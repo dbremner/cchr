@@ -1,2 +1,4 @@
 20061114: - afwerking parser/lexer errorline reporting
           - bezoek begeleider, tegen volgende week proberen output te hebben
+
+20061118: - afwerking init/destruct voor semtree

@@ -33,10 +33,8 @@ typedef struct {
 
 typedef struct {
   char *name;
-  char *type;
-  int def; /* 0=in kept, 1=in removed, 2=in body */
-  int defnum; /* index of declaration of type def */
-  int occ; /* will be 0 in HNF, 1 for each extra occ in kept or removed */
+  char *type; /* copy of constr->types[], do not free */
+  int occr,occk,occb,occg; /* occurences in removed,kept,body,guard */
 } sem_var_t;
 
 typedef struct {
@@ -47,5 +45,11 @@ typedef struct {
   alist_declare(sem_conocc_t,body);
   sem_expr_t guard;
 } sem_rule_t;
+
+typedef struct {
+  alist_declare(sem_rule_t,rules);
+  alist_declare(char*,exts);
+  alist_declare(sem_constr_t,cons);
+} sem_cchr_t;
 
 #endif

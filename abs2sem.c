@@ -101,3 +101,16 @@ void sem_cchr_destruct(sem_cchr_t *cchr) {
   for (int i=0; i<alist_len(cchr->exts); i++) sem_rule_destruct(alist_ptr(cchr->exts,i));
   alist_free(cchr->exts);
 }
+
+static char *copy_string(char *in) {
+  char *ret=malloc(strlen(in)+1);
+  strcpy(ret,in);
+  return ret;
+}
+
+void sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
+  for (int i=0; i<alist_len(in->exts) {
+    alist_add(out->exts,copy_string(alist_get(in->exts)));
+  }
+  
+}

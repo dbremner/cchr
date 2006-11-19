@@ -21,6 +21,10 @@ void static sem_constr_destruct(sem_constr_t *con) {
   alist_free(con->occ[SEM_RULE_LEVEL_KEPT]);
   alist_free(con->occ[SEM_RULE_LEVEL_REM]);
   alist_free(con->occ[SEM_RULE_LEVEL_BODY]);
+  for (int i=0; i<alist_len(con->types); i++) {
+    free(alist_get(con->types,i));
+  }
+  alist_free(con->types);
 }
 
 void static sem_exprpart_init_var(sem_exprpart_t *exprp, int var) {
@@ -59,7 +63,12 @@ void static sem_conocc_init(sem_conocc_t *occ, int constr) {
   occ->constr=constr;
 }
 
-void static sem_conocc_destruct(sem_conocc_t *con) {
+void static sem_conocc_destruct(sem_conocc_t *con,int type) {
+  for (int i=0; i<alist_len(con->args); i++) {
+    if (type==SEM_RULE_LEVEL_BODY) {
+      sem_expr_destruct(&(alist_get(con->args,i).expr));
+    }
+  }
   alist_free(con->args);
 }
 
@@ -89,11 +98,11 @@ void static sem_rule_destruct(sem_rule_t *rule) {
   free(rule->name);
   for (int i=0; i<alist_len(rule->vars); i++) sem_var_destruct(alist_ptr(rule->vars,i));
   alist_free(rule->vars);
-  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_KEPT],i));
+  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_KEPT],i),SEM_RULE_LEVEL_KEPT);
   alist_free(rule->con[SEM_RULE_LEVEL_KEPT]);
-  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_REM]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_REM],i));
+  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_REM]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_REM],i),SEM_RULE_LEVEL_REM);
   alist_free(rule->con[SEM_RULE_LEVEL_REM]);
-  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_BODY]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_BODY],i));
+  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_BODY]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_BODY],i),SEM_RULE_LEVEL_BODY);
   alist_free(rule->con[SEM_RULE_LEVEL_BODY]);
   for (int i=0; i<alist_len(rule->guard); i++) sem_expr_destruct(alist_ptr(rule->guard,i));
   alist_free(rule->guard);

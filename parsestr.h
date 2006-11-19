@@ -7,14 +7,20 @@
 
 #include "alist.h"
 
-#define TOKEN_TYPE_LIT 0
-#define TOKEN_TYPE_SYMB 1
-#define TOKEN_TYPE_FUNC 2
+typedef enum enum_token_type_t {
+  TOKEN_TYPE_LIT=1,
+  TOKEN_TYPE_SYMB=2,
+  TOKEN_TYPE_FUNC=3
+} token_type_t;
+
+#define TOKEN_TYPE_LIT 1
+#define TOKEN_TYPE_SYMB 2
+#define TOKEN_TYPE_FUNC 3
 
 typedef struct _expr_t_struct expr_t;
 
 typedef struct {
-  int type;
+  token_type_t type;
   char *data;
   alist_declare(expr_t,args);
 } token_t;

@@ -19,7 +19,7 @@ void dumpCHR(cchr_t *chr,int level);
 int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
 int yylex_init (yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
-int static yyerror(YYLTYPE *loc,yyscan_t scanner,char *msg);
+int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg);
 
 void cchr_init(cchr_t *cchr);
 void cchr_merge(cchr_t *out,cchr_t *in);
@@ -33,6 +33,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 %locations
 %pure-parser
 %parse-param { yyscan_t scanner }
+%parse-param { cchr_t *output }
 
 %union {
   char *lit;
@@ -61,8 +62,8 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 %type <token> arglist
 %destructor { destruct_token_t(&$$); } arglist
 
-%type <cchr> constrlist stmt main input rule extlist
-%destructor { destruct_cchr_t(&$$); } constrlist stmt main input rule extlist
+%type <cchr> constrlist stmt input rule extlist
+%destructor { destruct_cchr_t(&$$); } constrlist stmt input rule extlist
 
 %type <elist> exprlist
 %destructor { destruct_exprlist_t(&$$); } exprlist
@@ -78,7 +79,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 
 %%
 
-main : input { dumpCHR(&$1,0); $$=$1; process_abstree(&$$); }
+main : input { *output=$1; }
      ;
 
 input : { cchr_init(&$$); }
@@ -200,16 +201,6 @@ type : TOK_SYMB { $$ = $1; }
 	 ;
 
 %%
-
-int main(int argc, char *argv[])
-{
-  yyscan_t scanner;
-  //freopen("gcd.cchr","r",stdin);
-  yylex_init(&scanner);
-  yyparse(scanner);
-  yylex_destroy(scanner);
-  return(0);
-}
 
 void printIndent(int level) {
   fprintf(stderr,"%.*s",level*2,"                                                                                                  ");
@@ -342,7 +333,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
   }
 }
 
-int static yyerror(YYLTYPE *loc,yyscan_t scanner,char *msg) {
+int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg) {
   fprintf(stderr,"Parse error on line %i: %s\n",loc->last_line,msg);
   return 1;
 }

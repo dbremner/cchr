@@ -6,8 +6,9 @@
 #include "alist.h"
 #include "parsestr.h"
 #include "semtree.h"
+#include "abs2sem.h"
 
-void sem_constr_init(sem_constr_t* con,char *name) {
+void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->types);
   alist_init(con->occ[SEM_RULE_LEVEL_KEPT]);
   alist_init(con->occ[SEM_RULE_LEVEL_REM]);
@@ -15,19 +16,19 @@ void sem_constr_init(sem_constr_t* con,char *name) {
   con->name=name;
 }
 
-void sem_constr_destruct(sem_constr_t *con) {
+void static sem_constr_destruct(sem_constr_t *con) {
   free(con->name);
   alist_free(con->occ[SEM_RULE_LEVEL_KEPT]);
   alist_free(con->occ[SEM_RULE_LEVEL_REM]);
   alist_free(con->occ[SEM_RULE_LEVEL_BODY]);
 }
 
-void sem_exprpart_init_var(sem_exprpart_t *exprp, int var) {
+void static sem_exprpart_init_var(sem_exprpart_t *exprp, int var) {
   exprp->type=SEM_EXPRPART_TYPE_VAR;
   exprp->data.var=var;
 }
 
-void sem_exprpart_destruct(sem_exprpart_t *exprp) {
+void static sem_exprpart_destruct(sem_exprpart_t *exprp) {
   switch (exprp->type) {
     case SEM_EXPRPART_TYPE_LIT: {
       free(exprp->data.lit);
@@ -39,30 +40,30 @@ void sem_exprpart_destruct(sem_exprpart_t *exprp) {
   }
 }
 
-void sem_exprpart_init_lit(sem_exprpart_t *exprp, char *str) {
+void static sem_exprpart_init_lit(sem_exprpart_t *exprp, char *str) {
   exprp->type=SEM_EXPRPART_TYPE_LIT;
   exprp->data.lit=str;
 }
 
-void sem_expr_init(sem_expr_t *expr) {
+void static sem_expr_init(sem_expr_t *expr) {
   alist_init(expr->parts);
 }
 
-void sem_expr_destruct(sem_expr_t *expr) {
+void static sem_expr_destruct(sem_expr_t *expr) {
   for (int i=0; i<alist_len(expr->parts); i++) sem_exprpart_destruct(alist_ptr(expr->parts,i));
   alist_free(expr->parts);
 }
 
-void sem_conocc_init(sem_conocc_t *occ, int constr) {
+void static sem_conocc_init(sem_conocc_t *occ, int constr) {
   alist_init(occ->args);
   occ->constr=constr;
 }
 
-void sem_conocc_destruct(sem_conocc_t *con) {
+void static sem_conocc_destruct(sem_conocc_t *con) {
   alist_free(con->args);
 }
 
-void sem_var_init(sem_var_t *var, char *name, char *type) {
+void static sem_var_init(sem_var_t *var, char *name, char *type) {
   var->name=name;
   var->type=type;
   var->occ[SEM_RULE_LEVEL_KEPT]=0;
@@ -71,11 +72,11 @@ void sem_var_init(sem_var_t *var, char *name, char *type) {
   var->occ[SEM_RULE_LEVEL_GUARD]=0;
 }
 
-void sem_var_destruct(sem_var_t *var) {
+void static sem_var_destruct(sem_var_t *var) {
   free(var->name);
 }
 
-void sem_rule_init(sem_rule_t *rule, char *name) {
+void static sem_rule_init(sem_rule_t *rule, char *name) {
   rule->name=name;
   alist_init(rule->vars);
   alist_init(rule->con[SEM_RULE_LEVEL_KEPT]);
@@ -84,7 +85,7 @@ void sem_rule_init(sem_rule_t *rule, char *name) {
   alist_init(rule->con[SEM_RULE_LEVEL_GUARD]);
 }
 
-void sem_rule_destruct(sem_rule_t *rule) {
+void static sem_rule_destruct(sem_rule_t *rule) {
   free(rule->name);
   for (int i=0; i<alist_len(rule->vars); i++) sem_var_destruct(alist_ptr(rule->vars,i));
   alist_free(rule->vars);
@@ -120,7 +121,7 @@ char static *copy_string(char *in) {
   return ret;
 }
 
-int sem_generate_random_var(sem_rule_t *rule) {
+int static sem_generate_random_var(sem_rule_t *rule) {
 	int j=0;
 	char test[32];
 	do {
@@ -143,7 +144,7 @@ int sem_generate_random_var(sem_rule_t *rule) {
 	return ret;
 }
 
-void sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in) {
+void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in) {
 	for (int j=0; j<alist_len(in->list); j++) {
 		token_t *tok=alist_ptr(in->list,j);
 		int pa=0;
@@ -205,7 +206,7 @@ void sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t
 	}
 }
 
-int sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t *expr) {
+int static sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t *expr) {
 	if (alist_len(expr->parts)==1 && alist_get(expr->parts,0).type==SEM_EXPRPART_TYPE_VAR) {
 		int v=alist_get(expr->parts,0).data.var;
 		sem_expr_destruct(expr);
@@ -237,7 +238,7 @@ int sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t *expr) 
 }
 
 /* return 0 if no constraint occurence can be derived from the expression 'in' */
-int sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int type) {
+int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int type) {
 	if (alist_len(in->list) != 1) return 0;
 	token_t *tok=alist_ptr(in->list,0);
 	if (tok->type != TOKEN_TYPE_FUNC) return 0;
@@ -273,7 +274,7 @@ int sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int type) {
 	return 0;
 }
 
-void sem_rule_hnf(sem_rule_t *rule) {
+void static sem_rule_hnf(sem_rule_t *rule) {
 	for (int j=0; j<alist_len(rule->vars); j++) {
 		sem_var_t *var=alist_ptr(rule->vars,j);
 		int bnd=var->occ[0]+var->occ[1];
@@ -314,7 +315,7 @@ void sem_rule_hnf(sem_rule_t *rule) {
 	}
 }
 
-void sem_generate_rule(sem_cchr_t *out,rule_t *in) {
+void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	sem_rule_t n;
 	sem_rule_init(&n,copy_string(in->name));
 	if (alist_len(in->guard.list)!=0) {
@@ -336,7 +337,7 @@ void sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	alist_add(out->rules,n);
 }
 
-void sem_generate_cons(sem_cchr_t *out,constr_t *in) {
+void static sem_generate_cons(sem_cchr_t *out,constr_t *in) {
   sem_constr_t n;
   sem_constr_init(&n,copy_string(in->name));
   for (int i=0; i<alist_len(in->list); i++) {
@@ -356,11 +357,4 @@ void sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   for (int i=0; i<alist_len(in->rules); i++) {
   	sem_generate_rule(out,alist_ptr(in->rules,i));
   }
-}
-
-void process_abstree(cchr_t *in) {
-	sem_cchr_t cchr;
-	sem_generate_cchr(&cchr,in);
-	printf("Semantic tree generated\n");
-	sem_cchr_destruct(&cchr);
 }

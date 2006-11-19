@@ -12,6 +12,8 @@
 #define YYLEX_PARAM scanner
 
 typedef void* yyscan_t;
+void process_abstree(cchr_t *in);
+
 
 void dumpCHR(cchr_t *chr,int level);
 int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
@@ -76,10 +78,10 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 
 %%
 
-main : input { dumpCHR(&$1,0); $$=$1; }
+main : input { dumpCHR(&$1,0); $$=$1; process_abstree(&$$); }
      ;
 
-input : { cchr_init(&($$)); }
+input : { cchr_init(&$$); }
         | input stmt { $$=$1; cchr_merge(&$$,&$2); }
         ;
 
@@ -202,6 +204,7 @@ type : TOK_SYMB { $$ = $1; }
 int main(int argc, char *argv[])
 {
   yyscan_t scanner;
+  freopen("gcd.cchr","r",stdin);
   yylex_init(&scanner);
   yyparse(scanner);
   yylex_destroy(scanner);

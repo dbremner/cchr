@@ -1,6 +1,9 @@
 #ifndef _parsestr_h_
 #define _parsestr_h_ 1
 
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef USE_EFENCE
 #include <efence.h>
 #endif

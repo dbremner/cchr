@@ -18,8 +18,8 @@ all: $(OUTDIR)/cchr.parse
 clean: 
 	rm -rf $(INTDIR)/* $(OUTDIR)/*
 
-$(OUTDIR)/cchr.parse: $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o
-	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr.parse $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o
+$(OUTDIR)/cchr.parse: $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o $(OUTDIR)/main.o
+	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr.parse $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o $(OUTDIR)/main.o
 
 $(INTDIR)/cchr.tab.c $(INTDIR)/cchr.tab.h: cchr.y
 	bison -dv -o $(INTDIR)/cchr.tab.c cchr.y
@@ -27,12 +27,14 @@ $(INTDIR)/cchr.tab.c $(INTDIR)/cchr.tab.h: cchr.y
 $(INTDIR)/cchr.lex.c: $(INTDIR)/cchr.tab.h cchr.lex
 	flex -o $(INTDIR)/cchr.lex.c cchr.lex
 
-$(OUTDIR)/cchr.tab.o: $(INTDIR)/cchr.tab.c parsestr.h
+$(OUTDIR)/cchr.tab.o: $(INTDIR)/cchr.tab.c parsestr.h alist.h
 	$(CC) $(CFLAGS) -I . $(INTDIR)/cchr.tab.c -c -o $(OUTDIR)/cchr.tab.o
 
 $(OUTDIR)/cchr.lex.o: $(INTDIR)/cchr.tab.h $(INTDIR)/cchr.lex.c parsestr.h
 	$(CC) $(CFLAGS) -I . $(INTDIR)/cchr.lex.c -c -o $(OUTDIR)/cchr.lex.o
 
-$(OUTDIR)/abs2sem.o: abs2sem.c semtree.h parsestr.h
+$(OUTDIR)/abs2sem.o: abs2sem.c semtree.h parsestr.h abs2sem.h alist.h
 	$(CC) $(CFLAGS) abs2sem.c -c -o $(OUTDIR)/abs2sem.o
 
+$(OUTDIR)/main.o: main.c abs2sem.h semtree.h parsestr.h alist.h
+	$(CC) $(CFLAGS) main.c -c -o $(OUTDIR)/main.o

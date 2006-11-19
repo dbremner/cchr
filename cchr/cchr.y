@@ -9,10 +9,12 @@
 #include "parsestr.h"
 #include "cchr.tab.h"
 
+typedef void *yyscan_t;
 #define YYLEX_PARAM scanner
 
 void dumpCHR(cchr_t *chr,int level);
 int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg);
+int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
 
 void cchr_init(cchr_t *cchr);
 void cchr_merge(cchr_t *out,cchr_t *in);

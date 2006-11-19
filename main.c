@@ -17,6 +17,6 @@ int main(int argc, char *argv[])
   yylex_destroy(scanner);
   sem_cchr_t sem_cchr;
   sem_generate_cchr(&sem_cchr,&cchr);
-  sem_cchr_destruct(&cchr);
+  sem_cchr_destruct(&sem_cchr);
   return(0);
 }

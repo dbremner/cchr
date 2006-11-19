@@ -205,13 +205,10 @@ void sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t
 	}
 }
 
-int sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in) {
-	sem_expr_t expr;
-	sem_expr_init(&expr);
-	sem_generate_expr(&expr,rule,cchr,in);
-	if (alist_len(expr.parts)==1 && alist_get(expr.parts,0).type==SEM_EXPRPART_TYPE_VAR) {
-		int v=alist_get(expr.parts,0).data.var;
-		sem_expr_destruct(&expr);
+int sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t *expr) {
+	if (alist_len(expr->parts)==1 && alist_get(expr->parts,0).type==SEM_EXPRPART_TYPE_VAR) {
+		int v=alist_get(expr->parts,0).data.var;
+		sem_expr_destruct(expr);
 		return v;
 	}
 	/*for (int j=0; j<alist_len(expr.list); j++) {
@@ -231,8 +228,8 @@ int sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in) {
 	alist_add(nex.parts,nexp);
 	sem_exprpart_init_lit(&nexp,copy_string("("));
 	alist_add(nex.parts,nexp);
-	alist_addall(nex.parts,expr.parts);
-	alist_free(expr.parts);
+	alist_addall(nex.parts,expr->parts);
+	alist_free(expr->parts);
 	sem_exprpart_init_lit(&nexp,copy_string(")"));
 	alist_add(nex.parts,nexp);
 	alist_add(rule->guard,nex);
@@ -255,15 +252,66 @@ int sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int type) {
 			alist_add(cons->occ[type],r);
 			for (int s=0; s<alist_len(tok->args); s++) {
 				expr_t *expr=alist_ptr(tok->args,s);
-				int var=sem_generate_conocc_arg(rule,cchr,expr);
-				alist_add(n.args,var);
-				alist_get(rule->vars,var).occ[type]++;
+				sem_conoccarg_t coa;
+				sem_expr_t se;
+				sem_expr_init(&se);
+				sem_generate_expr(&se,rule,cchr,expr);
+				if (type==SEM_RULE_LEVEL_KEPT || type==SEM_RULE_LEVEL_REM) {
+				  int var=sem_generate_conocc_arg(rule,cchr,&se);
+				  coa.var=var;
+				  alist_add(n.args,coa);
+				  alist_get(rule->vars,var).occ[type]++;
+				} else {
+					coa.expr=se;
+					alist_add(n.args,coa);
+				}
 			}
 			alist_add(rule->con[type],n);
 			return 1;
 		}
 	}
 	return 0;
+}
+
+void sem_rule_hnf(sem_rule_t *rule) {
+	for (int j=0; j<alist_len(rule->vars); j++) {
+		sem_var_t *var=alist_ptr(rule->vars,j);
+		int bnd=var->occ[0]+var->occ[1];
+		if (bnd==0) {
+			fprintf(stderr,"error: in rule '%s': variable '%s' is unbound\n",rule->name,var->name);
+			// TODO error handling
+		}
+		if (bnd>1) { // split variable
+			int oc=0;
+			for (int p=SEM_RULE_LEVEL_KEPT; p<=SEM_RULE_LEVEL_REM; p++) { // KEPT & REM
+				for (int k=0; k<alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); k++) { // all conocc's
+					sem_conocc_t *cot=alist_ptr(rule->con[SEM_RULE_LEVEL_KEPT],k);
+					for (int l=0; l<alist_len(cot->args); l++) { // all args of conocc
+						int kv=alist_get(cot->args,l).var;
+						if (kv==j) {
+							if (oc) {
+								int nv=sem_generate_random_var(rule);
+								alist_get(cot->args,l).var=nv;
+								sem_expr_t ne;
+								sem_expr_init(&ne);
+								sem_exprpart_t nep;
+								sem_exprpart_init_var(&nep,j);
+								alist_add(ne.parts,nep);
+								sem_exprpart_init_lit(&nep,copy_string("=="));
+								alist_add(ne.parts,nep);
+								sem_exprpart_init_var(&nep,nv);
+								alist_add(ne.parts,nep);
+								alist_add(rule->guard,ne);
+								var->occ[p]--;
+								alist_get(rule->vars,nv).occ[p]++;
+							}
+							oc=1;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void sem_generate_rule(sem_cchr_t *out,rule_t *in) {
@@ -284,6 +332,7 @@ void sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	for (int i=0; i<alist_len(in->body.list); i++) {
 		sem_generate_conocc(&n,out,alist_ptr(in->body.list,i),SEM_RULE_LEVEL_BODY); /* TODO check return==1 */
 	}
+	sem_rule_hnf(&n);
 	alist_add(out->rules,n);
 }
 

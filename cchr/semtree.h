@@ -47,15 +47,20 @@ typedef struct {
   alist_declare(sem_exprpart_t,parts);
 } sem_expr_t;
 
+typedef union {
+	sem_expr_t expr; /* for BODY */
+	int var; /* for KEPT & REM */
+} sem_conoccarg_t;
+
 typedef struct {
   int constr;
-  alist_declare(int,args); /* var ID's */
+  alist_declare(sem_conoccarg_t,args); /* in KEPT & REM: just one var ID */
 } sem_conocc_t;
 
 typedef struct {
   char *name;
   char *type; /* copy of constr->types[], do not free */
-  int occ[3]; /* occurences in removed,kept,body */
+  int occ[2]; /* occurences in removed,kept */
 } sem_var_t;
 
 typedef struct {

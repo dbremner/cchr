@@ -1982,7 +1982,7 @@ yyreturn:
 int main(int argc, char *argv[])
 {
   yyscan_t scanner;
-  freopen("gcd.cchr","r",stdin);
+  //freopen("gcd.cchr","r",stdin);
   yylex_init(&scanner);
   yyparse(scanner);
   yylex_destroy(scanner);

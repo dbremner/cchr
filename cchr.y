@@ -11,14 +11,7 @@
 
 #define YYLEX_PARAM scanner
 
-typedef void* yyscan_t;
-void process_abstree(cchr_t *in);
-
-
 void dumpCHR(cchr_t *chr,int level);
-int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
-int yylex_init (yyscan_t* scanner);
-int yylex_destroy (yyscan_t yyscanner );
 int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg);
 
 void cchr_init(cchr_t *cchr);

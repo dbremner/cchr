@@ -77,8 +77,6 @@ void static sem_var_init(sem_var_t *var, char *name, char *type) {
   var->type=type;
   var->occ[SEM_RULE_LEVEL_KEPT]=0;
   var->occ[SEM_RULE_LEVEL_REM]=0;
-  var->occ[SEM_RULE_LEVEL_BODY]=0;
-  var->occ[SEM_RULE_LEVEL_GUARD]=0;
 }
 
 void static sem_var_destruct(sem_var_t *var) {
@@ -91,7 +89,7 @@ void static sem_rule_init(sem_rule_t *rule, char *name) {
   alist_init(rule->con[SEM_RULE_LEVEL_KEPT]);
   alist_init(rule->con[SEM_RULE_LEVEL_REM]);
   alist_init(rule->con[SEM_RULE_LEVEL_BODY]);
-  alist_init(rule->con[SEM_RULE_LEVEL_GUARD]);
+  alist_init(rule->guard);
 }
 
 void static sem_rule_destruct(sem_rule_t *rule) {

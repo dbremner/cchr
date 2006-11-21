@@ -1,6 +1,7 @@
 #include "parsestr.h"
 #include "semtree.h"
 #include "abs2sem.h"
+#include "sem2csm.h"
 
 typedef void* yyscan_t;
 int yylex_init (yyscan_t* scanner);
@@ -18,6 +19,7 @@ int main(int argc, char *argv[])
   sem_cchr_t sem_cchr;
   sem_generate_cchr(&sem_cchr,&cchr);
   destruct_cchr_t(&cchr);
+  csm_generate(&sem_cchr,stdout);
   sem_cchr_destruct(&sem_cchr);
   return(0);
 }

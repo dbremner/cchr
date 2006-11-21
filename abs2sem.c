@@ -147,7 +147,6 @@ int static sem_generate_random_var(sem_rule_t *rule) {
 	sem_var_init(&var,copy_string(test),NULL);
 	int ret=alist_len(rule->vars);
 	alist_add(rule->vars,var);
-	printf("generated var '%s' as %i\n",var.name,ret);
 	return ret;
 }
 

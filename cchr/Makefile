@@ -18,8 +18,8 @@ all: $(OUTDIR)/cchr.parse
 clean: 
 	rm -rf $(INTDIR)/* $(OUTDIR)/*
 
-$(OUTDIR)/cchr.parse: $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o $(OUTDIR)/main.o
-	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr.parse $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o $(OUTDIR)/main.o
+$(OUTDIR)/cchr.parse: $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o $(OUTDIR)/main.o $(OUTDIR)/sem2csm.o
+	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr.parse $(OUTDIR)/cchr.tab.o $(OUTDIR)/cchr.lex.o $(OUTDIR)/abs2sem.o $(OUTDIR)/sem2csm.o $(OUTDIR)/main.o
 
 $(INTDIR)/cchr.tab.c $(INTDIR)/cchr.tab.h: cchr.y
 	bison -dv -o $(INTDIR)/cchr.tab.c cchr.y
@@ -36,5 +36,8 @@ $(OUTDIR)/cchr.lex.o: $(INTDIR)/cchr.tab.h $(INTDIR)/cchr.lex.c parsestr.h
 $(OUTDIR)/abs2sem.o: abs2sem.c semtree.h parsestr.h abs2sem.h alist.h
 	$(CC) $(CFLAGS) abs2sem.c -c -o $(OUTDIR)/abs2sem.o
 
-$(OUTDIR)/main.o: main.c abs2sem.h semtree.h parsestr.h alist.h
+$(OUTDIR)/sem2csm.o: sem2csm.c semtree.h sem2csm.h alist.h
+	$(CC) $(CFLAGS) sem2csm.c -c -o $(OUTDIR)/sem2csm.o
+
+$(OUTDIR)/main.o: main.c sem2csm.h abs2sem.h semtree.h parsestr.h alist.h
 	$(CC) $(CFLAGS) main.c -c -o $(OUTDIR)/main.o

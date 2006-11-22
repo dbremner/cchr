@@ -5,6 +5,11 @@
 #include "semtree.h"
 #include "alist.h"
 
+void static csm_output_indented(int level,FILE *out) {
+	const char spc[]="                                                                             ";
+	fprintf(out,"%.*s",level*2,spc);
+}
+
 int static csm_constr_getname(sem_cchr_t *cchr,int cons,char *out,int size) {
 	sem_constr_t *ptr=alist_ptr(cchr->cons,cons);
 	return snprintf(out,size,"%s_%i",ptr->name,alist_len(ptr->types));
@@ -36,16 +41,26 @@ int static csm_conocc_getname(sem_cchr_t *cchr,int cons,int occ,char *out,int si
 }
 
 void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
-	sem_constr_t *ptr=alist_ptr(cchr->cons,cons);
-	int rem=1;
-	if (occ>=alist_len(ptr->occ[1])) {
-		rem=0;
-		occ-=alist_len(ptr->occ[1]);
-	}
-	sem_ruleocc_t *ro=alist_ptr(ptr->occ[rem],occ);
 	char buf[256];
 	csm_conocc_getname(cchr,cons,occ,buf,256);
-	
+	char buf2[256];
+	csm_constr_getname(cchr,cons,buf2,256);
+	sem_constr_t *con=alist_ptr(cchr->cons,cons);
+	int rem=1;
+	if (occ>=alist_len(con->occ[1])) {
+		rem=0;
+		occ-=alist_len(con->occ[1]);
+	}
+	sem_ruleocc_t *ro=alist_ptr(con->occ[rem],occ);
+	fprintf(out,"\n");
+	fprintf(out,"#undef CODELIST_%s\n",buf);
+	fprintf(out,"#define CODELIST_%s \\\n",buf);
+	int level=1;
+	if (!rem) {
+		csm_output_indented(level,out);
+		fprintf(out,"CSM_MAKE(%s) \\\n",buf2);
+	}
+	fprintf(out,"\n");
 }
 
 void csm_generate(sem_cchr_t *in,FILE *out) {
@@ -66,10 +81,9 @@ void csm_generate(sem_cchr_t *in,FILE *out) {
 		fprintf(out,"#define ARGLIST_%s(DEF,SEP) ",conn);
 		for (int j=0; j<alist_len(con->types); j++) {
 			if (j) fprintf(out," SEP ");
-			fprintf(out,"DEF(%s,%i,%s)",conn,j+1,alist_get(con->types,j));
+			fprintf(out,"DEF(%s,arg%i,%s)",conn,j+1,alist_get(con->types,j));
 		}
 		fprintf(out,"\n");
-		
 		fprintf(out,"#undef RULELIST_%s\n",conn);
 		fprintf(out,"#define RULELIST_%s(DEF,SEP) ",conn);
 		for (int j=0; j<alist_len(con->occ[0])+alist_len(con->occ[1]); j++) {
@@ -77,8 +91,12 @@ void csm_generate(sem_cchr_t *in,FILE *out) {
 			csm_conocc_getname(in,i,j,buf,256);
 			fprintf(out,"DEF(%s)",buf);
 		}
-		fprintf(out,"\n\n");
-		
+		fprintf(out,"\n");
+		for (int j=0; j<alist_len(con->occ[0])+alist_len(con->occ[1]); j++) {
+			csm_generate_code(in,i,j,out);
+		}
+		fprintf(out,"\n");
 	}
+	fprintf(out,"#include \"cchr_csm.h\"\n");
 	
 }

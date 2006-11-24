@@ -1,4 +1,4 @@
 constraint gcd(int);
 
-gcd1 @ gcd(0) <=> true;
-gcd2 @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
+triv @ gcd(0) <=> true;
+dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);

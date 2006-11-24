@@ -1,9 +1,34 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include "semtree.h"
 #include "alist.h"
+
+char static *make_message(const char *fmt, ...) {
+    int n, size = 100;
+    char *p, *np;
+    va_list ap;
+    if ((p = malloc (size)) == NULL) return NULL;
+    while (1) {
+    	va_start(ap, fmt);
+		n = vsnprintf (p, size, fmt, ap);
+		va_end(ap);
+		if (n > -1 && n < size) return p;
+		if (n > -1) {
+			size = n+1;
+		} else {
+   			size *= 2;
+		}
+        if ((np = realloc (p, size)) == NULL) {
+           free(p);
+           return NULL;
+        } else {
+           p = np;
+        }
+     }
+  }
 
 void static csm_output_indented(int level,FILE *out) {
 	const char spc[]="                                                                             ";
@@ -40,6 +65,61 @@ int static csm_conocc_getname(sem_cchr_t *cchr,int cons,int occ,char *out,int si
 	return tsize;
 }
 
+int static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,int arem,int aid,FILE *out,int level) {
+	if (alist_len(rule->guard)>0) {
+		csm_output_indented(level,out);
+		fprintf(out,"CSM_IF(");
+		char **tbl=malloc(sizeof(char*)*alist_len(rule->vars));
+		for (int i=0; i<alist_len(rule->vars); i++) {
+			int found=0;
+			sem_var_t *var=alist_ptr(rule->vars,i);
+			sem_rule_level_t isrem=var->occ[SEM_RULE_LEVEL_REM] ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT;
+			for (int j=0; j<alist_len(rule->con[isrem]); j++) {
+				sem_conocc_t *co=alist_ptr(rule->con[isrem],j);
+				for (int k=0; k<alist_len(co->args); k++) {
+					if (alist_get(co->args,k).var==i) {
+						char cona[256];
+						csm_constr_getname(chr,co->constr,cona,256);
+						if (arem==isrem && j==aid) {
+							tbl[i]=make_message("CSM_ARG(%s,arg%i)",cona,k+1);
+						} else {
+							tbl[i]=make_message("CSM_LARG(%s,%s%i,arg%i)",cona,isrem ? "R" : "K",j+1,k+1);
+						} 
+						found=1;
+						break; 
+					}
+				}
+				if (found) break;
+			}
+		}
+		for (int s=0; s<alist_len(rule->guard); s++) {
+			if (s) fprintf(out," && ");
+			fprintf(out,"(");
+			sem_expr_t *expr=alist_ptr(rule->guard,s);
+			for (int t=0; t<alist_len(expr->parts); t++) {
+				if (t) fprintf(out," ");
+				sem_exprpart_t *ep=alist_ptr(expr->parts,t);
+				switch (ep->type) {
+					case SEM_EXPRPART_TYPE_LIT: {
+						fprintf(out,"%s",ep->data.lit);
+						break;
+					}
+					case SEM_EXPRPART_TYPE_VAR: {
+						fprintf(out,"%s",tbl[ep->data.var]);
+						break;
+					}
+				}
+			}
+			fprintf(out,")");
+		}
+		fprintf(out,", \\\n");
+		level++;
+		for (int u=0; u<alist_len(rule->vars); u++) free(tbl[u]);
+		free(tbl);
+	}
+	return level;
+}
+
 void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 	char buf[256];
 	csm_conocc_getname(cchr,cons,occ,buf,256);
@@ -52,6 +132,8 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 		occ-=alist_len(con->occ[1]);
 	}
 	sem_ruleocc_t *ro=alist_ptr(con->occ[rem],occ);
+	sem_rule_t *ru=alist_ptr(cchr->rules,ro->rule);
+	
 	fprintf(out,"\n");
 	fprintf(out,"#undef CODELIST_%s\n",buf);
 	fprintf(out,"#define CODELIST_%s \\\n",buf);
@@ -59,6 +141,53 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 	if (!rem) {
 		csm_output_indented(level,out);
 		fprintf(out,"CSM_MAKE(%s) \\\n",buf2);
+	}
+	int ncons=alist_len(ru->con[SEM_RULE_LEVEL_KEPT])+alist_len(ru->con[SEM_RULE_LEVEL_REM]);
+	for (int ci=0; ci<ncons; ci++) {
+		int ci_rem=1,cid=ci;
+		if (ci>=alist_len(ru->con[SEM_RULE_LEVEL_REM])) { 
+			cid-= alist_len(ru->con[SEM_RULE_LEVEL_REM]); 
+			ci_rem=0;
+		}
+		if (cid!=ro->pos || ci_rem!=rem) {
+			int cicon=alist_get(ru->con[ci_rem],cid).constr;
+			char cicon_name[256];
+			csm_constr_getname(cchr,cicon,cicon_name,256);
+			csm_output_indented(level,out);
+			fprintf(out,"CSM_LOOP(%s,%s%i, \\\n",cicon_name,ci_rem ? "R" : "K",cid+1);
+			level++;
+			int conlo=0;
+			for (int ci2=0; ci2<ci; ci2++) {
+				int ci2_rem=1,ci2d=ci2;
+				if (ci2>=alist_len(ru->con[SEM_RULE_LEVEL_REM])) { 
+					ci2d-= alist_len(ru->con[SEM_RULE_LEVEL_REM]); 
+					ci2_rem=0;
+				}
+				int cicon2=alist_get(ru->con[ci2_rem],ci2d).constr;
+				if (cicon2 == cicon) {
+					if (conlo==0) {
+						csm_output_indented(level++,out);
+						fprintf(out,"CSM_IF(");
+					} else {
+						fprintf(out," && ");
+					}
+					conlo++;
+					if (cicon2 == cons) {
+						fprintf(out,"CSM_DIFFSELF(%s%i),",ci_rem ? "R" : "K",cid+1);
+					} else {
+						fprintf(out,"CSM_DIFF(%s%i,%s%i),",ci_rem ? "R" : "K",cid+1,ci2_rem ? "R" : "K",ci2d+1);
+					}
+				}
+				
+			}
+			if (conlo) fprintf(out," \\\n");
+		}
+	}
+	level=csm_generate_guard(cchr,ru,rem,ro->pos,out,level);
+	while (level>1) {
+		level--;
+		csm_output_indented(level,out);
+		fprintf(out,") \\\n");
 	}
 	fprintf(out,"\n");
 }

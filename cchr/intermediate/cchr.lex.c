@@ -536,11 +536,12 @@ static yyconst flex_int32_t yy_rule_can_match_eol[32] =
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "cchr.lex"
-/*
- * cchr.lex: FLEX lexer for CCHR code
- *
- */
-#line 7 "cchr.lex"
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| cchr.lex - FLEX file for CHR-in-C lexer                                    |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+#line 8 "cchr.lex"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -556,7 +557,7 @@ void strip_sl(char *c);
 
 
 
-#line 560 "intermediate/cchr.lex.c"
+#line 561 "intermediate/cchr.lex.c"
 
 #define INITIAL 0
 #define BCOMMENT 1
@@ -791,10 +792,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 47 "cchr.lex"
+#line 48 "cchr.lex"
 
 
-#line 798 "intermediate/cchr.lex.c"
+#line 799 "intermediate/cchr.lex.c"
 
     yylval = yylval_param;
 
@@ -891,168 +892,168 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 49 "cchr.lex"
+#line 50 "cchr.lex"
 BEGIN(BCOMMENT);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 50 "cchr.lex"
+#line 51 "cchr.lex"
 BEGIN(INITIAL);
 	YY_BREAK
 case YY_STATE_EOF(BCOMMENT):
-#line 51 "cchr.lex"
+#line 52 "cchr.lex"
 yyerror("EOF in comment",yyscanner);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 52 "cchr.lex"
+#line 53 "cchr.lex"
 {}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 54 "cchr.lex"
+#line 55 "cchr.lex"
 BEGIN(LCOMMENT);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 55 "cchr.lex"
+#line 56 "cchr.lex"
 {}
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 56 "cchr.lex"
+#line 57 "cchr.lex"
 BEGIN(INITIAL);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 58 "cchr.lex"
+#line 59 "cchr.lex"
 LIT_RETURN(TOK_CONSTRAINT);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 59 "cchr.lex"
+#line 60 "cchr.lex"
 LIT_RETURN(TOK_TRUE);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 60 "cchr.lex"
+#line 61 "cchr.lex"
 LIT_RETURN(TOK_EXTERN);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 61 "cchr.lex"
+#line 62 "cchr.lex"
 LIT_RETURN(TOK_LCBRAC);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 62 "cchr.lex"
+#line 63 "cchr.lex"
 LIT_RETURN(TOK_RCBRAC);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 63 "cchr.lex"
+#line 64 "cchr.lex"
 LIT_RETURN(TOK_SEMI);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 64 "cchr.lex"
+#line 65 "cchr.lex"
 LIT_RETURN(TOK_COMMA);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 65 "cchr.lex"
+#line 66 "cchr.lex"
 LIT_RETURN(TOK_AT);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 66 "cchr.lex"
+#line 67 "cchr.lex"
 LIT_RETURN(TOK_SIMP);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 67 "cchr.lex"
+#line 68 "cchr.lex"
 LIT_RETURN(TOK_PROP);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 68 "cchr.lex"
+#line 69 "cchr.lex"
 LIT_RETURN(TOK_SPIPE);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 69 "cchr.lex"
+#line 70 "cchr.lex"
 LIT_RETURN(TOK_BSLASH);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 70 "cchr.lex"
+#line 71 "cchr.lex"
 LIT_RETURN(TOK_LRBRAC);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 71 "cchr.lex"
+#line 72 "cchr.lex"
 LIT_RETURN(TOK_RRBRAC);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 73 "cchr.lex"
+#line 74 "cchr.lex"
 LIT_RETURN(TOK_OP)
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 74 "cchr.lex"
+#line 75 "cchr.lex"
 LIT_RETURN(TOK_OP)
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 75 "cchr.lex"
+#line 76 "cchr.lex"
 LIT_RETURN(TOK_CONST)
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 76 "cchr.lex"
+#line 77 "cchr.lex"
 LIT_RETURN(TOK_CONST)
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 77 "cchr.lex"
+#line 78 "cchr.lex"
 LIT_RETURN(TOK_CONST)
 	YY_BREAK
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 78 "cchr.lex"
+#line 79 "cchr.lex"
 {strip_sl(yytext); LIT_RETURN(TOK_FUNC);}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 79 "cchr.lex"
+#line 80 "cchr.lex"
 LIT_RETURN(TOK_SYMB)
 	YY_BREAK
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 80 "cchr.lex"
+#line 81 "cchr.lex"
 {strip_sl(yytext); LIT_RETURN(TOK_SYMBAT); }
 	YY_BREAK
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 82 "cchr.lex"
+#line 83 "cchr.lex"
 /* do nothing */
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 84 "cchr.lex"
+#line 85 "cchr.lex"
 return TOK_ERROR;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 86 "cchr.lex"
+#line 87 "cchr.lex"
 ECHO;
 	YY_BREAK
-#line 1056 "intermediate/cchr.lex.c"
+#line 1057 "intermediate/cchr.lex.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(LCOMMENT):
 	yyterminate();
@@ -2150,7 +2151,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 86 "cchr.lex"
+#line 87 "cchr.lex"
 
 
 

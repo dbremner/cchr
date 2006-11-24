@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| abs2sem.c - syntax tree to semantic tree conversion                        |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -291,8 +297,8 @@ void static sem_rule_hnf(sem_rule_t *rule) {
 		if (bnd>1) { // split variable
 			int oc=0;
 			for (int p=SEM_RULE_LEVEL_KEPT; p<=SEM_RULE_LEVEL_REM; p++) { // KEPT & REM
-				for (int k=0; k<alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); k++) { // all conocc's
-					sem_conocc_t *cot=alist_ptr(rule->con[SEM_RULE_LEVEL_KEPT],k);
+				for (int k=0; k<alist_len(rule->con[p]); k++) { // all conocc's
+					sem_conocc_t *cot=alist_ptr(rule->con[p],k);
 					for (int l=0; l<alist_len(cot->args); l++) { // all args of conocc
 						int kv=alist_get(cot->args,l).var;
 						if (kv==j) {

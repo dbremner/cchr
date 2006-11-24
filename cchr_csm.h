@@ -103,6 +103,6 @@ begin: \
 #define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid).data.CON.NAME = arg_##NAME ;
 #define CSM_MAKE_SEP1_ 
 
-CSM_START;
-
 #endif
+
+CSM_START;

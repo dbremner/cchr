@@ -1,13 +1,17 @@
 CC := gcc -Wall -pipe -std=c99
 INTDIR := intermediate
 
+CFLAGS := -O3 -g0
+LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+OUTDIR := bin
+
 #CFLAGS := -m32 -O0 -ggdb3
 #LDFLAGS := -lefence -m32 -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 #OUTDIR := i686
 
-CFLAGS := -m64 -O0 -ggdb3 -march=athlon64 -DUSE_EFENCE
-LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
-OUTDIR := amd64-debug
+#CFLAGS := -m64 -O0 -ggdb3 -march=athlon64 -DUSE_EFENCE
+#LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+#OUTDIR := amd64-debug
 
 #CFLAGS := -O3 -g0 -march=athlon64 -pipe -fweb -frename-registers -ftracer -fpeel-loops
 #LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all

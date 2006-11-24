@@ -95,10 +95,10 @@ begin: \
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid) && dcls_get(_global_runtime.store,pid).id == oldid)
 #define CSM_REGENSELF (dcls_get(_global_runtime.store,pid).gen_num != oldgen)
 #define CSM_ADD(CON,...) { cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); }
-#define CSM_ADDU(CON) { cchr_fire_##CON(); }
+#define CSM_ADDE(CON) { cchr_fire_##CON(); }
 #define CSM_NEEDSELF { if (doadd) {cchr_store(pid); doadd=0;} }
-#define CSM_SETLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR; {local_##VAR = EXPR;}
-#define CSM_GETLOCAL(VAR) local_##VAR
+#define CSM_SETLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR; {local_##VAR = (EXPR);}
+#define CSM_GETLOCAL(VAR) (local_##VAR)
 
 #define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid).data.CON.NAME = arg_##NAME ;
 #define CSM_MAKE_SEP1_ 

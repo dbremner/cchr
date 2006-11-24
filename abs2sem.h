@@ -1,3 +1,10 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| abs2sem.h - header for syntax tree to semantic tree conversion             |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
+
 #ifndef ABS2SEM_H_
 #define ABS2SEM_H_
 

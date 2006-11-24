@@ -1,7 +1,8 @@
-/*
- * cchr.lex: FLEX lexer for CCHR code
- *
- */
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| cchr.lex - FLEX file for CHR-in-C lexer                                    |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
 
 %{
 #include <stdio.h>

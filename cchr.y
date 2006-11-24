@@ -1,4 +1,10 @@
 %{
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| cchr.y - YACC parser for CHR-in-C code                                     |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #ifndef _cchr_y_
 #define _cchr_y_
 

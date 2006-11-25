@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| dcls.h - dynamic circular lists, with multiple iterators                   |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #ifndef _dcls_h_
 #define _dcls_h_ 1
 

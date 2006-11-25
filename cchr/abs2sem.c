@@ -18,6 +18,7 @@
 #include <efence.h>
 #endif
 
+/* initialize a sem_constr_t */
 void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->types);
   alist_init(con->occ[SEM_RULE_LEVEL_KEPT]);
@@ -26,6 +27,7 @@ void static sem_constr_init(sem_constr_t* con,char *name) {
   con->name=name;
 }
 
+/* destruct a sem_constr_t */
 void static sem_constr_destruct(sem_constr_t *con) {
   free(con->name);
   alist_free(con->occ[SEM_RULE_LEVEL_KEPT]);
@@ -37,11 +39,19 @@ void static sem_constr_destruct(sem_constr_t *con) {
   alist_free(con->types);
 }
 
+/* initialize a sem_exprpart_t as a variable reference */
 void static sem_exprpart_init_var(sem_exprpart_t *exprp, int var) {
   exprp->type=SEM_EXPRPART_TYPE_VAR;
   exprp->data.var=var;
 }
 
+/* initialize a sem_expr_part_t as a literal string */
+void static sem_exprpart_init_lit(sem_exprpart_t *exprp, char *str) {
+  exprp->type=SEM_EXPRPART_TYPE_LIT;
+  exprp->data.lit=str;
+}
+
+/* destruct a sem_exprpart_t */
 void static sem_exprpart_destruct(sem_exprpart_t *exprp) {
   switch (exprp->type) {
     case SEM_EXPRPART_TYPE_LIT: {
@@ -54,25 +64,24 @@ void static sem_exprpart_destruct(sem_exprpart_t *exprp) {
   }
 }
 
-void static sem_exprpart_init_lit(sem_exprpart_t *exprp, char *str) {
-  exprp->type=SEM_EXPRPART_TYPE_LIT;
-  exprp->data.lit=str;
-}
-
+/* initialize a sem_expr_t */
 void static sem_expr_init(sem_expr_t *expr) {
   alist_init(expr->parts);
 }
 
+/* destruct a sem_expr_t */
 void static sem_expr_destruct(sem_expr_t *expr) {
   for (int i=0; i<alist_len(expr->parts); i++) sem_exprpart_destruct(alist_ptr(expr->parts,i));
   alist_free(expr->parts);
 }
 
+/* initialize a sem_conocc_t */
 void static sem_conocc_init(sem_conocc_t *occ, int constr) {
   alist_init(occ->args);
   occ->constr=constr;
 }
 
+/* destruct a sem_conocc_t */
 void static sem_conocc_destruct(sem_conocc_t *con,int type) {
   for (int i=0; i<alist_len(con->args); i++) {
     if (type==SEM_RULE_LEVEL_BODY) {
@@ -82,6 +91,7 @@ void static sem_conocc_destruct(sem_conocc_t *con,int type) {
   alist_free(con->args);
 }
 
+/* initialize a sem_var_t */
 void static sem_var_init(sem_var_t *var, char *name, char *type) {
   var->name=name;
   var->type=type;
@@ -89,10 +99,12 @@ void static sem_var_init(sem_var_t *var, char *name, char *type) {
   var->occ[SEM_RULE_LEVEL_REM]=0;
 }
 
+/* destruct a sem_var_t */
 void static sem_var_destruct(sem_var_t *var) {
   free(var->name);
 }
 
+/* initialize a sem_rule_t */
 void static sem_rule_init(sem_rule_t *rule, char *name) {
   rule->name=name;
   alist_init(rule->vars);
@@ -102,6 +114,7 @@ void static sem_rule_init(sem_rule_t *rule, char *name) {
   alist_init(rule->guard);
 }
 
+/* destruct a sem_rule_t */
 void static sem_rule_destruct(sem_rule_t *rule) {
   free(rule->name);
   for (int i=0; i<alist_len(rule->vars); i++) sem_var_destruct(alist_ptr(rule->vars,i));
@@ -116,12 +129,14 @@ void static sem_rule_destruct(sem_rule_t *rule) {
   alist_free(rule->guard);
 }
 
+/* initialize a sem_cchr_t */
 void sem_cchr_init(sem_cchr_t *cchr) {
   alist_init(cchr->rules);
   alist_init(cchr->cons);
   alist_init(cchr->exts);
 }
 
+/* destruct a sem_cchr_t */
 void sem_cchr_destruct(sem_cchr_t *cchr) {
   for (int i=0; i<alist_len(cchr->rules); i++) sem_rule_destruct(alist_ptr(cchr->rules,i));
   alist_free(cchr->rules);
@@ -131,6 +146,7 @@ void sem_cchr_destruct(sem_cchr_t *cchr) {
   alist_free(cchr->exts);
 }
 
+/* allocate and copy a string */
 char static *copy_string(char *in) {
   if (in==NULL) return NULL;
   char *ret=malloc(strlen(in)+1);
@@ -138,6 +154,7 @@ char static *copy_string(char *in) {
   return ret;
 }
 
+/* generate a new (unused) variable in a rule, and return its id */
 int static sem_generate_random_var(sem_rule_t *rule) {
 	int j=0;
 	char test[32];
@@ -160,6 +177,7 @@ int static sem_generate_random_var(sem_rule_t *rule) {
 	return ret;
 }
 
+/* generate a sem_expr_t from a expr_t */
 void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in) {
 	for (int j=0; j<alist_len(in->list); j++) {
 		token_t *tok=alist_ptr(in->list,j);
@@ -222,6 +240,7 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 	}
 }
 
+/* generate a conocc arg (for in kept or removed constraints) given its sem_expr_t as argument */
 int static sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t *expr) {
 	if (alist_len(expr->parts)==1 && alist_get(expr->parts,0).type==SEM_EXPRPART_TYPE_VAR) {
 		int v=alist_get(expr->parts,0).data.var;
@@ -254,6 +273,7 @@ int static sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t 
 }
 
 /* return 0 if no constraint occurence can be derived from the expression 'in' */
+/* generate a conocc (given its functional form in a expr_t) */
 int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int type) {
 	if (alist_len(in->list) != 1) return 0;
 	token_t *tok=alist_ptr(in->list,0);
@@ -290,6 +310,7 @@ int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 	return 0;
 }
 
+/* complete the HNF form (splitting duplicate variables) */
 void static sem_rule_hnf(sem_rule_t *rule) {
 	for (int j=0; j<alist_len(rule->vars); j++) {
 		sem_var_t *var=alist_ptr(rule->vars,j);
@@ -331,6 +352,7 @@ void static sem_rule_hnf(sem_rule_t *rule) {
 	}
 }
 
+/* generate a new rule in an output sem_cchr_t */
 void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	sem_rule_t n;
 	sem_rule_init(&n,copy_string(in->name));
@@ -353,6 +375,7 @@ void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	alist_add(out->rules,n);
 }
 
+/* generate a new constraint in an output sem_cchr_t */
 void static sem_generate_cons(sem_cchr_t *out,constr_t *in) {
   sem_constr_t n;
   sem_constr_init(&n,copy_string(in->name));
@@ -362,6 +385,7 @@ void static sem_generate_cons(sem_cchr_t *out,constr_t *in) {
   alist_add(out->cons,n);
 }
 
+/* generate a semantic form (sem_cchr_t) of the syntax tree (cchr_t) */
 void sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   sem_cchr_init(out);
   for (int i=0; i<alist_len(in->exts); i++) {

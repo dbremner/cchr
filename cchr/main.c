@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| main.c - main compiler routines                                            |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

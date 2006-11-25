@@ -1,4 +1,8 @@
-
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| sem2csm.c - Conversion of semantic tree to C output (using CSM)            |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
 
 #include <stdio.h>
 #include <string.h>

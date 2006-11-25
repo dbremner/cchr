@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| semtree.h - Definition of semantic tree data structure                     |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #ifndef _semtree_h_
 #define _semtree_h_ 1
 

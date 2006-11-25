@@ -8,6 +8,9 @@
 #include "abs2sem.h"
 #include "sem2csm.h"
 
+#ifdef USE_EFENCE
+#include <efence.h>
+#endif
 
 typedef void* yyscan_t;
 int yylex_init (yyscan_t* scanner);

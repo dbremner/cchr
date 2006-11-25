@@ -14,6 +14,10 @@
 #include "semtree.h"
 #include "abs2sem.h"
 
+#ifdef USE_EFENCE
+#include <efence.h>
+#endif
+
 void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->types);
   alist_init(con->occ[SEM_RULE_LEVEL_KEPT]);

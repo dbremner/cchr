@@ -203,6 +203,12 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 					}
 				}
 				if (ie) break;
+				if (!strcmp(tok->data,"_")) { /* unassigned variable */
+					sem_exprpart_init_var(&se,sem_generate_random_var(rule));
+					alist_add(expr->parts,se);
+					ie=1;
+					break;
+				}
 				if (!isupper(tok->data[0])) {
 					// TODO: error, variable names must start with an uppercase letter
 					break;

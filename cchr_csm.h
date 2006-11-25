@@ -17,7 +17,7 @@
 #define CSM_START_SEP2_
 #define CSM_START_DEF2_(NAME) \
   typedef struct { \
-    ARGLIST_##NAME(CSM_START_DEF2_1_,CSM_START_SEP2_1) \
+    ARGLIST_##NAME(CSM_START_DEF2_1_,CSM_START_SEP2_1_) \
   } cchr_cons_ ## NAME ## _t;
 
 #define CSM_START_SEP2_1_
@@ -43,7 +43,7 @@ begin: \
     CSM_NEEDSELF \
   } \
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_START_DEF5_4_,CSM_START_SEP5_4_)) { \
-  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_START_DEF5_3_,CSM_START_SEF5_3_)); \
+  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_START_DEF5_3_,CSM_START_SEP5_3_)); \
   }
 
 #define CSM_START_SEP5_1_
@@ -93,8 +93,8 @@ begin: \
   void static inline cchr_kill(dcls_pid_t pid) { \
     dcls_empty(_global_runtime.store,pid); \
   } \
-  CONSLIST(CSM_START_DEF4_,CSM_START_SEP4) \
-  CONSLIST(CSM_START_DEF5_,CSM_START_SEP5) \
+  CONSLIST(CSM_START_DEF4_,CSM_START_SEP4_) \
+  CONSLIST(CSM_START_DEF5_,CSM_START_SEP5_) \
   
 
 #define CSM_ARG(TYPE,NAME) (arg_##NAME)
@@ -115,6 +115,7 @@ begin: \
 #define CSM_NEEDSELF { if (doadd) {cchr_store(pid); doadd=0;} }
 #define CSM_SETLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR; {local_##VAR = (EXPR);}
 #define CSM_GETLOCAL(VAR) (local_##VAR)
+#define CSM_MESSAGE(...) {fprintf(stderr,__VA_ARGS__);}
 
 #define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid).data.CON.NAME = arg_##NAME ;
 #define CSM_MAKE_SEP1_ 

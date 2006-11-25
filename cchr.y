@@ -15,6 +15,10 @@
 #include "parsestr.h"
 #include "cchr.tab.h"
 
+#ifdef USE_EFENCE
+#include <efence.h>
+#endif
+
 typedef void *yyscan_t;
 
 void dumpCHR(cchr_t *chr,int level);

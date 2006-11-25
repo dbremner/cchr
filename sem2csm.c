@@ -8,6 +8,10 @@
 #include "semtree.h"
 #include "alist.h"
 
+#ifdef USE_EFENCE
+#include <efence.h>
+#endif
+
 char static *make_message(const char *fmt, ...) {
     int n, size = 100;
     char *p, *np;

@@ -12,6 +12,10 @@
 #include "parsestr.h"
 #include "cchr.tab.h"
 
+#ifdef USE_EFENCE
+#include <efence.h>
+#endif
+
 void static yyerror(char *message,yyscan_t scanner);
 
 void strip_sl(char *c);
@@ -46,7 +50,7 @@ identifier        {alpha}{alpha_num}*
 unsigned_integer  {digit}+
 hex_integer       -?(0x|OX){hex_digit}{hex_digit}*
 exponent          e[+-]?{digit}+
-integer           -?{unsigned_integer}
+integer           -?{unsigned_integer}U?(L|LL|S)?
 i                 {unsigned_integer}
 real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 

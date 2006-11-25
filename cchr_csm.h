@@ -35,6 +35,9 @@
 begin: \
     RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
     CSM_NEEDSELF \
+  } \
+  void cchr_add_##NAME( ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
+  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_START_DEF5_3_,CSM_START_SEF5_3_)); \
   }
 
 #define CSM_START_SEP5_1_ ,
@@ -42,6 +45,9 @@ begin: \
 
 #define CSM_START_SEP5_2_
 #define CSM_START_DEF5_2_(NAME) { CODELIST_##NAME }
+
+#define CSM_START_SEP5_3_
+#define CSM_START_DEF5_3_(CON,NAME,TYPE) , arg_##NAME
 
 #define CSM_START \
   enum cchr_cons_type { CONSLIST(CSM_START_DEF1_,CSM_START_SEP1_) , CCHR_CONS_COUNT }; \
@@ -79,9 +85,9 @@ begin: \
 
 #define CSM_IF(EXP,CODE) { if (EXP) { CODE } }
 #define CSM_DIFFSELF(VAR) (pid != pid_##VAR)
-#define CSM_DIFF(VAR1,VAR2) (pid##VAR1 != pid##VAR2)
-#define CSM_KILLSELF { if (!doadd) cchr_kill(pid); }
-#define CSM_KILL(VAR) { dcls_empty(_global_runtime.store,pid##VAR); }
+#define CSM_DIFF(VAR1,VAR2) (pid_##VAR1 != pid_##VAR2)
+#define CSM_KILLSELF { if (!doadd) {dcls_empty(_global_runtime.store,pid);} }
+#define CSM_KILL(VAR) { dcls_empty(_global_runtime.store,pid_##VAR); }
 #define CSM_LOOP(TYPE,VAR,CODE) { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{CODE}) }
 #define CSM_END { return; }
 #define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
@@ -99,4 +105,4 @@ begin: \
 
 #endif
 
-CSM_START;
+CSM_START

@@ -33,18 +33,18 @@ void static process_file(FILE *in, FILE *out) {
 	int c; /* character read */
 	int line=1; /* line number */
 	int ls=1; /* only spaces have occured after last newline */
-	while ((c=getc(in)) != EOF) {
-		if (c == '\n') {line++;ls=1;}
-		if (isalpha(c)) {
+	while ((c=getc(in)) != EOF) { /* loop over all bytes in the source */
+		if (c == '\n') {line++;ls=1;} /* line-number counter */
+		if (isalpha(c)) { /* for alphabetical characters */
 			ls=0;
-			if (ss>0) {
-				fwrite(wb,ws,1,out);
+			if (ss>0) { /* if word+space buffer are filled */
+				fwrite(wb,ws,1,out); /* write them out */
 				if (ws) as=0;
 				ws=0;
 				fwrite(sb,ss,1,out);
 				ss=0;
 			}
-			wb[ws++]=c;		
+			wb[ws++]=c; /* add this character to word buffer */		
 			continue;
 		}
 		if (c == '#' && ls) {

@@ -12,10 +12,11 @@
 
 #include "alist.h"
 
+/* the token types */
 typedef enum enum_token_type_t {
-  TOKEN_TYPE_LIT=1,
-  TOKEN_TYPE_SYMB=2,
-  TOKEN_TYPE_FUNC=3
+  TOKEN_TYPE_LIT=1, /* a literal string */
+  TOKEN_TYPE_SYMB=2, /* a symbol, possibly a variable name */
+  TOKEN_TYPE_FUNC=3 /* a functional form like A(B,C,...) */
 } token_type_t;
 
 #define TOKEN_TYPE_LIT 1
@@ -24,25 +25,30 @@ typedef enum enum_token_type_t {
 
 typedef struct _expr_t_struct expr_t;
 
+/* a token, the basic building block of an expression */
 typedef struct {
   token_type_t type;
   char *data;
-  alist_declare(expr_t,args);
+  alist_declare(expr_t,args); /* only when type==TOKEN_TYPE_FUNC */
 } token_t;
 
+/* an expression, being a sequence of tokens */
 struct _expr_t_struct {
   alist_declare(token_t,list);
 };
 
+/* a constraint having a name and a list of arguments (the types) */
 typedef struct {
   char *name;
   alist_declare(char*,list);
 } constr_t;
 
+/* a list of expressions */
 typedef struct {
   alist_declare(expr_t,list);
 } exprlist_t;
 
+/* a rule, having a name, 3 expression lists and a guard */
 typedef struct {
   char *name;
   exprlist_t kept;
@@ -51,12 +57,14 @@ typedef struct {
   expr_t guard;
 } rule_t;
 
+/* a syntax tree, having constraints, rules, and a list of external symbols */
 typedef struct {
   alist_declare(constr_t,constrs);
   alist_declare(rule_t,rules);
   alist_declare(char*,exts);
 } cchr_t;
 
+/* declaration of destructors */
 void destruct_cchr_t (cchr_t *cchr);
 void destruct_rule_t (rule_t *rule);
 void destruct_exprlist_t (exprlist_t *exprl);

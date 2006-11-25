@@ -189,7 +189,7 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 				alist_add(expr->parts,se);
 				break;
 			}
-			case TOKEN_TYPE_FUNC: /* a function-call is actually a type of symol */
+			case TOKEN_TYPE_FUNC: /* a function-call is actually a type of symbol */
 			  pa=1;
 			case TOKEN_TYPE_SYMB: {
 				sem_exprpart_t se;

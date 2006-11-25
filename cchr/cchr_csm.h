@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 
+/* we need dcls */
 #include "dcls.h"
 
 #define CSM_START_SEP1_ ,

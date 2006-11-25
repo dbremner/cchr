@@ -38,7 +38,6 @@
     int doadd=(pid==DCLS_EMPTY_PID); \
     int oldid; \
     int oldgen; \
-begin: \
     RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
     CSM_NEEDSELF \
   } \

@@ -18,13 +18,18 @@ void strip_sl(char *c);
 
 #define LIT_RETURN(TYPE) {yylloc->first_line=yyget_lineno(yyscanner); yylloc->last_line=yyget_lineno(yyscanner); yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
 
+#define YY_INPUT(buf,result,max_size) { \
+	int c = getc(yyin); \
+    result = (c == EOF) ? YY_NULL : (buf[0] = c, 1); \
+}
+
 %}
 
 %option noyywrap
 %option yylineno
 %option nounput
 %option batch
-%option never-interactive
+%option always-interactive
 %option bison-bridge
 %option bison-locations
 %option reentrant
@@ -58,7 +63,7 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 
 "constraint"      LIT_RETURN(TOK_CONSTRAINT);
 "true"            LIT_RETURN(TOK_TRUE);
-"extern"	  LIT_RETURN(TOK_EXTERN);
+"extern"	  	  LIT_RETURN(TOK_EXTERN);
 "{"               LIT_RETURN(TOK_LCBRAC);
 "}"               LIT_RETURN(TOK_RCBRAC);
 ";"               LIT_RETURN(TOK_SEMI);

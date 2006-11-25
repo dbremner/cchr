@@ -5,11 +5,17 @@ INTDIR := intermediate
 #LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 #OUTDIR := bin
 
-CFLAGS := -O0 -ggdb3 -march=athlon64 -DUSE_EFENCE
-LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+CFLAGS := -O0 -ggdb3 -march=athlon64
+LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
 OUTDIR := debug
 
-all: $(OUTDIR)/cchr.parse
+all: $(INTDIR) $(OUTDIR) $(OUTDIR)/cchr.parse
+
+$(OUTDIR):
+	mkdir $(OUTDIR)
+
+$(INTDIR):
+	mkdir $(INTDIR)
 
 clean: 
 	rm -rf $(INTDIR)/* $(OUTDIR)/*

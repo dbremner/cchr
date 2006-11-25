@@ -263,9 +263,13 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 		csm_output_indented(level,out);
 		fprintf(out,") \\\n");
 	}
-	level--;
-	csm_output_indented(level,out);
-	fprintf(out,")\n\n");
+	if (level>1) {
+		level--;
+		csm_output_indented(level,out);
+		fprintf(out,")\n\n");
+	} else {
+		fprintf(out,"\n\n");
+	}
 }
 
 void csm_generate(sem_cchr_t *in,FILE *out) {

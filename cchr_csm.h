@@ -77,6 +77,12 @@ begin: \
     dcls_get(_global_runtime.store,ret).type=type; \
     return ret; \
   } \
+  void static inline cchr_store(dcls_pid_t pid) { \
+    dcls_add_begin(_global_runtime.store,pid,dcls_get(_global_runtime.store,pid).type); \
+  } \
+  void static inline cchr_kill(dcls_pid_t pid) { \
+    dcls_empty(_global_runtime.store,pid); \
+  } \
   CONSLIST(CSM_START_DEF4_,CSM_START_SEP4) \
   CONSLIST(CSM_START_DEF5_,CSM_START_SEP5) \
   
@@ -86,8 +92,8 @@ begin: \
 #define CSM_IF(EXP,CODE) { if (EXP) { CODE } }
 #define CSM_DIFFSELF(VAR) (pid != pid_##VAR)
 #define CSM_DIFF(VAR1,VAR2) (pid_##VAR1 != pid_##VAR2)
-#define CSM_KILLSELF { if (!doadd) {dcls_empty(_global_runtime.store,pid);} }
-#define CSM_KILL(VAR) { dcls_empty(_global_runtime.store,pid_##VAR); }
+#define CSM_KILLSELF { if (!doadd) cchr_kill(pid); }
+#define CSM_KILL(VAR) { cchr_kill(pid_##VAR); }
 #define CSM_LOOP(TYPE,VAR,CODE) { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{CODE}) }
 #define CSM_END { return; }
 #define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
@@ -95,8 +101,8 @@ begin: \
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid) && dcls_get(_global_runtime.store,pid).id == oldid)
 #define CSM_REGENSELF (dcls_get(_global_runtime.store,pid).gen_num != oldgen)
 #define CSM_ADD(CON,...) { cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); }
-#define CSM_ADDE(CON) { cchr_fire_##CON(DCLS_EMPTY_PID); }
-#define CSM_NEEDSELF { if (doadd) {dcls_add_begin(_global_runtime.store,pid,dcls_get(_global_runtime.store,pid).type); doadd=0;} }
+#define CSM_ADDE(CON) { cchr_fire_##CON(); }
+#define CSM_NEEDSELF { if (doadd) {cchr_store(pid); doadd=0;} }
 #define CSM_SETLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR; {local_##VAR = (EXPR);}
 #define CSM_GETLOCAL(VAR) (local_##VAR)
 

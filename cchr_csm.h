@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| cchr_csm.h - header file included by compiler output                       |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #ifndef _cchr_csm_h_
 #define _cchr_csm_h_
 
@@ -28,7 +34,7 @@
 
 #define CSM_START_SEP5_
 #define CSM_START_DEF5_(NAME) \
-  void static inline cchr_fire_##NAME(dcls_pid_t pid, ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
+  void static inline cchr_fire_##NAME(dcls_pid_t pid ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
     int doadd=(pid==DCLS_EMPTY_PID); \
     int oldid; \
     int oldgen; \
@@ -36,18 +42,22 @@ begin: \
     RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
     CSM_NEEDSELF \
   } \
-  void cchr_add_##NAME( ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
+  void cchr_add_##NAME( ARGLIST_##NAME(CSM_START_DEF5_4_,CSM_START_SEP5_4_)) { \
   	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_START_DEF5_3_,CSM_START_SEF5_3_)); \
   }
 
-#define CSM_START_SEP5_1_ ,
-#define CSM_START_DEF5_1_(CON,NAME,TYPE) TYPE arg_##NAME
+#define CSM_START_SEP5_1_
+#define CSM_START_DEF5_1_(CON,NAME,TYPE) , TYPE arg_##NAME
 
 #define CSM_START_SEP5_2_
 #define CSM_START_DEF5_2_(NAME) { CODELIST_##NAME }
 
 #define CSM_START_SEP5_3_
 #define CSM_START_DEF5_3_(CON,NAME,TYPE) , arg_##NAME
+
+#define CSM_START_SEP5_4_ ,
+#define CSM_START_DEF5_4_(CON,NAME,TYPE) TYPE arg_##NAME
+
 
 #define CSM_START \
   enum cchr_cons_type { CONSLIST(CSM_START_DEF1_,CSM_START_SEP1_) , CCHR_CONS_COUNT }; \

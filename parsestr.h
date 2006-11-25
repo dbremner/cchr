@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| parsestr.h - definition of syntax tree data structure                      |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #ifndef _parsestr_h_
 #define _parsestr_h_ 1
 

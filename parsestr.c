@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| parsestr.c - some helper routines for syntax tree data structure           |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #include "parsestr.h"
 
 #ifdef USE_EFENCE

@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| alist.h - header for working with dynamical array lists                    |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/ 
+
 #ifndef _alist_h_
 #define _alist_h_ 1
 

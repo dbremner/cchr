@@ -1,13 +1,13 @@
 CC := gcc -Wall -pipe -std=c99
 INTDIR := intermediate
 
-CFLAGS := -O3 -g0
-LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
-OUTDIR := bin
+#CFLAGS := -O3 -g0
+#LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+#OUTDIR := bin
 
-#CFLAGS := -O0 -ggdb3 -march=athlon64 -DUSE_EFENCE
-#LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
-#OUTDIR := debug
+CFLAGS := -O0 -ggdb3 -march=athlon64 -DUSE_EFENCE
+LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+OUTDIR := debug
 
 all: $(OUTDIR)/cchr.parse
 

@@ -16,7 +16,6 @@
 #include "cchr.tab.h"
 
 typedef void *yyscan_t;
-#define YYLEX_PARAM scanner
 
 void dumpCHR(cchr_t *chr,int level);
 int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg);
@@ -28,6 +27,8 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
                   expr_t *guard,exprlist_t *body);
 
 #endif
+
+#define YYLEX_PARAM scanner
 
 %}
 
@@ -81,6 +82,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 %%
 
 main : input { *output=$1; }
+	 | input TOK_RCBRAC { *output=$1; free($2); YYACCEPT; }
      ;
 
 input : { cchr_init(&$$); }

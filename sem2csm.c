@@ -16,6 +16,7 @@
 #include <efence.h>
 #endif
 
+/* do something sprintf-like, but put the output in a malloc'ed block */
 char static *make_message(const char *fmt, ...) {
     int n, size = 100;
     char *p, *np;
@@ -32,24 +33,27 @@ char static *make_message(const char *fmt, ...) {
    			size *= 2;
 		}
         if ((np = realloc (p, size)) == NULL) {
-           free(p);
-           return NULL;
+            free(p);
+            return NULL;
         } else {
-           p = np;
+            p = np;
         }
-     }
-  }
+    }
+}
 
+/* output indentation */
 void static csm_output_indented(int level,FILE *out) {
 	const char spc[]="                                                                             ";
 	fprintf(out,"%.*s",level*2,spc);
 }
 
+/* get output name for a constraint (put it in 'out' buffer) */
 int static csm_constr_getname(sem_cchr_t *cchr,int cons,char *out,int size) {
 	sem_constr_t *ptr=alist_ptr(cchr->cons,cons);
 	return snprintf(out,size,"%s_%i",ptr->name,alist_len(ptr->types));
 }
 
+/* get output name for a rule (put it in 'out' buffer) */
 int static csm_rule_getname(sem_cchr_t *cchr,int rule,char *out,int size) {
 	sem_rule_t *ptr=alist_ptr(cchr->rules,rule);
 	if (ptr->name) {
@@ -59,6 +63,7 @@ int static csm_rule_getname(sem_cchr_t *cchr,int rule,char *out,int size) {
 	}
 }
 
+/* get output name for a constraint occurence (put it in 'out' buffer) */
 int static csm_conocc_getname(sem_cchr_t *cchr,int cons,int occ,char *out,int size) {
 	sem_constr_t *ptr=alist_ptr(cchr->cons,cons);
 	int rem=1;
@@ -75,22 +80,23 @@ int static csm_conocc_getname(sem_cchr_t *cchr,int cons,int occ,char *out,int si
 	return tsize;
 }
 
+/* generate variable-access table (array of char*'s, each pointing to the code to be used for accessing variable corresponding to array index) */ 
 char static **csm_generate_vartable(sem_cchr_t *chr,sem_rule_t *rule,int arem,int aid) {
 	char **tbl=malloc(sizeof(char*)*alist_len(rule->vars));
 	for (int i=0; i<alist_len(rule->vars); i++) {
 		int found=0;
 		sem_var_t *var=alist_ptr(rule->vars,i);
-		if (var->local) {
+		if (var->local) { /* local variables are accessed as LOCAL's in CSM */
 			tbl[i]=make_message("CSM_GETLOCAL(L_%s)",var->name);
-		} else {
+		} else { /* variable defined by head of rule */
 			sem_rule_level_t isrem=var->occ[SEM_RULE_LEVEL_REM] ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT;
-			for (int j=0; j<alist_len(rule->con[isrem]); j++) {
+			for (int j=0; j<alist_len(rule->con[isrem]); j++) { /* search what rule defines it */
 				sem_conocc_t *co=alist_ptr(rule->con[isrem],j);
-				for (int k=0; k<alist_len(co->args); k++) {
+				for (int k=0; k<alist_len(co->args); k++) { /* search which argument of that rule defines it */
 					if (alist_get(co->args,k).var==i) {
 						char cona[256];
 						csm_constr_getname(chr,co->constr,cona,256);
-						if (arem==isrem && j==aid) {
+						if (arem==isrem && j==aid) { /* if this is the active rule, use ARG instead of LARG */
 							tbl[i]=make_message("CSM_ARG(%s,arg%i)",cona,k+1);
 						} else {
 							tbl[i]=make_message("CSM_LARG(%s,%s%i,arg%i)",cona,isrem ? "R" : "K",j+1,k+1);
@@ -106,11 +112,13 @@ char static **csm_generate_vartable(sem_cchr_t *chr,sem_rule_t *rule,int arem,in
 	return tbl;
 }
 
+/* nice destructor for the variable table */
 void static csm_destruct_vartable(sem_rule_t *rule,char **tbl) {
 	for (int u=0; u<alist_len(rule->vars); u++) free(tbl[u]);
 	free(tbl);
 }
 
+/* generate code for an expression (as a C expression) */
 void static csm_generate_expr(sem_expr_t *expr,char **tbl,FILE *out) {
 	for (int t=0; t<alist_len(expr->parts); t++) {
 		if (t) fprintf(out," ");
@@ -128,6 +136,7 @@ void static csm_generate_expr(sem_expr_t *expr,char **tbl,FILE *out) {
 	}
 }
 
+/* generate code for a guard (as a C expression) */
 int static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,FILE *out,int level) {
 	if (alist_len(rule->guard)>0) {
 		csm_output_indented(level,out);
@@ -145,6 +154,7 @@ int static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,FILE *
 	return level;
 }
 
+/* generate code for a body (as a list of C (CSM) statements) */
 int static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid,char **tbl,FILE *out,int level) {
 	for (int l=0; l<alist_len(rule->vars); l++) {
 		sem_var_t *var=alist_ptr(rule->vars,l);
@@ -204,6 +214,7 @@ int static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid,
 	return level;
 }
 
+/* generate codelist for a constraint occurence */
 void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 	char buf[256];
 	csm_conocc_getname(cchr,cons,occ,buf,256);
@@ -285,6 +296,7 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 	}
 }
 
+/* generate code for a CCHR block (based on the semantic tree) */
 void csm_generate(sem_cchr_t *in,FILE *out) {
 	char buf[256];
 	fprintf(out,"#undef CONSLIST\n");

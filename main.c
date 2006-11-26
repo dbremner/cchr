@@ -18,7 +18,7 @@
 #include <efence.h>
 #endif
 
-/* a few definitions, not exported by flex/bison */
+/* a few definitions for interfacing with lexer/scanner */
 typedef void* yyscan_t;
 int yylex_init (yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
@@ -30,22 +30,40 @@ typedef struct YYLTYPE {
     int last_line;
     int last_column;
 } YYLTYPE;
-
 YYLTYPE *yyget_lloc ( yyscan_t scanner );
 
+/* process an input stream, considering it CCHR code */
+void process_file_cchr(FILE *in, FILE *out, int *line) {
+	yyscan_t scanner;
+	yylex_init(&scanner);
+	yyset_in(in,scanner);
+	cchr_t cchr;
+	if (!yyparse(scanner,&cchr,*line-1)) {
+		*line+=yyget_lloc(scanner)->last_line-1;
+		yylex_destroy(scanner);
+		sem_cchr_t sem_cchr;
+		sem_generate_cchr(&sem_cchr,&cchr);
+		destruct_cchr_t(&cchr);
+		csm_generate(&sem_cchr,out);
+		sem_cchr_destruct(&sem_cchr);
+	} else {
+		yylex_destroy(scanner);
+		return;
+	}
+}
 
-/* process a single file */
-void process_file(FILE *in, FILE *out) {
+/* process a single file. This function will read the passed file, byte per
+ * byte, and call process_file_cchr when necessary */
+void process_file(FILE *in, FILE *out, int *line) {
 	char wb[256];
 	int ws=0; /* size of word buffer */
 	char sb[256];
 	int ss=0; /* size of space buffer */
 	int as=1; /* accepting state (only after ; or } ) */
 	int c; /* character read */
-	int line=1; /* line number */
 	int ls=1; /* only spaces have occured after last newline */
 	while ((c=getc(in)) != EOF) { /* loop over all bytes in the source */
-		if (c == '\n') {line++;ls=1;} /* line-number counter */
+		if (c == '\n') {(*line)++;ls=1;} /* line-number counter */
 		if (isalpha(c)) { /* for alphabetical characters */
 			ls=0;
 			if (ss>0) { /* if word+space buffer are filled */
@@ -67,7 +85,7 @@ void process_file(FILE *in, FILE *out) {
 			int bs=0;
 			while ((c=getc(in)) != EOF) {
 				fputc(c,out);
-				if (c=='\n') line++;
+				if (c=='\n') (*line)++;
 				if (c=='\n' && !bs) break;
 				if (c=='\\') {
 					bs=(!bs);
@@ -78,7 +96,7 @@ void process_file(FILE *in, FILE *out) {
 			ls=1;
 			continue;
 		}
-		if (isspace(c)) {
+		if (isspace(c)) { /* whitespace */
 			if (ws) {
 			  sb[ss++]=c;
 			  continue;
@@ -86,24 +104,9 @@ void process_file(FILE *in, FILE *out) {
 		} else {
 			ls=0;
 		}
-		if (c == '{') {
+		if (c == '{') { /* begin of a block */
 			if (as && ws==4 && !strncmp(wb,"cchr",4)) {
-				yyscan_t scanner;
-				yylex_init(&scanner);
-				yyset_in(in,scanner);
-				cchr_t cchr;
-				if (!yyparse(scanner,&cchr,line-1)) {
-					line=yyget_lloc(scanner)->last_line+line-1;
-					yylex_destroy(scanner);
-					sem_cchr_t sem_cchr;
-					sem_generate_cchr(&sem_cchr,&cchr);
-					destruct_cchr_t(&cchr);
-					csm_generate(&sem_cchr,out);
-					sem_cchr_destruct(&sem_cchr);
-				} else {
-					yylex_destroy(scanner);
-					return;
-				}
+				process_file_cchr(in,out,line);
 				ws=0;
 				ss=0;
 				as=1;
@@ -114,7 +117,7 @@ void process_file(FILE *in, FILE *out) {
 		ws=0;
 		fwrite(sb,ss,1,out);
 		ss=0;
-		if (!isspace(c)) as=(c == '}' || c == ';');
+		if (!isspace(c)) as=(c == '}' || c == ';'); /* after these a "cchr {" may follow */
 		fputc(c,out);
 		
 	}
@@ -125,5 +128,6 @@ void process_file(FILE *in, FILE *out) {
 
 int main(int argc, char *argv[])
 {
-	process_file(stdin,stdout);
+	int line=1;
+	process_file(stdin,stdout,&line);
 }

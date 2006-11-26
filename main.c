@@ -18,13 +18,24 @@
 #include <efence.h>
 #endif
 
+/* a few definitions, not exported by flex/bison */
 typedef void* yyscan_t;
 int yylex_init (yyscan_t* scanner);
 int yylex_destroy (yyscan_t yyscanner );
-int yyparse(yyscan_t scanner,cchr_t *output);
+int yyparse(yyscan_t scanner,cchr_t *output,int base_line);
 void yyset_in  ( FILE * in_str , yyscan_t scanner );
+typedef struct YYLTYPE {
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+} YYLTYPE;
 
-void static process_file(FILE *in, FILE *out) {
+YYLTYPE *yyget_lloc ( yyscan_t scanner );
+
+
+/* process a single file */
+void process_file(FILE *in, FILE *out) {
 	char wb[256];
 	int ws=0; /* size of word buffer */
 	char sb[256];
@@ -47,7 +58,7 @@ void static process_file(FILE *in, FILE *out) {
 			wb[ws++]=c; /* add this character to word buffer */		
 			continue;
 		}
-		if (c == '#' && ls) {
+		if (c == '#' && ls) { /* for preprocessor statements */
 			fwrite(wb,ws,1,out);
 			ws=0;
 			fwrite(sb,ss,1,out);
@@ -56,6 +67,7 @@ void static process_file(FILE *in, FILE *out) {
 			int bs=0;
 			while ((c=getc(in)) != EOF) {
 				fputc(c,out);
+				if (c=='\n') line++;
 				if (c=='\n' && !bs) break;
 				if (c=='\\') {
 					bs=(!bs);
@@ -80,13 +92,18 @@ void static process_file(FILE *in, FILE *out) {
 				yylex_init(&scanner);
 				yyset_in(in,scanner);
 				cchr_t cchr;
-				yyparse(scanner,&cchr);
-				yylex_destroy(scanner);
-				sem_cchr_t sem_cchr;
-				sem_generate_cchr(&sem_cchr,&cchr);
-				destruct_cchr_t(&cchr);
-				csm_generate(&sem_cchr,out);
-				sem_cchr_destruct(&sem_cchr);
+				if (!yyparse(scanner,&cchr,line-1)) {
+					line=yyget_lloc(scanner)->last_line+line-1;
+					yylex_destroy(scanner);
+					sem_cchr_t sem_cchr;
+					sem_generate_cchr(&sem_cchr,&cchr);
+					destruct_cchr_t(&cchr);
+					csm_generate(&sem_cchr,out);
+					sem_cchr_destruct(&sem_cchr);
+				} else {
+					yylex_destroy(scanner);
+					return;
+				}
 				ws=0;
 				ss=0;
 				as=1;

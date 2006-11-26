@@ -4,7 +4,7 @@ cchr {
   constraint fib(int,uint64_t),init(int);
   
   begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
-  calc @  init(Max), fib(N-1,M1), fib(N,M2) ==> N<Max | uint64_t NP=N+1, fib(NP, M1+M2);
+  calc @  init(Max), fib(N-1,M1), fib(N,M2) ==> N<Max | int NP=N+2, fib(NP-1, M1+M2);
 //  fini @ init(Max) <=> true; /* this removes init_1 before any fib_2 is generated */
   fini @ fib(Max,_) \ init(Max) <=> true;
 }

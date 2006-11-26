@@ -95,13 +95,24 @@ void static sem_conocc_destruct(sem_conocc_t *con,int type) {
 void static sem_var_init(sem_var_t *var, char *name, char *type) {
   var->name=name;
   var->type=type;
+  var->local=0;
   var->occ[SEM_RULE_LEVEL_KEPT]=0;
   var->occ[SEM_RULE_LEVEL_REM]=0;
+  sem_expr_init(&(var->def));
+}
+
+/* initialize a variable as local */
+void static sem_var_init_local(sem_var_t *var, char *name, char *type, sem_expr_t *def) {
+	sem_var_init(var,name,type);
+	var->local=1;
+	var->def = *def;
 }
 
 /* destruct a sem_var_t */
 void static sem_var_destruct(sem_var_t *var) {
   free(var->name);
+  free(var->type);
+  if (var->local) sem_expr_destruct(&(var->def));
 }
 
 /* initialize a sem_rule_t */
@@ -178,8 +189,8 @@ int static sem_generate_random_var(sem_rule_t *rule) {
 }
 
 /* generate a sem_expr_t from a expr_t */
-void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in) {
-	for (int j=0; j<alist_len(in->list); j++) {
+void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int pos) {
+	for (int j=pos; j<alist_len(in->list); j++) {
 		token_t *tok=alist_ptr(in->list,j);
 		int pa=0;
 		switch (tok->type) {
@@ -240,10 +251,43 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 					sem_exprpart_init_lit(&se,copy_string(","));
 					alist_add(expr->parts,se);
 				}
-				sem_generate_expr(expr,rule,cchr,alist_ptr(tok->args,l));
+				sem_generate_expr(expr,rule,cchr,alist_ptr(tok->args,l),0);
 			}
 		}
 	}
+}
+
+int static sem_generate_localvar(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr) {
+	if (alist_len(expr->list)<4) return 0;
+	int j=0;
+	int pl=0;
+	while (j<alist_len(expr->list)-1) {
+		token_t *ep=alist_ptr(expr->list,j);
+		if (ep->type==TOKEN_TYPE_LIT && !strcmp(ep->data,"=")) {
+			if (j<2) return 0;
+			token_t *pep=alist_ptr(expr->list,j-1);
+			if (pep->type==TOKEN_TYPE_SYMB && isupper(pep->data[0])) {
+				char *type=malloc(pl+1);
+				type[0]=0;
+				for (int t=0; t<j-1; t++) {
+					if (t) strcat(type," ");
+					strcat(type,alist_get(expr->list,t).data);
+				}
+				sem_expr_t se;
+				sem_expr_init(&se);
+				sem_generate_expr(&se,rule,cchr,expr,j+1);
+				sem_var_t var;
+				sem_var_init_local(&var,copy_string(pep->data),type,&se);
+				alist_add(rule->vars,var);
+				return 1;
+			}
+			return 0;
+		}
+		if (ep->type==TOKEN_TYPE_FUNC) return 0;
+		pl+=strlen(ep->data)+1;
+		j++;
+	}
+	return 0;
 }
 
 /* generate a conocc arg (for in kept or removed constraints) given its sem_expr_t as argument */
@@ -298,7 +342,7 @@ int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 				sem_conoccarg_t coa;
 				sem_expr_t se;
 				sem_expr_init(&se);
-				sem_generate_expr(&se,rule,cchr,expr);
+				sem_generate_expr(&se,rule,cchr,expr,0);
 				if (type==SEM_RULE_LEVEL_KEPT || type==SEM_RULE_LEVEL_REM) {
 				  int var=sem_generate_conocc_arg(rule,cchr,&se);
 				  coa.var=var;
@@ -321,7 +365,7 @@ void static sem_rule_hnf(sem_rule_t *rule) {
 	for (int j=0; j<alist_len(rule->vars); j++) {
 		sem_var_t *var=alist_ptr(rule->vars,j);
 		int bnd=var->occ[0]+var->occ[1];
-		if (bnd==0) {
+		if (bnd==0 && !var->local) {
 			fprintf(stderr,"error: in rule '%s': variable '%s' is unbound\n",rule->name,var->name);
 			// TODO error handling
 		}
@@ -365,7 +409,7 @@ void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	for (int i=0; i<alist_len(in->guard.list); i++) {
 		sem_expr_t expr;
 		sem_expr_init(&expr);
-		sem_generate_expr(&expr,&n,out,alist_ptr(in->guard.list,i));
+		sem_generate_expr(&expr,&n,out,alist_ptr(in->guard.list,i),0);
 		alist_add(n.guard,expr);
 	}
 	for (int i=0; i<alist_len(in->kept.list); i++) {
@@ -375,7 +419,9 @@ void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 		sem_generate_conocc(&n,out,alist_ptr(in->removed.list,i),SEM_RULE_LEVEL_REM); /* TODO check return==1 */
 	}
 	for (int i=0; i<alist_len(in->body.list); i++) {
-		sem_generate_conocc(&n,out,alist_ptr(in->body.list,i),SEM_RULE_LEVEL_BODY); /* TODO check return==1 */
+		if (!sem_generate_conocc(&n,out,alist_ptr(in->body.list,i),SEM_RULE_LEVEL_BODY)) {
+			sem_generate_localvar(out,&n,alist_ptr(in->body.list,i));
+		}
 	}
 	sem_rule_hnf(&n);
 	alist_add(out->rules,n);

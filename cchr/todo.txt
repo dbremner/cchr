@@ -1,0 +1,16 @@
+- anonymous variables (done: 26/11/2006)
+
+- error handling in abs2sem
+- local statements (like local variables, without variable) in body
+- built-in constraint solver (macros?)
+- hashtable interface (macros?)
+- other data structures (next to dcls)
+- propagation history (using hastables?)
+- lookups instead of loops (for some constraint arguments)
+- user-defined destructors for constraints
+- output header files
+- output constraint-store accessor functions
+- intermediate representation before actual code generation (?)
+- operator (infix, prefix, postfix) notation for constraints (?)
+- comments in output
+- improve source structure (split compiler/runtime)

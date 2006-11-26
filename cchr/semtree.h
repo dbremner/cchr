@@ -76,6 +76,8 @@ typedef struct {
   char *name;
   char *type; /* copy of constr->types[], do not free */
   int occ[2]; /* occurences in removed,kept */
+  int local; /* whether is variable is local in the body */
+  sem_expr_t def; /* only when local==1, this variable's definition */ 
 } sem_var_t;
 
 /* a rule, having a (optional) name, a list of variables, a list of constraint occurences (in head & body), and a guard */

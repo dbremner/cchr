@@ -80,23 +80,27 @@ char static **csm_generate_vartable(sem_cchr_t *chr,sem_rule_t *rule,int arem,in
 	for (int i=0; i<alist_len(rule->vars); i++) {
 		int found=0;
 		sem_var_t *var=alist_ptr(rule->vars,i);
-		sem_rule_level_t isrem=var->occ[SEM_RULE_LEVEL_REM] ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT;
-		for (int j=0; j<alist_len(rule->con[isrem]); j++) {
-			sem_conocc_t *co=alist_ptr(rule->con[isrem],j);
-			for (int k=0; k<alist_len(co->args); k++) {
-				if (alist_get(co->args,k).var==i) {
-					char cona[256];
-					csm_constr_getname(chr,co->constr,cona,256);
-					if (arem==isrem && j==aid) {
-						tbl[i]=make_message("CSM_ARG(%s,arg%i)",cona,k+1);
-					} else {
-						tbl[i]=make_message("CSM_LARG(%s,%s%i,arg%i)",cona,isrem ? "R" : "K",j+1,k+1);
-					} 
-					found=1;
-					break; 
+		if (var->local) {
+			tbl[i]=make_message("CSM_GETLOCAL(L_%s)",var->name);
+		} else {
+			sem_rule_level_t isrem=var->occ[SEM_RULE_LEVEL_REM] ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT;
+			for (int j=0; j<alist_len(rule->con[isrem]); j++) {
+				sem_conocc_t *co=alist_ptr(rule->con[isrem],j);
+				for (int k=0; k<alist_len(co->args); k++) {
+					if (alist_get(co->args,k).var==i) {
+						char cona[256];
+						csm_constr_getname(chr,co->constr,cona,256);
+						if (arem==isrem && j==aid) {
+							tbl[i]=make_message("CSM_ARG(%s,arg%i)",cona,k+1);
+						} else {
+							tbl[i]=make_message("CSM_LARG(%s,%s%i,arg%i)",cona,isrem ? "R" : "K",j+1,k+1);
+						} 
+						found=1;
+						break; 
+					}
 				}
+				if (found) break;
 			}
-			if (found) break;
 		}
 	}
 	return tbl;
@@ -142,6 +146,15 @@ int static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,FILE *
 }
 
 int static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid,char **tbl,FILE *out,int level) {
+	for (int l=0; l<alist_len(rule->vars); l++) {
+		sem_var_t *var=alist_ptr(rule->vars,l);
+		if (var->local) {
+			csm_output_indented(level,out);
+			fprintf(out,"CSM_SETLOCAL(%s,L_%s,",var->type,var->name);
+			csm_generate_expr(&(var->def),tbl,out);
+			fprintf(out,") \\\n");
+		}
+	}
 	for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_BODY]); i++) {
 		sem_conocc_t *co=alist_ptr(rule->con[SEM_RULE_LEVEL_BODY],i);
 		for (int j=0; j<alist_len(co->args); j++) {

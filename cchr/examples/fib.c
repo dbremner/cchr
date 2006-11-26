@@ -11,10 +11,10 @@ cchr {
 
 int main(void) {
   cchr_runtime_init();
-  cchr_add_init_1(92);
+  cchr_add_init_1(7000);
   dcls_iter(_global_runtime.store,j,CCHR_CONS_TYPE_fib_2,{
     cchr_entry_t *ent=dcls_ptr(_global_runtime.store,j);
-    printf("fib(%i,%llu)\n",(int)(ent->data.fib_2.arg1),(unsigned long long)(ent->data.fib_2.arg2));
+    //printf("fib(%i,%llu)\n",(int)(ent->data.fib_2.arg1),(unsigned long long)(ent->data.fib_2.arg2));
   })
   return 0;
 }

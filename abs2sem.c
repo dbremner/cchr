@@ -214,7 +214,7 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 					}
 				}
 				if (ie) break;
-				if (!strcmp(tok->data,"_")) { /* unassigned variable */
+				if (tok->data[0]=='_') { /* anonymous variable */
 					sem_exprpart_init_var(&se,sem_generate_random_var(rule));
 					alist_add(expr->parts,se);
 					ie=1;
@@ -297,13 +297,6 @@ int static sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t 
 		sem_expr_destruct(expr);
 		return v;
 	}
-	/*for (int j=0; j<alist_len(expr.list); j++) {
-		if (alist_get(expr.list,j).type==SEM_EXPRPART_TYPE_VAR) {
-			TODO: error: variable expression as CCHR argument
-			sem_expr_destruct(&expr);
-			return -1;
-		}
-	}*/
 	int var=sem_generate_random_var(rule);
 	sem_expr_t nex;
 	sem_expr_init(&nex);

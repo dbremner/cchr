@@ -54,7 +54,7 @@ typedef struct {
   exprlist_t kept;
   exprlist_t removed;
   exprlist_t body;
-  expr_t guard;
+  exprlist_t guard;
 } rule_t;
 
 /* a syntax tree, having constraints, rules, and a list of external symbols */

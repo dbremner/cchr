@@ -39,7 +39,7 @@ void destruct_rule_t (rule_t *rule) {
   destruct_exprlist_t(&(rule->kept));
   destruct_exprlist_t(&(rule->removed));
   destruct_exprlist_t(&(rule->body));
-  destruct_expr_t(&(rule->guard));
+  destruct_exprlist_t(&(rule->guard));
 }
 
 void destruct_cchr_t (cchr_t *cchr) {

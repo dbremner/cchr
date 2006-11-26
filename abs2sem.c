@@ -362,10 +362,10 @@ void static sem_rule_hnf(sem_rule_t *rule) {
 void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	sem_rule_t n;
 	sem_rule_init(&n,copy_string(in->name));
-	if (alist_len(in->guard.list)!=0) {
+	for (int i=0; i<alist_len(in->guard.list); i++) {
 		sem_expr_t expr;
 		sem_expr_init(&expr);
-		sem_generate_expr(&expr,&n,out,&(in->guard));
+		sem_generate_expr(&expr,&n,out,alist_ptr(in->guard.list,i));
 		alist_add(n.guard,expr);
 	}
 	for (int i=0; i<alist_len(in->kept.list); i++) {

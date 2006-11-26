@@ -28,7 +28,7 @@ int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
 void cchr_init(cchr_t *cchr);
 void cchr_merge(cchr_t *out,cchr_t *in);
 void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
-                  expr_t *guard,exprlist_t *body);
+                  exprlist_t *guard,exprlist_t *body);
 
 #endif
 
@@ -174,9 +174,9 @@ rname : TOK_SYMBAT { $$=$1; }
       | { $$=NULL; }
       ;
 
-rule : rname exprlist TOK_BSLASH exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,&$6,&$8); free($3); free($5); free($7); free($9); }
-     | rname exprlist TOK_SIMP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,&$4,&$6); free($3); free($5); free($7); }
-     | rname exprlist TOK_PROP tokenlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,&$4,&$6); free($3); free($5); free($7); }
+rule : rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,&$6,&$8); free($3); free($5); free($7); free($9); }
+     | rname exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,&$4,&$6); free($3); free($5); free($7); }
+     | rname exprlist TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,&$4,&$6); free($3); free($5); free($7); }
      | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,&$4,NULL,&$6); free($3); free($5); free($7); }
      | rname exprlist TOK_SIMP exprlist TOK_SEMI { cchr_genrule(&$$,$1,NULL,&$2,NULL,&$4); free($3); free($5); }
      | rname exprlist TOK_PROP exprlist TOK_SEMI { cchr_genrule(&$$,$1,&$2,NULL,NULL,&$4); free($3); free($5); }
@@ -269,7 +269,12 @@ void dumpRule(rule_t *rule,int level) {
     printIndent(level); fprintf(stderr,"body[%i]='",j3); dumpExpr(alist_ptr(rule->body.list,j3)); fprintf(stderr,"';\n");
     j3++;
   }
-  printIndent(level); fprintf(stderr,"Guard='"); dumpExpr(&(rule->guard)); fprintf(stderr,"';\n");
+  printIndent(level); fprintf(stderr,"nGuard=%i;\n",alist_len(rule->guard.list));
+  int j4=0;
+  while (j3<alist_len(rule->guard.list)) {
+    printIndent(level); fprintf(stderr,"guard[%i]='",j4); dumpExpr(alist_ptr(rule->guard.list,j4)); fprintf(stderr,"';\n");
+    j4++;
+  }
   level--;
   printIndent(level); fprintf(stderr,"}\n");
 }
@@ -314,7 +319,7 @@ void cchr_merge(cchr_t *out,cchr_t *in) {
   alist_free(in->exts);
 }
 
-void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,expr_t *guard,exprlist_t *body) {
+void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,exprlist_t *guard,exprlist_t *body) {
   cchr_init(cchr);
   rule_t *rule; alist_new(cchr->rules,rule);
   rule->name=name;

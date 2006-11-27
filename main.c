@@ -13,6 +13,7 @@
 #include "semtree.h"
 #include "abs2sem.h"
 #include "sem2csm.h"
+#include "output.h"
 
 #ifdef USE_EFENCE
 #include <efence.h>
@@ -33,7 +34,7 @@ typedef struct YYLTYPE {
 YYLTYPE *yyget_lloc ( yyscan_t scanner );
 
 /* process an input stream, considering it CCHR code */
-void process_file_cchr(FILE *in, FILE *out, int *line) {
+void process_file_cchr(FILE *in, output_t *out, int *line) {
 	yyscan_t scanner;
 	yylex_init(&scanner);
 	yyset_in(in,scanner);
@@ -54,7 +55,7 @@ void process_file_cchr(FILE *in, FILE *out, int *line) {
 
 /* process a single file. This function will read the passed file, byte per
  * byte, and call process_file_cchr when necessary */
-void process_file(FILE *in, FILE *out, int *line) {
+void process_file(FILE *in, output_t *out, int *line, char *inname, char *outname) {
 	char wb[256];
 	int ws=0; /* size of word buffer */
 	char sb[256];
@@ -62,29 +63,30 @@ void process_file(FILE *in, FILE *out, int *line) {
 	int as=1; /* accepting state (only after ; or } ) */
 	int c; /* character read */
 	int ls=1; /* only spaces have occured after last newline */
+	output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 	while ((c=getc(in)) != EOF) { /* loop over all bytes in the source */
 		if (c == '\n') {(*line)++;ls=1;} /* line-number counter */
 		if (isalpha(c)) { /* for alphabetical characters */
 			ls=0;
 			if (ss>0) { /* if word+space buffer are filled */
-				fwrite(wb,ws,1,out); /* write them out */
+				output_chars(out,wb,ws); /* write them out */
 				if (ws) as=0;
 				ws=0;
-				fwrite(sb,ss,1,out);
+				output_chars(out,sb,ss);
 				ss=0;
 			}
 			wb[ws++]=c; /* add this character to word buffer */		
 			continue;
 		}
 		if (c == '#' && ls) { /* for preprocessor statements */
-			fwrite(wb,ws,1,out);
+			output_chars(out,wb,ws);
 			ws=0;
-			fwrite(sb,ss,1,out);
+			output_chars(out,sb,ss);
 			ss=0;
-			fputc(c,out);
+			output_char(out,c);
 			int bs=0;
 			while ((c=getc(in)) != EOF) {
-				fputc(c,out);
+				output_char(out,c);
 				if (c=='\n') (*line)++;
 				if (c=='\n' && !bs) break;
 				if (c=='\\') {
@@ -106,28 +108,40 @@ void process_file(FILE *in, FILE *out, int *line) {
 		}
 		if (c == '{') { /* begin of a block */
 			if (as && ws==4 && !strncmp(wb,"cchr",4)) {
+				output_fmt(out,"#line %i \"%s\"\n",output_get_line(out)+1,outname);
 				process_file_cchr(in,out,line);
+			    	output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 				ws=0;
 				ss=0;
 				as=1;
 				continue;
 			}
 		}
-		fwrite(wb,ws,1,out);
+		output_chars(out,wb,ws);
 		ws=0;
-		fwrite(sb,ss,1,out);
+		output_chars(out,sb,ss);
 		ss=0;
 		if (!isspace(c)) as=(c == '}' || c == ';'); /* after these a "cchr {" may follow */
-		fputc(c,out);
+		output_char(out,c);
 		
 	}
-	fwrite(wb,ws,1,out);
-	fwrite(sb,ss,1,out);
+	output_chars(out,wb,ws);
+	output_chars(out,sb,ss);
 }
 
 
 int main(int argc, char *argv[])
 {
-	int line=1;
-	process_file(stdin,stdout,&line);
+	for (int i=1; i<argc; i++) {
+	    char *arg=argv[i];
+	    int line=1;
+	    char *oa=malloc(strlen(oa)+3);
+	    strcpy(oa,arg);
+	    strcat(oa,".c");
+	    FILE *in=fopen(arg,"r");
+	    FILE *out=fopen(oa,"w");
+	    output_t oo;
+	    output_init(&oo,out);
+	    process_file(in,&oo,&line,arg,oa);
+	}
 }

@@ -1,3 +1,9 @@
+/****************************************************************************\
+| CCHR - A CHR-in-C to C compiler                                            |
+| output.h - header for minimal indenting output routines                    |
+| written by Pieter Wuille                                                   |
+\****************************************************************************/
+
 #ifndef _output_h_
 #define _output_h_ 1
 

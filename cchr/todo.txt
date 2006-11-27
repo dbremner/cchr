@@ -1,4 +1,3 @@
-- #line output
 - error handling in abs2sem
 - local statements (like local variables, without variable) in body
 - built-in constraint store (macros?)
@@ -17,3 +16,4 @@
 - multiple guards (done: 26/11/2006)
 - local variables in body (done: 26/11/2006)
 - anonymous variables (done: 26/11/2006)
+- #line output (done: 27/11/2006)

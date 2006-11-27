@@ -1,7 +1,7 @@
 CC := gcc -Wall -pipe -std=c99
 INTDIR := intermediate
 
-MODE := efence
+#MODE := efence
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3

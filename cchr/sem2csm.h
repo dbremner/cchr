@@ -10,7 +10,8 @@
 #include <stdio.h>
 
 #include "semtree.h"
+#include "output.h"
 
-void csm_generate(sem_cchr_t *in,FILE *out);
+void csm_generate(sem_cchr_t *in,output_t *out);
 
 #endif

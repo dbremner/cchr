@@ -4,13 +4,13 @@
 | written by Pieter Wuille                                                   |
 \****************************************************************************/ 
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
 #include "semtree.h"
 #include "alist.h"
+#include "output.h"
 
 #ifdef USE_EFENCE
 #include <efence.h>
@@ -39,12 +39,6 @@ char static *make_message(const char *fmt, ...) {
             p = np;
         }
     }
-}
-
-/* output indentation */
-void static csm_output_indented(int level,FILE *out) {
-	const char spc[]="                                                                             ";
-	fprintf(out,"%.*s",level*2,spc);
 }
 
 /* get output name for a constraint (put it in 'out' buffer) */
@@ -119,17 +113,17 @@ void static csm_destruct_vartable(sem_rule_t *rule,char **tbl) {
 }
 
 /* generate code for an expression (as a C expression) */
-void static csm_generate_expr(sem_expr_t *expr,char **tbl,FILE *out) {
+void static csm_generate_expr(sem_expr_t *expr,char **tbl,output_t *out) {
 	for (int t=0; t<alist_len(expr->parts); t++) {
-		if (t) fprintf(out," ");
+		if (t) output_fmt(out," ");
 		sem_exprpart_t *ep=alist_ptr(expr->parts,t);
 		switch (ep->type) {
 			case SEM_EXPRPART_TYPE_LIT: {
-				fprintf(out,"%s",ep->data.lit);
+				output_fmt(out,"%s",ep->data.lit);
 				break;
 			}
 			case SEM_EXPRPART_TYPE_VAR: {
-				fprintf(out,"%s",tbl[ep->data.var]);
+				output_fmt(out,"%s",tbl[ep->data.var]);
 				break;
 			}
 		}
@@ -137,85 +131,72 @@ void static csm_generate_expr(sem_expr_t *expr,char **tbl,FILE *out) {
 }
 
 /* generate code for a guard (as a C expression) */
-int static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,FILE *out,int level) {
+void static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,output_t *out) {
 	if (alist_len(rule->guard)>0) {
-		csm_output_indented(level,out);
-		fprintf(out,"CSM_IF(");
+		output_fmt(out,"CSM_IF(");
 		for (int s=0; s<alist_len(rule->guard); s++) {
-			if (s) fprintf(out," && ");
-			fprintf(out,"(");
+			if (s) output_fmt(out," && ");
+			output_fmt(out,"(");
 			sem_expr_t *expr=alist_ptr(rule->guard,s);
 			csm_generate_expr(expr,tbl,out);
-			fprintf(out,")");
+			output_fmt(out,")");
 		}
-		fprintf(out,", \\\n");
-		level++;
+		output_indent(out,", \\",") \\");
 	}
-	return level;
 }
 
 /* generate code for a body (as a list of C (CSM) statements) */
-int static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid,char **tbl,FILE *out,int level) {
+void static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid,char **tbl,output_t *out) {
 	for (int l=0; l<alist_len(rule->vars); l++) {
 		sem_var_t *var=alist_ptr(rule->vars,l);
 		if (var->local) {
-			csm_output_indented(level,out);
-			fprintf(out,"CSM_SETLOCAL(%s,L_%s,",var->type,var->name);
+			output_fmt(out,"CSM_SETLOCAL(%s,L_%s,",var->type,var->name);
 			csm_generate_expr(&(var->def),tbl,out);
-			fprintf(out,") \\\n");
+			output_fmt(out,") \\\n");
 		}
 	}
 	for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_BODY]); i++) {
 		sem_conocc_t *co=alist_ptr(rule->con[SEM_RULE_LEVEL_BODY],i);
 		for (int j=0; j<alist_len(co->args); j++) {
-			csm_output_indented(level,out);
-			fprintf(out,"CSM_SETLOCAL(%s,B%i_arg%i,",alist_get(alist_get(cchr->cons,co->constr).types,j),i+1,j+1);
+			output_fmt(out,"CSM_SETLOCAL(%s,B%i_arg%i,",alist_get(alist_get(cchr->cons,co->constr).types,j),i+1,j+1);
 			csm_generate_expr(&(alist_get(co->args,j).expr),tbl,out);
-			fprintf(out,") \\\n");
+			output_fmt(out,") \\\n");
 		}
 		
 	}
 	for (int k=0; k<alist_len(rule->con[SEM_RULE_LEVEL_REM]); k++) {
 		if (!arem || aid!=k) {
-			csm_output_indented(level,out);
-			fprintf(out,"CSM_KILL(R%i) \\\n",k+1);
+			output_fmt(out,"CSM_KILL(R%i) \\\n",k+1);
 		}
 	}
 	if (arem) {
-		csm_output_indented(level,out);
-		fprintf(out,"CSM_KILLSELF \\\n");
+		output_fmt(out,"CSM_KILLSELF \\\n");
 	} else {
-		csm_output_indented(level,out);
-		fprintf(out,"CSM_NEEDSELF \\\n");
+		output_fmt(out,"CSM_NEEDSELF \\\n");
 	}
 	for (int k=0; k<alist_len(rule->con[SEM_RULE_LEVEL_BODY]); k++) {
 		sem_conocc_t *co=alist_ptr(rule->con[SEM_RULE_LEVEL_BODY],k);
 		char con[256];
 		csm_constr_getname(cchr,co->constr,con,256);
 		if (alist_len(co->args)==0) {
-			csm_output_indented(level,out);
-			fprintf(out,"CSM_ADDE(%s) \\\n",con);
+			output_fmt(out,"CSM_ADDE(%s) \\\n",con);
 		} else {
-			csm_output_indented(level,out);
-			fprintf(out,"CSM_ADD(%s",con);
+			output_fmt(out,"CSM_ADD(%s",con);
 			for (int l=0; l<alist_len(co->args); l++) {
-				fprintf(out,",CSM_GETLOCAL(B%i_arg%i)",k+1,l+1);
+				output_fmt(out,",CSM_GETLOCAL(B%i_arg%i)",k+1,l+1);
 			}
-			fprintf(out,") \\\n");
+			output_fmt(out,") \\\n");
 		}
 	}
 	if (arem) {
-		csm_output_indented(level,out);
-		fprintf(out,"CSM_END \\\n");
+		output_fmt(out,"CSM_END \\");
 	} else {
-		csm_output_indented(level,out);
-		fprintf(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF,CSM_END) \\\n");
+		output_fmt(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF,CSM_END) \\");
 	}
-	return level;
 }
 
 /* generate codelist for a constraint occurence */
-void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
+void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 	char buf[256];
 	csm_conocc_getname(cchr,cons,occ,buf,256);
 	char buf2[256];
@@ -229,13 +210,12 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 	sem_ruleocc_t *ro=alist_ptr(con->occ[rem],occ);
 	sem_rule_t *ru=alist_ptr(cchr->rules,ro->rule);
 	
-	fprintf(out,"\n");
-	fprintf(out,"#undef CODELIST_%s\n",buf);
-	fprintf(out,"#define CODELIST_%s \\\n",buf);
-	int level=1;
+	output_fmt(out,"\n");
+	output_fmt(out,"#undef CODELIST_%s\n",buf);
+	output_fmt(out,"#define CODELIST_%s ",buf);
+	output_indent(out," \\","");
 	if (!rem) {
-		csm_output_indented(level,out);
-		fprintf(out,"CSM_MAKE(%s) \\\n",buf2);
+		output_fmt(out,"CSM_MAKE(%s) \\\n",buf2);
 	}
 	int ncons=alist_len(ru->con[SEM_RULE_LEVEL_KEPT])+alist_len(ru->con[SEM_RULE_LEVEL_REM]);
 	for (int ci=0; ci<ncons; ci++) {
@@ -248,9 +228,8 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 			int cicon=alist_get(ru->con[ci_rem],cid).constr;
 			char cicon_name[256];
 			csm_constr_getname(cchr,cicon,cicon_name,256);
-			csm_output_indented(level,out);
-			fprintf(out,"CSM_LOOP(%s,%s%i, \\\n",cicon_name,ci_rem ? "R" : "K",cid+1);
-			level++;
+			output_fmt(out,"CSM_LOOP(%s,%s%i,",cicon_name,ci_rem ? "R" : "K",cid+1);
+			output_indent(out," \\",") \\");
 			int conlo=0;
 			for (int ci2=0; ci2<ncons; ci2++) {
 				int ci2_rem=1,ci2d=ci2;
@@ -261,75 +240,64 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,FILE *out) {
 				int cicon2=alist_get(ru->con[ci2_rem],ci2d).constr;
 				if ((ci2<ci || (ci2_rem==rem && ci2d==ro->pos)) && (cicon2==cicon)) { 
 					if (conlo==0) {
-						csm_output_indented(level++,out);
-						fprintf(out,"CSM_IF(");
+						output_fmt(out,"CSM_IF(");
 					} else {
-						fprintf(out," && ");
+						output_fmt(out," && ");
 					}
 					conlo++;
 					if (ci2d==ro->pos && ci2_rem==rem) {
-						fprintf(out,"CSM_DIFFSELF(%s%i),",ci_rem ? "R" : "K",cid+1);
+						output_fmt(out,"CSM_DIFFSELF(%s%i),",ci_rem ? "R" : "K",cid+1);
 					} else {
-						fprintf(out,"CSM_DIFF(%s%i,%s%i),",ci_rem ? "R" : "K",cid+1,ci2_rem ? "R" : "K",ci2d+1);
+						output_fmt(out,"CSM_DIFF(%s%i,%s%i),",ci_rem ? "R" : "K",cid+1,ci2_rem ? "R" : "K",ci2d+1);
 					}
 				}
 				
 			}
-			if (conlo) fprintf(out," \\\n");
+			if (conlo) output_indent(out," \\",") \\");
 		}
 	}
 	char **tbl=csm_generate_vartable(cchr,ru,rem,ro->pos);
-	level=csm_generate_guard(cchr,ru,tbl,out,level);
-	level=csm_generate_body(cchr,ru,rem,ro->pos,tbl,out,level);
+	csm_generate_guard(cchr,ru,tbl,out);
+	csm_generate_body(cchr,ru,rem,ro->pos,tbl,out);
 	csm_destruct_vartable(ru,tbl);
-	while (level>2) {
-		level--;
-		csm_output_indented(level,out);
-		fprintf(out,") \\\n");
-	}
-	if (level>1) {
-		level--;
-		csm_output_indented(level,out);
-		fprintf(out,")\n\n");
-	} else {
-		fprintf(out,"\n\n");
-	}
+	output_unindent_till(out,0);
+	output_char(out,'\n');
 }
 
 /* generate code for a CCHR block (based on the semantic tree) */
-void csm_generate(sem_cchr_t *in,FILE *out) {
+void csm_generate(sem_cchr_t *in,output_t *out) {
 	char buf[256];
-	fprintf(out,"#undef CONSLIST\n");
-	fprintf(out,"#define CONSLIST(DEF,SEP) ");
+	output_fmt(out,"#undef CONSLIST\n");
+	output_fmt(out,"#define CONSLIST(DEF,SEP) ");
 	for (int i=0; i<alist_len(in->cons); i++) {
-		if (i) fprintf(out," SEP ");
+		if (i) output_fmt(out," SEP ");
 		csm_constr_getname(in,i,buf,256);
-		fprintf(out,"DEF(%s)",buf);
+		output_fmt(out,"DEF(%s)",buf);
 	}
-	fprintf(out,"\n\n");
+	output_fmt(out,"\n\n");
 	for (int i=0; i<alist_len(in->cons); i++) {
 		sem_constr_t *con=alist_ptr(in->cons,i);
 		char conn[256];
 		csm_constr_getname(in,i,conn,256);
-		fprintf(out,"#undef ARGLIST_%s\n",conn);
-		fprintf(out,"#define ARGLIST_%s(DEF,SEP) ",conn);
+		output_fmt(out,"#undef ARGLIST_%s\n",conn);
+		output_fmt(out,"#define ARGLIST_%s(DEF,SEP) ",conn);
 		for (int j=0; j<alist_len(con->types); j++) {
-			if (j) fprintf(out," SEP ");
-			fprintf(out,"DEF(%s,arg%i,%s)",conn,j+1,alist_get(con->types,j));
+			if (j) output_fmt(out," SEP ");
+			output_fmt(out,"DEF(%s,arg%i,%s)",conn,j+1,alist_get(con->types,j));
 		}
-		fprintf(out,"\n");
-		fprintf(out,"#undef RULELIST_%s\n",conn);
-		fprintf(out,"#define RULELIST_%s(DEF,SEP) ",conn);
+		output_fmt(out,"\n");
+		output_fmt(out,"#undef RULELIST_%s\n",conn);
+		output_fmt(out,"#define RULELIST_%s(DEF,SEP) ",conn);
 		for (int j=0; j<alist_len(con->occ[0])+alist_len(con->occ[1]); j++) {
-			if (j) fprintf(out," SEP ");
+			if (j) output_fmt(out," SEP ");
 			csm_conocc_getname(in,i,j,buf,256);
-			fprintf(out,"DEF(%s)",buf);
+			output_fmt(out,"DEF(%s)",buf);
 		}
-		fprintf(out,"\n");
+		output_fmt(out,"\n");
 		for (int j=0; j<alist_len(con->occ[0])+alist_len(con->occ[1]); j++) {
 			csm_generate_code(in,i,j,out);
 		}
-		fprintf(out,"\n");
+		output_fmt(out,"\n");
 	}
-	fprintf(out,"#include \"cchr_csm.h\"\n");
+	output_fmt(out,"#include \"cchr_csm.h\"\n");
 }

@@ -41,6 +41,12 @@
   (var)._n++; \
 } while(0);
 
+/* remove the last element from the array and put it in 'val' */
+#define alist_pop(var,val) do { \
+  (var)._n--; \
+  (val) = (var)._d[((var)._n)]; \
+} while(0);
+
 /* get the number of elements in alist 'var' */
 #define alist_len(var) ((var)._n)
 

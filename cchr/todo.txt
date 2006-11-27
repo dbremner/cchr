@@ -1,6 +1,7 @@
+- #line output
 - error handling in abs2sem
 - local statements (like local variables, without variable) in body
-- built-in constraint solver (macros?)
+- built-in constraint store (macros?)
 - hashtable interface (macros?)
 - other data structures (next to dcls)
 - propagation history (using hastables?)

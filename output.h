@@ -29,5 +29,6 @@ void output_init(output_t *output, FILE *out);
 void output_set_line(output_t *output, int line);
 int output_get_line(output_t *output);
 void output_fmt(output_t *output, char *fmt, ...);
+void output_destruct(output_t *output);
 
 #endif

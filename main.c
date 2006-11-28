@@ -145,5 +145,9 @@ int main(int argc, char *argv[])
 	    output_t oo;
 	    output_init(&oo,out);
 	    process_file(in,&oo,&line,arg,oa);
+	    free(oa);
+	    output_destruct(&oo);
+	    fclose(out);
+	    fclose(in);
 	}
 }

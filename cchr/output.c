@@ -34,6 +34,15 @@ void output_init(output_t *output, FILE *out) {
   alist_init(output->les);
 }
 
+/* destruct an output stream structure */
+void output_destruct(output_t *output) {
+  for (int j=0; j<alist_len(output->les); j++) {
+    free(alist_get(output->les,j));
+  }
+  alist_free(output->les);
+  free(output->idf);
+}
+
 /* output a number of chars (at most len) pointer to be str to out */
 void output_chars(output_t *output, char *str, int len) {
   char *fs;

@@ -135,8 +135,10 @@ int main(int argc, char *argv[])
 	for (int i=1; i<argc; i++) {
 	    char *arg=argv[i];
 	    int line=1;
-	    char *oa=malloc(strlen(oa)+3);
+	    char *oa=malloc(strlen(arg)+3);
 	    strcpy(oa,arg);
+	    if (strlen(arg)>4 && !strcmp(arg+strlen(arg)-4,".chr")) oa[strlen(arg)-4]=0;
+	    if (strlen(arg)>5 && !strcmp(arg+strlen(arg)-5,".cchr")) oa[strlen(arg)-5]=0;
 	    strcat(oa,".c");
 	    FILE *in=fopen(arg,"r");
 	    FILE *out=fopen(oa,"w");

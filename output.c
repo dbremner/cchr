@@ -11,14 +11,21 @@
 
 #include "output.h"
 
+#ifdef USE_EFENCE
+#include <efence.h>
+#endif
+
+/* get line number in output stream */
 int output_get_line(output_t *output) {
   return output->linenum;
 }
 
+/* set output line in output stream */
 void output_set_line(output_t *output, int line) {
   output->linenum=line;
 }
 
+/* initialize output stream structure */
 void output_init(output_t *output, FILE *out) {
   output->out=out;
   output->linenum=1;
@@ -27,6 +34,7 @@ void output_init(output_t *output, FILE *out) {
   alist_init(output->les);
 }
 
+/* output a number of chars (at most len) pointer to be str to out */
 void output_chars(output_t *output, char *str, int len) {
   char *fs;
   while ((fs=strchr(str,'\n')) && fs<str+len) {
@@ -43,40 +51,18 @@ void output_chars(output_t *output, char *str, int len) {
   fwrite(str,len,1,output->out);
 }
 
+/* output a single character to out */
 void output_char(output_t *output, int ch) {
   char ccc=ch;
   output_chars(output,&ccc,1);
 }
 
+/* output a string to output */
 void output_string(output_t *output, char *str) {
   output_chars(output,str,strlen(str));
 }
 
-void output_indent(output_t *output, char *in, char *out) {
-  output_string(output,in);
-  char *ad=malloc(strlen(out)+2);
-  strcpy(ad,"\n");
-  strcat(ad,out);
-  alist_add(output->les,ad);
-  output_string(output,"\n");
-}
-
-void output_unindent(output_t *output) {
-  int l=alist_len(output->les);
-  if (l) {
-    char *ptr;
-    alist_pop(output->les,ptr);
-    output_string(output,ptr);
-    free(ptr);
-  }
-}
-
-void output_unindent_till(output_t *output,int level) {
-  while (alist_len(output->les)>level) {
-    output_unindent(output);
-  }
-}
-
+/* output some formatted data to output (see fprintf) */
 void output_fmt(output_t *output, char *fmt, ...) {
     int n, size = 100;
     char *p, *np;
@@ -104,3 +90,33 @@ void output_fmt(output_t *output, char *fmt, ...) {
         }
     }
 }
+
+/* output "in" to output, followed by a newline after which an indented block follows.
+ * this indented block can be ended with output_unindent, and will print a newline, a decreased indentation and "out" */
+void output_indent(output_t *output, char *in, char *out) {
+  output_string(output,in);
+  char *ad=malloc(strlen(out)+2);
+  strcpy(ad,"\n");
+  strcat(ad,out);
+  alist_add(output->les,ad);
+  output_string(output,"\n");
+}
+
+/* end an indented block, see output_indent */
+void output_unindent(output_t *output) {
+  int l=alist_len(output->les);
+  if (l) {
+    char *ptr;
+    alist_pop(output->les,ptr);
+    output_string(output,ptr);
+    free(ptr);
+  }
+}
+
+/* end all indented blocks until level level */
+void output_unindent_till(output_t *output,int level) {
+  while (alist_len(output->les)>level) {
+    output_unindent(output);
+  }
+}
+

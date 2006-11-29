@@ -60,17 +60,12 @@ int static csm_rule_getname(sem_cchr_t *cchr,int rule,char *out,int size) {
 /* get output name for a constraint occurence (put it in 'out' buffer) */
 int static csm_conocc_getname(sem_cchr_t *cchr,int cons,int occ,char *out,int size) {
 	sem_constr_t *ptr=alist_ptr(cchr->cons,cons);
-	int rem=1;
-	if (occ>=alist_len(ptr->occ[1])) {
-		rem=0;
-		occ-=alist_len(ptr->occ[1]);
-	}
 	int tsize=0;
-	sem_ruleocc_t *ro=alist_ptr(ptr->occ[rem],occ);
+	sem_ruleocc_t *ro=alist_ptr(ptr->occ,occ);
 	tsize+=csm_constr_getname(cchr,cons,out+tsize,size-tsize);
 	tsize+=snprintf(out+tsize,size-tsize,"_");
 	tsize+=csm_rule_getname(cchr,ro->rule,out+tsize,size-tsize);
-	tsize+=snprintf(out+tsize,size-tsize,"_%s%i",rem ? "R" : "K",ro->pos+1);
+	tsize+=snprintf(out+tsize,size-tsize,"_%s%i",ro->type==SEM_RULE_LEVEL_REM ? "R" : "K",ro->pos+1);
 	return tsize;
 }
 
@@ -229,12 +224,8 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 	char buf2[256];
 	csm_constr_getname(cchr,cons,buf2,256);
 	sem_constr_t *con=alist_ptr(cchr->cons,cons);
-	int rem=1;
-	if (occ>=alist_len(con->occ[1])) {
-		rem=0;
-		occ-=alist_len(con->occ[1]);
-	}
-	sem_ruleocc_t *ro=alist_ptr(con->occ[rem],occ);
+	sem_ruleocc_t *ro=alist_ptr(con->occ,occ);
+	int rem=ro->type==SEM_RULE_LEVEL_REM;
 	sem_rule_t *ru=alist_ptr(cchr->rules,ro->rule);
 	
 	output_fmt(out,"\n");
@@ -315,14 +306,22 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		output_fmt(out,"\n");
 		output_fmt(out,"#undef RULELIST_%s\n",conn);
 		output_fmt(out,"#define RULELIST_%s(DEF,SEP) ",conn);
-		for (int j=0; j<alist_len(con->occ[0])+alist_len(con->occ[1]); j++) {
-			if (j) output_fmt(out," SEP ");
-			csm_conocc_getname(in,i,j,buf,256);
-			output_fmt(out,"DEF(%s)",buf);
+		int jj=0;
+		for (int j=0; j<alist_len(con->occ); j++) {
+			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
+			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
+				if (jj) output_fmt(out," SEP ");
+				jj++;
+				csm_conocc_getname(in,i,j,buf,256);
+				output_fmt(out,"DEF(%s)",buf);
+			}
 		}
 		output_fmt(out,"\n");
-		for (int j=0; j<alist_len(con->occ[0])+alist_len(con->occ[1]); j++) {
-			csm_generate_code(in,i,j,out);
+		for (int j=0; j<alist_len(con->occ); j++) {
+			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
+			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
+				csm_generate_code(in,i,j,out);
+			}
 		}
 		output_fmt(out,"\n");
 	}

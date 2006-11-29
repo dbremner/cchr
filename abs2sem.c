@@ -123,6 +123,7 @@ void static sem_rule_init(sem_rule_t *rule, char *name) {
   alist_init(rule->con[SEM_RULE_LEVEL_REM]);
   alist_init(rule->con[SEM_RULE_LEVEL_BODY]);
   alist_init(rule->guard);
+  alist_init(rule->lstmt[0]);
 }
 
 /* destruct a sem_rule_t */
@@ -188,8 +189,13 @@ int static sem_generate_random_var(sem_rule_t *rule) {
 	return ret;
 }
 
+struct {
+	char *name;
+	int ar;
+} sem_stmsym;
+
 /* generate a sem_expr_t from a expr_t */
-void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int pos) {
+void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int pos, int stmt) {
 	for (int j=pos; j<alist_len(in->list); j++) {
 		token_t *tok=alist_ptr(in->list,j);
 		int pa=0;
@@ -220,10 +226,6 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 					ie=1;
 					break;
 				}
-				if (!isupper(tok->data[0])) {
-					// TODO: error, variable names must start with an uppercase letter
-					break;
-				}
 				for (int i=0; i<alist_len(rule->vars); i++) { /* look for existing var */
 					if (!strcmp(tok->data,alist_get(rule->vars,i).name)) {
 						sem_exprpart_init_var(&se,i);
@@ -233,13 +235,25 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 					}
 				}
 				if (ie) break;
-				int nvp=alist_len(rule->vars);
-				sem_var_t nv;
-				sem_var_init(&nv,copy_string(tok->data),NULL);
-				alist_add(rule->vars,nv);
-				sem_exprpart_init_var(&se,nvp);
-				alist_add(expr->parts,se);
-				break;
+				if (stmt) {
+					sem_exprpart_init_lit(&se,copy_string(tok->data));
+					alist_add(expr->parts,se);
+					ie=1;
+					break;
+				} else {
+					if (!isupper(tok->data[0])) {
+						// TODO: error, variable names must start with an uppercase letter
+						break;
+					}
+					int nvp=alist_len(rule->vars);
+					sem_var_t nv;
+					sem_var_init(&nv,copy_string(tok->data),NULL);
+					alist_add(rule->vars,nv);
+					sem_exprpart_init_var(&se,nvp);
+					alist_add(expr->parts,se);
+					ie=1;
+					break;
+				}
 			}
 		}
 		if (pa) {
@@ -251,10 +265,26 @@ void static sem_generate_expr(sem_expr_t *expr,sem_rule_t *rule,sem_cchr_t *cchr
 					sem_exprpart_init_lit(&se,copy_string(","));
 					alist_add(expr->parts,se);
 				}
-				sem_generate_expr(expr,rule,cchr,alist_ptr(tok->args,l),0);
+				sem_generate_expr(expr,rule,cchr,alist_ptr(tok->args,l),0,0);
 			}
+			sem_exprpart_init_lit(&se,copy_string(")"));
+			alist_add(expr->parts,se);
 		}
 	}
+}
+
+int static sem_generate_localstm(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr) {
+	if (alist_len(expr->list)<3) return 0;
+	if (alist_get(expr->list,0).type != TOKEN_TYPE_LIT || strcmp(alist_get(expr->list,0).data,"{")) return 0;
+	token_t b;
+	alist_pop(expr->list,b);
+	if (b.type != TOKEN_TYPE_LIT || strcmp(b.data,"}")) {alist_add(expr->list,b); return 0;}
+	destruct_token_t(&b);
+	sem_expr_t se;
+	sem_expr_init(&se);
+	sem_generate_expr(&se,rule,cchr,expr,1,1);
+	alist_add(rule->lstmt[0],se);
+	return 1;
 }
 
 int static sem_generate_localvar(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr) {
@@ -275,7 +305,7 @@ int static sem_generate_localvar(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr)
 				}
 				sem_expr_t se;
 				sem_expr_init(&se);
-				sem_generate_expr(&se,rule,cchr,expr,j+1);
+				sem_generate_expr(&se,rule,cchr,expr,j+1,0);
 				sem_var_t var;
 				sem_var_init_local(&var,copy_string(pep->data),type,&se);
 				alist_add(rule->vars,var);
@@ -335,7 +365,7 @@ int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 				sem_conoccarg_t coa;
 				sem_expr_t se;
 				sem_expr_init(&se);
-				sem_generate_expr(&se,rule,cchr,expr,0);
+				sem_generate_expr(&se,rule,cchr,expr,0,0);
 				if (type==SEM_RULE_LEVEL_KEPT || type==SEM_RULE_LEVEL_REM) {
 				  int var=sem_generate_conocc_arg(rule,cchr,&se);
 				  coa.var=var;
@@ -402,7 +432,7 @@ void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	for (int i=0; i<alist_len(in->guard.list); i++) {
 		sem_expr_t expr;
 		sem_expr_init(&expr);
-		sem_generate_expr(&expr,&n,out,alist_ptr(in->guard.list,i),0);
+		sem_generate_expr(&expr,&n,out,alist_ptr(in->guard.list,i),0,0);
 		alist_add(n.guard,expr);
 	}
 	for (int i=0; i<alist_len(in->kept.list); i++) {
@@ -412,9 +442,11 @@ void static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 		sem_generate_conocc(&n,out,alist_ptr(in->removed.list,i),SEM_RULE_LEVEL_REM); /* TODO check return==1 */
 	}
 	for (int i=0; i<alist_len(in->body.list); i++) {
-		if (!sem_generate_conocc(&n,out,alist_ptr(in->body.list,i),SEM_RULE_LEVEL_BODY)) {
-			sem_generate_localvar(out,&n,alist_ptr(in->body.list,i));
-		}
+		int ok=0;
+		if (!ok) ok=sem_generate_conocc(&n,out,alist_ptr(in->body.list,i),SEM_RULE_LEVEL_BODY);
+		if (!ok) ok=sem_generate_localvar(out,&n,alist_ptr(in->body.list,i));
+		if (!ok) ok=sem_generate_localstm(out,&n,alist_ptr(in->body.list,i));
+		if (!ok) fprintf(stderr,"In rule %s: unable to parse body part %i\n",n.name ? n.name : "<anonymous>",i+1);
 	}
 	sem_rule_hnf(&n);
 	alist_add(out->rules,n);

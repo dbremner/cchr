@@ -38,6 +38,8 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 
 %locations
 %pure-parser
+%error-verbose
+
 %parse-param { yyscan_t scanner }
 %parse-param { cchr_t *output }
 %parse-param { int base_line }
@@ -63,7 +65,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 %type <constr> typelistc typelist constr
 %destructor { destruct_constr_t(&$$); } typelistc typelist constr
 
-%type <expr> tokenlist token etokenlist etoken
+%type <expr> tokenlist token etokenlist etoken stoken stokenlist
 %destructor { destruct_expr_t(&$$); } tokenlist token etokenlist etoken
 
 %type <token> arglist
@@ -87,7 +89,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 %%
 
 main : input { *output=$1; }
-	 | input TOK_RCBRAC { *output=$1; free($2); YYACCEPT; }
+	 | input TOK_RCBRAC { *output=$1; free($2); dumpCHR(output, 1); YYACCEPT; }
      ;
 
 input : { cchr_init(&$$); }
@@ -99,6 +101,10 @@ tokenlist : tokenlist token { $$.list=$1.list; alist_addall($$.list,$2.list); al
           ;
 
 etokenlist : etokenlist etoken { $$.list=$1.list; alist_addall($$.list,$2.list); alist_free($2.list); }
+           | %prec PRE_ETLIST { alist_init($$.list); }
+           ;
+
+stokenlist : stokenlist stoken { $$.list=$1.list; alist_addall($$.list,$2.list); alist_free($2.list); }
            | %prec PRE_ETLIST { alist_init($$.list); }
            ;
 
@@ -116,6 +122,7 @@ token : literal {
 		    alist_add($$.list,$2);
 		    free($3);
 		}
+	  | TOK_LCBRAC stokenlist TOK_RCBRAC { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_addall($$.list,$2.list); alist_new($$.list,tok); tok->data=$3; tok->type=TOKEN_TYPE_LIT; alist_free($2.list); }
       | TOK_FUNC TOK_RRBRAC { 
     		    alist_init($$.list);
 		    token_t *tok;
@@ -155,9 +162,14 @@ etoken : token
 	   | TOK_SYMBAT { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_SYMB; alist_new($$.list,tok); tok->data=malloc(2); strcpy(tok->data,"@"); tok->type=TOKEN_TYPE_LIT;}
 	   ;
 
+stoken : etoken
+       | TOK_SEMI { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; }
+	   ;
+
 exprlist : TOK_TRUE { free($1); alist_init($$.list); }
 		 | tokenlist %prec PRE_ELIST { alist_init($$.list); alist_add($$.list,$1); }
 		 | exprlist TOK_COMMA tokenlist { $$=$1; alist_add($$.list,$3); free($2); }
+		 ;
 
 arglist : etokenlist %prec PRE_ENDALIST { $$.type = TOKEN_TYPE_FUNC; alist_init($$.args); $$.data=NULL; alist_add($$.args,$1); }
 		 | arglist TOK_COMMA etokenlist { $$=$1; alist_add($$.args,$3); free($2); }
@@ -272,7 +284,7 @@ void dumpRule(rule_t *rule,int level) {
   }
   printIndent(level); fprintf(stderr,"nGuard=%i;\n",alist_len(rule->guard.list));
   int j4=0;
-  while (j3<alist_len(rule->guard.list)) {
+  while (j4<alist_len(rule->guard.list)) {
     printIndent(level); fprintf(stderr,"guard[%i]='",j4); dumpExpr(alist_ptr(rule->guard.list,j4)); fprintf(stderr,"';\n");
     j4++;
   }

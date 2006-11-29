@@ -25,7 +25,7 @@ typedef enum enum_sem_rule_level {
 /* a rule occurence, listing in what rule and where a specific constraint occurs */
 typedef struct {
 	int rule; /* what rule? */
-	/* type of conlist in rule is determined by index of ruleocc list in sem_constr_t */
+	sem_rule_level_t type; /* in which clause of that rule */
 	int pos; /* position in that rule */
 } sem_ruleocc_t;
 
@@ -33,7 +33,7 @@ typedef struct {
 typedef struct {
   char *name;
   alist_declare(char*,types);
-  alist_declare(sem_ruleocc_t,occ[3]);
+  alist_declare(sem_ruleocc_t,occ);
 } sem_constr_t;
 
 /* the types of expression parts */

@@ -21,18 +21,14 @@
 /* initialize a sem_constr_t */
 void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->types);
-  alist_init(con->occ[SEM_RULE_LEVEL_KEPT]);
-  alist_init(con->occ[SEM_RULE_LEVEL_REM]);
-  alist_init(con->occ[SEM_RULE_LEVEL_BODY]);
+  alist_init(con->occ);
   con->name=name;
 }
 
 /* destruct a sem_constr_t */
 void static sem_constr_destruct(sem_constr_t *con) {
   free(con->name);
-  alist_free(con->occ[SEM_RULE_LEVEL_KEPT]);
-  alist_free(con->occ[SEM_RULE_LEVEL_REM]);
-  alist_free(con->occ[SEM_RULE_LEVEL_BODY]);
+  alist_free(con->occ);
   for (int i=0; i<alist_len(con->types); i++) {
     free(alist_get(con->types,i));
   }
@@ -365,7 +361,8 @@ int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 			sem_ruleocc_t r;
 			r.pos=alist_len(rule->con[type]);
 			r.rule=alist_len(cchr->rules);
-			alist_add(cons->occ[type],r);
+			r.type=type;
+			alist_add(cons->occ,r);
 			for (int s=0; s<alist_len(tok->args); s++) {
 				expr_t *expr=alist_ptr(tok->args,s);
 				sem_conoccarg_t coa;

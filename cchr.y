@@ -89,7 +89,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 %%
 
 main : input { *output=$1; }
-	 | input TOK_RCBRAC { *output=$1; free($2); dumpCHR(output, 1); YYACCEPT; }
+	 | input TOK_RCBRAC { *output=$1; free($2); /* dumpCHR(output, 1); */ YYACCEPT; }
      ;
 
 input : { cchr_init(&$$); }

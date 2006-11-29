@@ -137,6 +137,21 @@ void static csm_generate_expr(sem_expr_t *expr,char **tbl,output_t *out) {
 
 /* generate code for a guard (as a C expression) */
 void static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,output_t *out) {
+	for (int l=0; l<alist_len(rule->vars); l++) {
+		sem_var_t *var=alist_ptr(rule->vars,l);
+		if (var->local==1) {
+			output_fmt(out,"CSM_DEFLOCAL(%s,L_%s,",var->type,var->name);
+			csm_generate_expr(&(var->def),tbl,out);
+			output_fmt(out,") \\\n");
+		}
+	}
+	for (int i=0; i<alist_len(rule->lstmt[0]); i++) {
+		sem_expr_t *expr=alist_ptr(rule->lstmt[0],i);
+		output_indent(out,"CSM_NATIVE( { \\","} ) \\\n");
+		csm_generate_expr(expr,tbl,out);
+		output_string(out," \\");
+		output_unindent(out);
+	}
 	if (alist_len(rule->guard)>0) {
 		output_fmt(out,"CSM_IF(");
 		for (int s=0; s<alist_len(rule->guard); s++) {
@@ -154,14 +169,14 @@ void static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,outpu
 void static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid,char **tbl,output_t *out) {
 	for (int l=0; l<alist_len(rule->vars); l++) {
 		sem_var_t *var=alist_ptr(rule->vars,l);
-		if (var->local) {
+		if (var->local==2) {
 			output_fmt(out,"CSM_DEFLOCAL(%s,L_%s,",var->type,var->name);
 			csm_generate_expr(&(var->def),tbl,out);
 			output_fmt(out,") \\\n");
 		}
 	}
-	for (int i=0; i<alist_len(rule->lstmt[0]); i++) {
-		sem_expr_t *expr=alist_ptr(rule->lstmt[0],i);
+	for (int i=0; i<alist_len(rule->lstmt[1]); i++) {
+		sem_expr_t *expr=alist_ptr(rule->lstmt[1],i);
 		output_indent(out,"CSM_NATIVE( { \\","} ) \\\n");
 		csm_generate_expr(expr,tbl,out);
 		output_string(out," \\");

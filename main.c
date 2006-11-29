@@ -34,28 +34,34 @@ typedef struct YYLTYPE {
 YYLTYPE *yyget_lloc ( yyscan_t scanner );
 
 /* process an input stream, considering it CCHR code */
-void process_file_cchr(FILE *in, output_t *out, int *line) {
+int process_file_cchr(FILE *in, output_t *out, int *line) {
 	yyscan_t scanner;
 	yylex_init(&scanner);
 	yyset_in(in,scanner);
 	cchr_t cchr;
+	int ok=1;
 	if (!yyparse(scanner,&cchr,*line-1)) {
 		*line+=yyget_lloc(scanner)->last_line-1;
 		yylex_destroy(scanner);
 		sem_cchr_t sem_cchr;
-		sem_generate_cchr(&sem_cchr,&cchr);
+		int oko=sem_generate_cchr(&sem_cchr,&cchr);
 		destruct_cchr_t(&cchr);
-		csm_generate(&sem_cchr,out);
+		if (oko) {
+			csm_generate(&sem_cchr,out);
+		} else {
+			ok=0;
+		}
 		sem_cchr_destruct(&sem_cchr);
 	} else {
 		yylex_destroy(scanner);
-		return;
+		ok=0;
 	}
+	return ok;
 }
 
 /* process a single file. This function will read the passed file, byte per
  * byte, and call process_file_cchr when necessary */
-void process_file(FILE *in, output_t *out, int *line, char *inname, char *outname) {
+int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname) {
 	char wb[256];
 	int ws=0; /* size of word buffer */
 	char sb[256];
@@ -63,6 +69,7 @@ void process_file(FILE *in, output_t *out, int *line, char *inname, char *outnam
 	int as=1; /* accepting state (only after ; or } ) */
 	int c; /* character read */
 	int ls=1; /* only spaces have occured after last newline */
+	int ok=1; /* return value */
 	output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 	while ((c=getc(in)) != EOF) { /* loop over all bytes in the source */
 		if (c == '\n') {(*line)++;ls=1;} /* line-number counter */
@@ -109,8 +116,8 @@ void process_file(FILE *in, output_t *out, int *line, char *inname, char *outnam
 		if (c == '{') { /* begin of a block */
 			if (as && ws==4 && !strncmp(wb,"cchr",4)) {
 				output_fmt(out,"#line %i \"%s\"\n",output_get_line(out)+1,outname);
-				process_file_cchr(in,out,line);
-			    	output_fmt(out,"#line %i \"%s\"\n",*line,inname);
+				if (!process_file_cchr(in,out,line)) ok=0;
+			    output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 				ws=0;
 				ss=0;
 				as=1;
@@ -127,11 +134,13 @@ void process_file(FILE *in, output_t *out, int *line, char *inname, char *outnam
 	}
 	output_chars(out,wb,ws);
 	output_chars(out,sb,ss);
+	return ok;
 }
 
 
 int main(int argc, char *argv[])
 {
+	int ok=1;
 	for (int i=1; i<argc; i++) {
 	    char *arg=argv[i];
 	    int line=1;
@@ -144,10 +153,11 @@ int main(int argc, char *argv[])
 	    FILE *out=fopen(oa,"w");
 	    output_t oo;
 	    output_init(&oo,out);
-	    process_file(in,&oo,&line,arg,oa);
+	    if (!process_file(in,&oo,&line,arg,oa)) ok=0;
 	    free(oa);
 	    output_destruct(&oo);
 	    fclose(out);
 	    fclose(in);
 	}
+	return (!ok);
 }

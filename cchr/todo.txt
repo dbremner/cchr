@@ -17,4 +17,4 @@
 - anonymous variables (done: 26/11/2006)
 - #line output (done: 27/11/2006)
 - local statements in body between {} (done: 29/11/2006)
-
+- local vars/statements in guard (done: 29/11/2006)

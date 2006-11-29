@@ -76,7 +76,7 @@ typedef struct {
   char *name;
   char *type; /* copy of constr->types[], do not free */
   int occ[2]; /* occurences in removed,kept */
-  int local; /* whether is variable is local in the body */
+  int local; /* whether is variable is local in the body; 1=guard, 2=body */
   sem_expr_t def; /* only when local==1, this variable's definition */ 
 } sem_var_t;
 
@@ -86,7 +86,7 @@ typedef struct {
   alist_declare(sem_var_t,vars);
   alist_declare(sem_conocc_t,con[3]);
   alist_declare(sem_expr_t,guard);
-  alist_declare(sem_expr_t,lstmt[1]);
+  alist_declare(sem_expr_t,lstmt[2]);
 } sem_rule_t;
 
 /* a semantic tree, which is hardly a tree anymore */

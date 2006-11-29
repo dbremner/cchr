@@ -86,6 +86,7 @@ typedef struct {
   alist_declare(sem_var_t,vars);
   alist_declare(sem_conocc_t,con[3]);
   alist_declare(sem_expr_t,guard);
+  alist_declare(sem_expr_t,lstmt[1]);
 } sem_rule_t;
 
 /* a semantic tree, which is hardly a tree anymore */

@@ -81,7 +81,7 @@ char static **csm_generate_vartable(sem_cchr_t *chr,sem_rule_t *rule,int arem,in
 		int found=0;
 		sem_var_t *var=alist_ptr(rule->vars,i);
 		if (var->local) { /* local variables are accessed as LOCAL's in CSM */
-			tbl[i]=make_message("CSM_GETLOCAL(L_%s)",var->name);
+			tbl[i]=make_message("CSM_LOCAL(L_%s)",var->name);
 		} else { /* variable defined by head of rule */
 			sem_rule_level_t isrem=var->occ[SEM_RULE_LEVEL_REM] ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT;
 			for (int j=0; j<alist_len(rule->con[isrem]); j++) { /* search what rule defines it */
@@ -114,12 +114,17 @@ void static csm_destruct_vartable(sem_rule_t *rule,char **tbl) {
 
 /* generate code for an expression (as a C expression) */
 void static csm_generate_expr(sem_expr_t *expr,char **tbl,output_t *out) {
+	int dos=0;
 	for (int t=0; t<alist_len(expr->parts); t++) {
-		if (t) output_fmt(out," ");
+		if (dos) output_fmt(out," ");
+		dos=1;
 		sem_exprpart_t *ep=alist_ptr(expr->parts,t);
 		switch (ep->type) {
 			case SEM_EXPRPART_TYPE_LIT: {
+				if (!strcmp(ep->data.lit,"}")) {output_string(out," \\"); output_unindent(out);dos=0;}
 				output_fmt(out,"%s",ep->data.lit);
+				if (!strcmp(ep->data.lit,";")) {output_string(out," \\\n");dos=0;}
+				if (!strcmp(ep->data.lit,"{")) {output_indent(out," \\","");dos=0;}
 				break;
 			}
 			case SEM_EXPRPART_TYPE_VAR: {
@@ -150,15 +155,22 @@ void static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid
 	for (int l=0; l<alist_len(rule->vars); l++) {
 		sem_var_t *var=alist_ptr(rule->vars,l);
 		if (var->local) {
-			output_fmt(out,"CSM_SETLOCAL(%s,L_%s,",var->type,var->name);
+			output_fmt(out,"CSM_DEFLOCAL(%s,L_%s,",var->type,var->name);
 			csm_generate_expr(&(var->def),tbl,out);
 			output_fmt(out,") \\\n");
 		}
 	}
+	for (int i=0; i<alist_len(rule->lstmt[0]); i++) {
+		sem_expr_t *expr=alist_ptr(rule->lstmt[0],i);
+		output_indent(out,"CSM_NATIVE( { \\","} ) \\\n");
+		csm_generate_expr(expr,tbl,out);
+		output_string(out," \\");
+		output_unindent(out);
+	}
 	for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_BODY]); i++) {
 		sem_conocc_t *co=alist_ptr(rule->con[SEM_RULE_LEVEL_BODY],i);
 		for (int j=0; j<alist_len(co->args); j++) {
-			output_fmt(out,"CSM_SETLOCAL(%s,B%i_arg%i,",alist_get(alist_get(cchr->cons,co->constr).types,j),i+1,j+1);
+			output_fmt(out,"CSM_DEFLOCAL(%s,B%i_arg%i,",alist_get(alist_get(cchr->cons,co->constr).types,j),i+1,j+1);
 			csm_generate_expr(&(alist_get(co->args,j).expr),tbl,out);
 			output_fmt(out,") \\\n");
 		}
@@ -183,7 +195,7 @@ void static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid
 		} else {
 			output_fmt(out,"CSM_ADD(%s",con);
 			for (int l=0; l<alist_len(co->args); l++) {
-				output_fmt(out,",CSM_GETLOCAL(B%i_arg%i)",k+1,l+1);
+				output_fmt(out,",CSM_LOCAL(B%i_arg%i)",k+1,l+1);
 			}
 			output_fmt(out,") \\\n");
 		}

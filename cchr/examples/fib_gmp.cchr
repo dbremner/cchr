@@ -7,12 +7,41 @@ typedef struct {
 } bigint_t;
 
 cchr {
-  constraint fib(int,bigint_t);
+  constraint fib(int,bigint_t) destr(mpz_clear(Arg2.v));
   constraint init(int);
   
-  begin @ init(_) ==> bigint_t Z=, bigint_t Y=, {mpz_init_set_si(Z.v,1);mpz_init_set_si(Y.v,1);}, fib(0,Z), fib(1,Y);
-  calc @  init(Max), fib(N-1,M1), fib(N,M2) ==> N<Max | bigint_t Sum=, {mpz_init(Sum.v); mpz_add(Sum.v,M1.v,M2.v);}, fib(N+1, Sum);
-  fini @ fib(Max,_) \ init(Max) <=> true;
+  begin @ 
+      init(_) 
+    ==> 
+      bigint_t Z=, 
+      bigint_t Y=, 
+      {
+      	mpz_init_set_si(Z.v,1);
+      	mpz_init_set_si(Y.v,1);
+      },
+      fib(0,Z),
+      fib(1,Y);
+
+  calc @ 
+  	  init(Max),
+  	  fib(N-1,M1),
+  	  fib(N,M2)
+  	==>
+  	  N<Max 
+  	| 
+  	  bigint_t Sum=,
+  	  {
+  	  	mpz_init(Sum.v);
+  	  	mpz_add(Sum.v,M1.v,M2.v);
+  	  },
+  	  fib(N+1, Sum);
+
+  fini @ 
+  	  fib(Max,_) 
+  	\
+  	  init(Max) 
+  	<=>
+  	  true;
 }
 
 int main(int argc, char **argv) {

@@ -21,10 +21,29 @@
 #define CSM_DEBUG(...)
 #endif
 
-#define CSM_INDENT { CSM_DEBUG( for (int i=0; i<_global_runtime.debugindent; i++) fprintf(stderr,"  "); ) }
-#define CSM_PRINTF(INIT,TYPE) CSM_DEBUG( CSM_INDENT { fprintf(stderr,"%s%s: " FORMAT_##TYPE "#%i\n",INIT,#TYPE ARGLIST_##TYPE(CSM_START_DEF5_3_,CSM_START_SEP5_3_),(int)pid_self_); } )
-#define CSM_FMTOUT(FMT,...) CSM_DEBUG( { CSM_INDENT fprintf(stderr,FMT "\n",__VA_ARGS__); } )
-#define CSM_STROUT(FMT) CSM_DEBUG( { CSM_INDENT fputs(FMT "\n",stderr); } )
+#define CSM_INDENT { \
+	CSM_DEBUG( \
+		for (int i=0; i<_global_runtime.debugindent; i++) fprintf(stderr,"  "); \
+	) \
+}
+#define CSM_PRINTF(INIT,TYPE) CSM_DEBUG( \
+	CSM_INDENT \
+	{ \
+		fprintf(stderr,"%s%s: " FORMAT_##TYPE "#%i\n",INIT,#TYPE ARGLIST_##TYPE(CSM_START_DEF5_3_,CSM_START_SEP5_3_),(int)pid_self_); \
+	} \
+)
+#define CSM_FMTOUT(FMT,...) CSM_DEBUG( \
+	{ \
+		CSM_INDENT \
+		fprintf(stderr,FMT "\n",__VA_ARGS__); \
+	} \
+)
+#define CSM_STROUT(FMT) CSM_DEBUG( \
+	{ \
+		CSM_INDENT \
+		fputs(FMT "\n",stderr); \
+	} \
+)
 
 #define CSM_START_SEP1_ ,
 #define CSM_START_DEF1_(NAME) CCHR_CONS_TYPE_ ## NAME
@@ -117,14 +136,37 @@
 
 #define CSM_ARG(TYPE,NAME) (arg_##NAME)
 
-#define CSM_IF(EXP,CODE) { if (EXP) { CODE } }
+#define CSM_IF(EXP,CODE) { \
+	if (EXP) { \
+		CODE \
+	} \
+}
 #define CSM_DIFFSELF(VAR) (pid_self_ != pid_##VAR)
 #define CSM_DIFF(VAR1,VAR2) (pid_##VAR1 != pid_##VAR2)
-#define CSM_KILL_
-#define CSM_KILLSELF(TYPE) { if (pid_self_!=DCLS_EMPTY_PID) { DESTRUCT_##TYPE(self_); dcls_empty(_global_runtime.store,pid_self_); CSM_FMTOUT("kill %i (self)",(int)pid_self_); } }
-#define CSM_KILL(VAR,TYPE) { DESTRUCT_##TYPE(VAR); dcls_empty(_global_runtime.store,pid_##VAR); CSM_FMTOUT("kill %i",(int)pid_##VAR); }
-#define CSM_LOOP(TYPE,VAR,CODE) { dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{CODE}) }
-#define CSM_END { CSM_DEBUG(_global_runtime.debugindent--; CSM_STROUT("end fire");) return; }
+#define CSM_KILLSELF(TYPE) { \
+	if (pid_self_!=DCLS_EMPTY_PID) { \
+		DESTRUCT_##TYPE(self_); \
+		dcls_empty(_global_runtime.store,pid_self_); \
+		CSM_FMTOUT("kill %i (self)",(int)pid_self_); \
+	} \
+}
+#define CSM_KILL(VAR,TYPE) { \
+	DESTRUCT_##TYPE(VAR); \
+	dcls_empty(_global_runtime.store,pid_##VAR); \
+	CSM_FMTOUT("kill %i",(int)pid_##VAR); \
+}
+#define CSM_LOOP(TYPE,VAR,CODE) { \
+	dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{ \
+		CODE \
+	}) \
+}
+#define CSM_END { \
+	CSM_DEBUG( \
+		_global_runtime.debugindent--; \
+		CSM_STROUT("end fire"); \
+	) \
+	return; \
+}
 #define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
 #define CSM_MAKE(TYPE) { \
 	if (doadd && pid_self_==DCLS_EMPTY_PID) { \
@@ -138,13 +180,29 @@
 
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid_self_) && dcls_get(_global_runtime.store,pid_self_).id == oldid)
 #define CSM_REGENSELF (dcls_get(_global_runtime.store,pid_self_).gen_num != oldgen)
-#define CSM_ADD(CON,...) { cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); }
-#define CSM_ADDE(CON) { cchr_fire_##CON(); }
-#define CSM_NEEDSELF { if (doadd) {cchr_store(pid_self_); doadd=0; CSM_FMTOUT("store %i",(int)pid_self_); } }
-#define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR; {local_##VAR = (EXPR);}
+#define CSM_ADD(CON,...) { \
+	cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); \
+}
+#define CSM_ADDE(CON) { \
+	cchr_fire_##CON(); \
+}
+#define CSM_NEEDSELF { \
+	if (doadd) { \
+		cchr_store(pid_self_); \
+		doadd=0; \
+		CSM_FMTOUT("store %i",(int)pid_self_); \
+	} \
+}
+#define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR; { \
+	local_##VAR = (EXPR); \
+}
 #define CSM_LOCAL(VAR) (local_##VAR)
-#define CSM_MESSAGE(...) {fprintf(stderr,__VA_ARGS__);}
-#define CSM_NATIVE(CODE) { CODE }
+#define CSM_MESSAGE(...) { \
+	fprintf(stderr,__VA_ARGS__); \
+}
+#define CSM_NATIVE(CODE) { \
+	CODE \
+}
 
 #define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
 #define CSM_MAKE_SEP1_ 

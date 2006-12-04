@@ -330,10 +330,10 @@ int static sem_generate_localstm(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr,
 }
 
 int static sem_generate_localvar(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr, int body) {
-	if (alist_len(expr->list)<4) return 0;
+	if (alist_len(expr->list)<3) return 0;
 	int j=0;
 	int pl=0;
-	while (j<alist_len(expr->list)-1) {
+	while (j<alist_len(expr->list)) {
 		token_t *ep=alist_ptr(expr->list,j);
 		if (ep->type==TOKEN_TYPE_LIT && !strcmp(ep->data,"=")) {
 			if (j<2) return 0;
@@ -347,7 +347,9 @@ int static sem_generate_localvar(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr,
 				}
 				sem_expr_t se;
 				sem_expr_init(&se);
-				if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,j+1,0)) return 0;
+				if (j<alist_len(expr->list)-1) {
+					if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,j+1,0)) return 0;
+				}
 				sem_var_t var;
 				sem_var_init_local(&var,copy_string(pep->data),type,&se,body);
 				alist_add(rule->vt.vars,var);

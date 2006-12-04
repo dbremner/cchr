@@ -193,9 +193,9 @@
 		CSM_FMTOUT("store %i",(int)pid_self_); \
 	} \
 }
-#define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR; { \
-	local_##VAR = (EXPR); \
-}
+#define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR = EXPR;
+#define CSM_DECLOCAL(TYPE,VAR) TYPE local_##VAR;
+
 #define CSM_LOCAL(VAR) (local_##VAR)
 #define CSM_MESSAGE(...) { \
 	fprintf(stderr,__VA_ARGS__); \

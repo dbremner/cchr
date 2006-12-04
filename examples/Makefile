@@ -24,8 +24,14 @@ gcd.2: gcd.1 arcs.gcd
 fib.c: fib.cchr bin/cchr
 	bin/cchr fib.cchr
 
+fib_gmp.c: fib_gmp.cchr bin/cchr
+	bin/cchr fib_gmp.cchr
+
 fib: fib.c cchr_csm.h
-	$(CC) -x c $(CFLAGS) $(LDFLAGS) -o fib fib.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib fib.c
+
+fib_gmp: fib_gmp.c cchr_csm.h
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp fib_gmp.c
 
 fib.debug: fib.c cchr_csm.h
 	$(CC) -DCSM_CONF_DEBUG -x c $(CFLAGS) $(LDFLAGS) -o fib.debug fib.c

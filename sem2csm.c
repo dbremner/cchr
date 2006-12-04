@@ -182,9 +182,14 @@ void static csm_generate_body(sem_cchr_t *cchr,sem_rule_t *rule,int arem,int aid
 	for (int l=0; l<alist_len(rule->vt.vars); l++) {
 		sem_var_t *var=alist_ptr(rule->vt.vars,l);
 		if (var->local==2) {
-			output_fmt(out,"CSM_DEFLOCAL(%s,L_%s,",var->type,var->name);
-			csm_generate_expr(&(var->def),tbl,out);
-			output_fmt(out,") \\\n");
+			if (alist_len(var->def.parts)>0) {
+				output_fmt(out,"CSM_DEFLOCAL(%s,L_%s,",var->type,var->name);
+				csm_generate_expr(&(var->def),tbl,out);
+				output_fmt(out,") \\\n");
+			} else {
+				output_fmt(out,"CSM_DECLOCAL(%s,L_%s) \\\n",var->type,var->name);
+			}
+			
 		}
 	}
 	for (int i=0; i<alist_len(rule->lstmt[1]); i++) {
@@ -348,12 +353,13 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 			output_string(out,"\n");
 		}
 		output_char(out,'\n');
-		if (alist_len(con->fmt.parts)>0) {
-			output_fmt(out,"#undef DESTRUCT_%s\n",conn);
-			output_fmt(out,"#define DESTRUCT_%s(PID) ",conn);
+		output_fmt(out,"#undef DESTRUCT_%s\n",conn);
+		output_fmt(out,"#define DESTRUCT_%s(PID) ",conn);
+		if (alist_len(con->destr.parts)>0) {
 			csm_generate_expr(&(con->destr),vt,out);
-			output_string(out,"\n");
 		}
+		output_string(out,"\n");
+			
 		for (int j=0; j<alist_len(con->occ); j++) {
 			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
 			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {

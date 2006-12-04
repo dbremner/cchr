@@ -27,6 +27,8 @@ void destruct_constr_t (constr_t *constr) {
   free(constr->name);
   for (int i=0; i<alist_len(constr->list); i++) free(alist_get(constr->list,i));
   alist_free(constr->list);
+  for (int i=0; i<alist_len(constr->args); i++) destruct_expr_t(alist_ptr(constr->args,i));
+  alist_free(constr->args);
 }
 
 void destruct_exprlist_t (exprlist_t *exprl) {

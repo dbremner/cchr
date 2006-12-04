@@ -1,17 +1,19 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 cchr {
-  constraint fib(int,uint64_t),init(int);
+  constraint fib(int,uint64_t) fmt("fib(%i,%llu)"),init(int) fmt("init(%i)") destr({fprintf(stderr,"[deleting init(%i)]\n",Arg1);});
   
   begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
   calc @  init(Max), fib(N-1,M1), fib(N,M2) ==> int NP=N, {NP++;}, NP<=Max | int Sum=M1+M2, {if (0) {NP--;}}, fib(NP, M1+M2);
-// fini @ init(_) <=> true; /* this removes init_1 before any fib_2 is generated */
+//  fini @ init(_) <=> true; /* this removes init_1 before any fib_2 is generated */
   fini @ fib(Max,_) \ init(Max) <=> true;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
   cchr_runtime_init();
-  cchr_add_init_1(92);
+  int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
+  cchr_add_init_1(a);
   dcls_iter(_global_runtime.store,j,CCHR_CONS_TYPE_fib_2,{
     cchr_entry_t *ent=dcls_ptr(_global_runtime.store,j);
     printf("fib(%i,%llu)\n",(int)(ent->data.fib_2.arg1),(unsigned long long)(ent->data.fib_2.arg2));

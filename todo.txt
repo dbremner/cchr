@@ -18,3 +18,5 @@
 - #line output (done: 27/11/2006)
 - local statements in body between {} (done: 29/11/2006)
 - local vars/statements in guard (done: 29/11/2006)
+- debug mode (done: 3/12/2006)
+- destructors (done: 4/12/2006)

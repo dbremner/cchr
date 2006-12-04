@@ -22,137 +22,160 @@ Grammar
     9 stokenlist: stokenlist stoken
    10           | /* empty */
 
-   11 token: literal
-   12      | TOK_FUNC arglist TOK_RRBRAC
-   13      | TOK_LCBRAC stokenlist TOK_RCBRAC
-   14      | TOK_FUNC TOK_RRBRAC
-   15      | TOK_SYMB
-   16      | TOK_LRBRAC etokenlist TOK_RRBRAC
+   11 functio: TOK_FUNC arglist TOK_RRBRAC
+   12        | TOK_FUNC TOK_RRBRAC
 
-   17 etoken: token
-   18       | TOK_SPIPE
-   19       | TOK_SYMBAT
+   13 token: literal
+   14      | functio
+   15      | string
+   16      | TOK_LCBRAC stokenlist TOK_RCBRAC
+   17      | TOK_SYMB
+   18      | TOK_LRBRAC TOK_RRBRAC
+   19      | TOK_LRBRAC arglist TOK_RRBRAC
 
-   20 stoken: etoken
-   21       | TOK_SEMI
+   20 etoken: token
+   21       | TOK_SPIPE
+   22       | TOK_SYMBAT
 
-   22 exprlist: TOK_TRUE
-   23         | tokenlist
-   24         | exprlist TOK_COMMA tokenlist
+   23 stoken: etoken
+   24       | TOK_SEMI
 
-   25 arglist: etokenlist
-   26        | arglist TOK_COMMA etokenlist
+   25 exprlist: TOK_TRUE
+   26         | tokenlist
+   27         | exprlist TOK_COMMA tokenlist
 
-   27 extlist: TOK_SYMB
-   28        | extlist TOK_COMMA TOK_SYMB
+   28 string: TOK_BSTRING stringparts TOK_ESTRING
 
-   29 literal: TOK_COMMA
-   30        | TOK_CONST
-   31        | TOK_OP
-   32        | TOK_AT
+   29 stringparts: /* empty */
+   30            | stringparts TOK_STRING
 
-   33 rname: TOK_SYMBAT
-   34      | /* empty */
+   31 arglist: etokenlist
+   32        | arglist TOK_COMMA etokenlist
 
-   35 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   36     | rname exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   37     | rname exprlist TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI
-   38     | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI
-   39     | rname exprlist TOK_SIMP exprlist TOK_SEMI
-   40     | rname exprlist TOK_PROP exprlist TOK_SEMI
+   33 extlist: TOK_SYMB
+   34        | extlist TOK_COMMA TOK_SYMB
 
-   41 stmt: TOK_CONSTRAINT constrlist TOK_SEMI
-   42     | TOK_EXTERN extlist TOK_SEMI
-   43     | rule
+   35 literal: TOK_COMMA
+   36        | TOK_CONST
+   37        | TOK_OP
+   38        | TOK_AT
 
-   44 constrlist: constr
-   45           | constrlist TOK_COMMA constr
+   39 rname: TOK_SYMBAT
+   40      | /* empty */
 
-   46 constr: TOK_FUNC typelist TOK_RRBRAC
+   41 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   42     | rname exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   43     | rname exprlist TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI
+   44     | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI
+   45     | rname exprlist TOK_SIMP exprlist TOK_SEMI
+   46     | rname exprlist TOK_PROP exprlist TOK_SEMI
 
-   47 typelist: /* empty */
-   48         | typelistc
+   47 stmt: TOK_CONSTRAINT constrlist TOK_SEMI
+   48     | TOK_EXTERN extlist TOK_SEMI
+   49     | rule
 
-   49 typelistc: type
-   50          | typelistc TOK_COMMA type
+   50 constrlist: constr
+   51           | constrlist TOK_COMMA constr
 
-   51 type: TOK_SYMB
-   52     | type TOK_SYMB
+   52 carglist: /* empty */
+   53         | carglist functio
+
+   54 constr: TOK_FUNC typelist TOK_RRBRAC carglist
+
+   55 typelist: /* empty */
+   56         | typelistc
+
+   57 typelistc: type
+   58          | typelistc TOK_COMMA type
+
+   59 type: TOK_SYMB
+   60     | type TOK_SYMB
 
 
 Terminals, with rules where they appear
 
 $end (0) 0
 error (256)
-TOK_CONSTRAINT (258) 41
-TOK_TRUE (259) 22
-TOK_LCBRAC (260) 13
-TOK_RCBRAC (261) 2 13
-TOK_SEMI (262) 21 35 36 37 38 39 40 41 42
-TOK_COMMA (263) 24 26 28 29 45 50
-TOK_AT (264) 32
-TOK_SIMP (265) 35 36 38 39
-TOK_PROP (266) 37 40
-TOK_SPIPE (267) 18 35 36 37
-TOK_BSLASH (268) 35 38
-TOK_LRBRAC (269) 16
-TOK_RRBRAC (270) 12 14 16 46
-TOK_FUNC (271) 12 14 46
-TOK_SYMBAT (272) 19 33
-TOK_CONST (273) 30
-TOK_SYMB (274) 15 27 28 51 52
-TOK_OP (275) 31
-TOK_EXTERN (276) 42
-TOK_ERROR (277)
-PRE_ENDALIST (278)
-PRE_ELIST (279)
-PRE_ETLIST (280)
+TOK_CONSTRAINT (258) 47
+TOK_TRUE (259) 25
+TOK_LCBRAC (260) 16
+TOK_RCBRAC (261) 2 16
+TOK_SEMI (262) 24 41 42 43 44 45 46 47 48
+TOK_COMMA (263) 27 32 34 35 51 58
+TOK_AT (264) 38
+TOK_SIMP (265) 41 42 44 45
+TOK_PROP (266) 43 46
+TOK_SPIPE (267) 21 41 42 43
+TOK_BSLASH (268) 41 44
+TOK_LRBRAC (269) 18 19
+TOK_RRBRAC (270) 11 12 18 19 54
+TOK_FUNC (271) 11 12 54
+TOK_SYMBAT (272) 22 39
+TOK_CONST (273) 36
+TOK_SYMB (274) 17 33 34 59 60
+TOK_OP (275) 37
+TOK_EXTERN (276) 48
+TOK_BSTRING (277) 28
+TOK_STRING (278) 30
+TOK_ESTRING (279) 28
+TOK_ERROR (280)
+PRE_ENDALIST (281)
+PRE_ELIST (282)
+PRE_ETLIST (283)
 
 
 Nonterminals, with rules where they appear
 
-$accept (26)
+$accept (29)
     on left: 0
-main (27)
+main (30)
     on left: 1 2, on right: 0
-input (28)
+input (31)
     on left: 3 4, on right: 1 2 4
-tokenlist (29)
-    on left: 5 6, on right: 5 23 24
-etokenlist (30)
-    on left: 7 8, on right: 7 16 25 26
-stokenlist (31)
-    on left: 9 10, on right: 9 13
-token (32)
-    on left: 11 12 13 14 15 16, on right: 5 17
-etoken (33)
-    on left: 17 18 19, on right: 7 20
-stoken (34)
-    on left: 20 21, on right: 9
-exprlist (35)
-    on left: 22 23 24, on right: 24 35 36 37 38 39 40
-arglist (36)
-    on left: 25 26, on right: 12 26
-extlist (37)
-    on left: 27 28, on right: 28 42
-literal (38)
-    on left: 29 30 31 32, on right: 11
-rname (39)
-    on left: 33 34, on right: 35 36 37 38 39 40
-rule (40)
-    on left: 35 36 37 38 39 40, on right: 43
-stmt (41)
-    on left: 41 42 43, on right: 4
-constrlist (42)
-    on left: 44 45, on right: 41 45
-constr (43)
-    on left: 46, on right: 44 45
-typelist (44)
-    on left: 47 48, on right: 46
-typelistc (45)
-    on left: 49 50, on right: 48 50
-type (46)
-    on left: 51 52, on right: 49 50 52
+tokenlist (32)
+    on left: 5 6, on right: 5 26 27
+etokenlist (33)
+    on left: 7 8, on right: 7 31 32
+stokenlist (34)
+    on left: 9 10, on right: 9 16
+functio (35)
+    on left: 11 12, on right: 14 53
+token (36)
+    on left: 13 14 15 16 17 18 19, on right: 5 20
+etoken (37)
+    on left: 20 21 22, on right: 7 23
+stoken (38)
+    on left: 23 24, on right: 9
+exprlist (39)
+    on left: 25 26 27, on right: 27 41 42 43 44 45 46
+string (40)
+    on left: 28, on right: 15
+stringparts (41)
+    on left: 29 30, on right: 28 30
+arglist (42)
+    on left: 31 32, on right: 11 19 32
+extlist (43)
+    on left: 33 34, on right: 34 48
+literal (44)
+    on left: 35 36 37 38, on right: 13
+rname (45)
+    on left: 39 40, on right: 41 42 43 44 45 46
+rule (46)
+    on left: 41 42 43 44 45 46, on right: 49
+stmt (47)
+    on left: 47 48 49, on right: 4
+constrlist (48)
+    on left: 50 51, on right: 47 51
+carglist (49)
+    on left: 52 53, on right: 53 54
+constr (50)
+    on left: 54, on right: 50 51
+typelist (51)
+    on left: 55 56, on right: 54
+typelistc (52)
+    on left: 57 58, on right: 56 58
+type (53)
+    on left: 59 60, on right: 57 58 60
 
 
 state 0
@@ -184,7 +207,7 @@ state 2
     TOK_EXTERN      shift, and go to state 7
 
     $end      reduce using rule 1 (main)
-    $default  reduce using rule 34 (rname)
+    $default  reduce using rule 40 (rname)
 
     rname  go to state 8
     rule   go to state 9
@@ -200,7 +223,7 @@ state 3
 
 state 4
 
-   41 stmt: TOK_CONSTRAINT . constrlist TOK_SEMI
+   47 stmt: TOK_CONSTRAINT . constrlist TOK_SEMI
 
     TOK_FUNC  shift, and go to state 11
 
@@ -217,14 +240,14 @@ state 5
 
 state 6
 
-   33 rname: TOK_SYMBAT .
+   39 rname: TOK_SYMBAT .
 
-    $default  reduce using rule 33 (rname)
+    $default  reduce using rule 39 (rname)
 
 
 state 7
 
-   42 stmt: TOK_EXTERN . extlist TOK_SEMI
+   48 stmt: TOK_EXTERN . extlist TOK_SEMI
 
     TOK_SYMB  shift, and go to state 14
 
@@ -233,12 +256,12 @@ state 7
 
 state 8
 
-   35 rule: rname . exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   36     | rname . exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   37     | rname . exprlist TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI
-   38     | rname . exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI
-   39     | rname . exprlist TOK_SIMP exprlist TOK_SEMI
-   40     | rname . exprlist TOK_PROP exprlist TOK_SEMI
+   41 rule: rname . exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   42     | rname . exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   43     | rname . exprlist TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI
+   44     | rname . exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI
+   45     | rname . exprlist TOK_SIMP exprlist TOK_SEMI
+   46     | rname . exprlist TOK_PROP exprlist TOK_SEMI
 
     TOK_TRUE  shift, and go to state 16
 
@@ -250,9 +273,9 @@ state 8
 
 state 9
 
-   43 stmt: rule .
+   49 stmt: rule .
 
-    $default  reduce using rule 43 (stmt)
+    $default  reduce using rule 49 (stmt)
 
 
 state 10
@@ -264,11 +287,11 @@ state 10
 
 state 11
 
-   46 constr: TOK_FUNC . typelist TOK_RRBRAC
+   54 constr: TOK_FUNC . typelist TOK_RRBRAC carglist
 
     TOK_SYMB  shift, and go to state 19
 
-    $default  reduce using rule 47 (typelist)
+    $default  reduce using rule 55 (typelist)
 
     typelist   go to state 20
     typelistc  go to state 21
@@ -277,8 +300,8 @@ state 11
 
 state 12
 
-   41 stmt: TOK_CONSTRAINT constrlist . TOK_SEMI
-   45 constrlist: constrlist . TOK_COMMA constr
+   47 stmt: TOK_CONSTRAINT constrlist . TOK_SEMI
+   51 constrlist: constrlist . TOK_COMMA constr
 
     TOK_SEMI   shift, and go to state 23
     TOK_COMMA  shift, and go to state 24
@@ -286,22 +309,22 @@ state 12
 
 state 13
 
-   44 constrlist: constr .
+   50 constrlist: constr .
 
-    $default  reduce using rule 44 (constrlist)
+    $default  reduce using rule 50 (constrlist)
 
 
 state 14
 
-   27 extlist: TOK_SYMB .
+   33 extlist: TOK_SYMB .
 
-    $default  reduce using rule 27 (extlist)
+    $default  reduce using rule 33 (extlist)
 
 
 state 15
 
-   28 extlist: extlist . TOK_COMMA TOK_SYMB
-   42 stmt: TOK_EXTERN extlist . TOK_SEMI
+   34 extlist: extlist . TOK_COMMA TOK_SYMB
+   48 stmt: TOK_EXTERN extlist . TOK_SEMI
 
     TOK_SEMI   shift, and go to state 25
     TOK_COMMA  shift, and go to state 26
@@ -309,645 +332,725 @@ state 15
 
 state 16
 
-   22 exprlist: TOK_TRUE .
+   25 exprlist: TOK_TRUE .
 
-    $default  reduce using rule 22 (exprlist)
+    $default  reduce using rule 25 (exprlist)
 
 
 state 17
 
     5 tokenlist: tokenlist . token
-   23 exprlist: tokenlist .
+   26 exprlist: tokenlist .
 
-    TOK_LCBRAC  shift, and go to state 27
-    TOK_AT      shift, and go to state 29
-    TOK_LRBRAC  shift, and go to state 30
-    TOK_FUNC    shift, and go to state 31
-    TOK_CONST   shift, and go to state 32
-    TOK_SYMB    shift, and go to state 33
-    TOK_OP      shift, and go to state 34
+    TOK_LCBRAC   shift, and go to state 27
+    TOK_AT       shift, and go to state 29
+    TOK_LRBRAC   shift, and go to state 30
+    TOK_FUNC     shift, and go to state 31
+    TOK_CONST    shift, and go to state 32
+    TOK_SYMB     shift, and go to state 33
+    TOK_OP       shift, and go to state 34
+    TOK_BSTRING  shift, and go to state 35
 
-    $default  reduce using rule 23 (exprlist)
+    $default  reduce using rule 26 (exprlist)
 
-    token    go to state 35
-    literal  go to state 36
+    functio  go to state 36
+    token    go to state 37
+    string   go to state 38
+    literal  go to state 39
 
 
 state 18
 
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   35 rule: rname exprlist . TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   36     | rname exprlist . TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   37     | rname exprlist . TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI
-   38     | rname exprlist . TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI
-   39     | rname exprlist . TOK_SIMP exprlist TOK_SEMI
-   40     | rname exprlist . TOK_PROP exprlist TOK_SEMI
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   41 rule: rname exprlist . TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   42     | rname exprlist . TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   43     | rname exprlist . TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI
+   44     | rname exprlist . TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI
+   45     | rname exprlist . TOK_SIMP exprlist TOK_SEMI
+   46     | rname exprlist . TOK_PROP exprlist TOK_SEMI
 
-    TOK_COMMA   shift, and go to state 37
-    TOK_SIMP    shift, and go to state 38
-    TOK_PROP    shift, and go to state 39
-    TOK_BSLASH  shift, and go to state 40
+    TOK_COMMA   shift, and go to state 40
+    TOK_SIMP    shift, and go to state 41
+    TOK_PROP    shift, and go to state 42
+    TOK_BSLASH  shift, and go to state 43
 
 
 state 19
 
-   51 type: TOK_SYMB .
+   59 type: TOK_SYMB .
 
-    $default  reduce using rule 51 (type)
+    $default  reduce using rule 59 (type)
 
 
 state 20
 
-   46 constr: TOK_FUNC typelist . TOK_RRBRAC
+   54 constr: TOK_FUNC typelist . TOK_RRBRAC carglist
 
-    TOK_RRBRAC  shift, and go to state 41
+    TOK_RRBRAC  shift, and go to state 44
 
 
 state 21
 
-   48 typelist: typelistc .
-   50 typelistc: typelistc . TOK_COMMA type
+   56 typelist: typelistc .
+   58 typelistc: typelistc . TOK_COMMA type
 
-    TOK_COMMA  shift, and go to state 42
+    TOK_COMMA  shift, and go to state 45
 
-    $default  reduce using rule 48 (typelist)
+    $default  reduce using rule 56 (typelist)
 
 
 state 22
 
-   49 typelistc: type .
-   52 type: type . TOK_SYMB
+   57 typelistc: type .
+   60 type: type . TOK_SYMB
 
-    TOK_SYMB  shift, and go to state 43
+    TOK_SYMB  shift, and go to state 46
 
-    $default  reduce using rule 49 (typelistc)
+    $default  reduce using rule 57 (typelistc)
 
 
 state 23
 
-   41 stmt: TOK_CONSTRAINT constrlist TOK_SEMI .
+   47 stmt: TOK_CONSTRAINT constrlist TOK_SEMI .
 
-    $default  reduce using rule 41 (stmt)
+    $default  reduce using rule 47 (stmt)
 
 
 state 24
 
-   45 constrlist: constrlist TOK_COMMA . constr
+   51 constrlist: constrlist TOK_COMMA . constr
 
     TOK_FUNC  shift, and go to state 11
 
-    constr  go to state 44
+    constr  go to state 47
 
 
 state 25
 
-   42 stmt: TOK_EXTERN extlist TOK_SEMI .
+   48 stmt: TOK_EXTERN extlist TOK_SEMI .
 
-    $default  reduce using rule 42 (stmt)
+    $default  reduce using rule 48 (stmt)
 
 
 state 26
 
-   28 extlist: extlist TOK_COMMA . TOK_SYMB
+   34 extlist: extlist TOK_COMMA . TOK_SYMB
 
-    TOK_SYMB  shift, and go to state 45
+    TOK_SYMB  shift, and go to state 48
 
 
 state 27
 
-   13 token: TOK_LCBRAC . stokenlist TOK_RCBRAC
+   16 token: TOK_LCBRAC . stokenlist TOK_RCBRAC
 
     $default  reduce using rule 10 (stokenlist)
 
-    stokenlist  go to state 46
+    stokenlist  go to state 49
 
 
 state 28
 
-   29 literal: TOK_COMMA .
+   35 literal: TOK_COMMA .
 
-    $default  reduce using rule 29 (literal)
+    $default  reduce using rule 35 (literal)
 
 
 state 29
 
-   32 literal: TOK_AT .
+   38 literal: TOK_AT .
 
-    $default  reduce using rule 32 (literal)
+    $default  reduce using rule 38 (literal)
 
 
 state 30
 
-   16 token: TOK_LRBRAC . etokenlist TOK_RRBRAC
+   18 token: TOK_LRBRAC . TOK_RRBRAC
+   19      | TOK_LRBRAC . arglist TOK_RRBRAC
+
+    TOK_RRBRAC  shift, and go to state 50
 
     $default  reduce using rule 8 (etokenlist)
 
-    etokenlist  go to state 47
+    etokenlist  go to state 51
+    arglist     go to state 52
 
 
 state 31
 
-   12 token: TOK_FUNC . arglist TOK_RRBRAC
-   14      | TOK_FUNC . TOK_RRBRAC
+   11 functio: TOK_FUNC . arglist TOK_RRBRAC
+   12        | TOK_FUNC . TOK_RRBRAC
 
-    TOK_RRBRAC  shift, and go to state 48
+    TOK_RRBRAC  shift, and go to state 53
 
     $default  reduce using rule 8 (etokenlist)
 
-    etokenlist  go to state 49
-    arglist     go to state 50
+    etokenlist  go to state 51
+    arglist     go to state 54
 
 
 state 32
 
-   30 literal: TOK_CONST .
+   36 literal: TOK_CONST .
 
-    $default  reduce using rule 30 (literal)
+    $default  reduce using rule 36 (literal)
 
 
 state 33
 
-   15 token: TOK_SYMB .
+   17 token: TOK_SYMB .
 
-    $default  reduce using rule 15 (token)
+    $default  reduce using rule 17 (token)
 
 
 state 34
 
-   31 literal: TOK_OP .
+   37 literal: TOK_OP .
 
-    $default  reduce using rule 31 (literal)
+    $default  reduce using rule 37 (literal)
 
 
 state 35
+
+   28 string: TOK_BSTRING . stringparts TOK_ESTRING
+
+    $default  reduce using rule 29 (stringparts)
+
+    stringparts  go to state 55
+
+
+state 36
+
+   14 token: functio .
+
+    $default  reduce using rule 14 (token)
+
+
+state 37
 
     5 tokenlist: tokenlist token .
 
     $default  reduce using rule 5 (tokenlist)
 
 
-state 36
-
-   11 token: literal .
-
-    $default  reduce using rule 11 (token)
-
-
-state 37
-
-   24 exprlist: exprlist TOK_COMMA . tokenlist
-
-    $default  reduce using rule 6 (tokenlist)
-
-    tokenlist  go to state 51
-
-
 state 38
 
-   36 rule: rname exprlist TOK_SIMP . exprlist TOK_SPIPE exprlist TOK_SEMI
-   39     | rname exprlist TOK_SIMP . exprlist TOK_SEMI
+   15 token: string .
 
-    TOK_TRUE  shift, and go to state 16
-
-    $default  reduce using rule 6 (tokenlist)
-
-    tokenlist  go to state 17
-    exprlist   go to state 52
+    $default  reduce using rule 15 (token)
 
 
 state 39
 
-   37 rule: rname exprlist TOK_PROP . exprlist TOK_SPIPE exprlist TOK_SEMI
-   40     | rname exprlist TOK_PROP . exprlist TOK_SEMI
-
-    TOK_TRUE  shift, and go to state 16
-
-    $default  reduce using rule 6 (tokenlist)
-
-    tokenlist  go to state 17
-    exprlist   go to state 53
-
-
-state 40
-
-   35 rule: rname exprlist TOK_BSLASH . exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   38     | rname exprlist TOK_BSLASH . exprlist TOK_SIMP exprlist TOK_SEMI
-
-    TOK_TRUE  shift, and go to state 16
-
-    $default  reduce using rule 6 (tokenlist)
-
-    tokenlist  go to state 17
-    exprlist   go to state 54
-
-
-state 41
-
-   46 constr: TOK_FUNC typelist TOK_RRBRAC .
-
-    $default  reduce using rule 46 (constr)
-
-
-state 42
-
-   50 typelistc: typelistc TOK_COMMA . type
-
-    TOK_SYMB  shift, and go to state 19
-
-    type  go to state 55
-
-
-state 43
-
-   52 type: type TOK_SYMB .
-
-    $default  reduce using rule 52 (type)
-
-
-state 44
-
-   45 constrlist: constrlist TOK_COMMA constr .
-
-    $default  reduce using rule 45 (constrlist)
-
-
-state 45
-
-   28 extlist: extlist TOK_COMMA TOK_SYMB .
-
-    $default  reduce using rule 28 (extlist)
-
-
-state 46
-
-    9 stokenlist: stokenlist . stoken
-   13 token: TOK_LCBRAC stokenlist . TOK_RCBRAC
-
-    TOK_LCBRAC  shift, and go to state 27
-    TOK_RCBRAC  shift, and go to state 56
-    TOK_SEMI    shift, and go to state 57
-    TOK_COMMA   shift, and go to state 28
-    TOK_AT      shift, and go to state 29
-    TOK_SPIPE   shift, and go to state 58
-    TOK_LRBRAC  shift, and go to state 30
-    TOK_FUNC    shift, and go to state 31
-    TOK_SYMBAT  shift, and go to state 59
-    TOK_CONST   shift, and go to state 32
-    TOK_SYMB    shift, and go to state 33
-    TOK_OP      shift, and go to state 34
-
-    token    go to state 60
-    etoken   go to state 61
-    stoken   go to state 62
-    literal  go to state 36
-
-
-state 47
-
-    7 etokenlist: etokenlist . etoken
-   16 token: TOK_LRBRAC etokenlist . TOK_RRBRAC
-
-    TOK_LCBRAC  shift, and go to state 27
-    TOK_COMMA   shift, and go to state 28
-    TOK_AT      shift, and go to state 29
-    TOK_SPIPE   shift, and go to state 58
-    TOK_LRBRAC  shift, and go to state 30
-    TOK_RRBRAC  shift, and go to state 63
-    TOK_FUNC    shift, and go to state 31
-    TOK_SYMBAT  shift, and go to state 59
-    TOK_CONST   shift, and go to state 32
-    TOK_SYMB    shift, and go to state 33
-    TOK_OP      shift, and go to state 34
-
-    token    go to state 60
-    etoken   go to state 64
-    literal  go to state 36
-
-
-state 48
-
-   14 token: TOK_FUNC TOK_RRBRAC .
-
-    $default  reduce using rule 14 (token)
-
-
-state 49
-
-    7 etokenlist: etokenlist . etoken
-   25 arglist: etokenlist .
-
-    TOK_LCBRAC  shift, and go to state 27
-    TOK_AT      shift, and go to state 29
-    TOK_SPIPE   shift, and go to state 58
-    TOK_LRBRAC  shift, and go to state 30
-    TOK_FUNC    shift, and go to state 31
-    TOK_SYMBAT  shift, and go to state 59
-    TOK_CONST   shift, and go to state 32
-    TOK_SYMB    shift, and go to state 33
-    TOK_OP      shift, and go to state 34
-
-    $default  reduce using rule 25 (arglist)
-
-    token    go to state 60
-    etoken   go to state 64
-    literal  go to state 36
-
-
-state 50
-
-   12 token: TOK_FUNC arglist . TOK_RRBRAC
-   26 arglist: arglist . TOK_COMMA etokenlist
-
-    TOK_COMMA   shift, and go to state 65
-    TOK_RRBRAC  shift, and go to state 66
-
-
-state 51
-
-    5 tokenlist: tokenlist . token
-   24 exprlist: exprlist TOK_COMMA tokenlist .
-
-    TOK_LCBRAC  shift, and go to state 27
-    TOK_AT      shift, and go to state 29
-    TOK_LRBRAC  shift, and go to state 30
-    TOK_FUNC    shift, and go to state 31
-    TOK_CONST   shift, and go to state 32
-    TOK_SYMB    shift, and go to state 33
-    TOK_OP      shift, and go to state 34
-
-    $default  reduce using rule 24 (exprlist)
-
-    token    go to state 35
-    literal  go to state 36
-
-
-state 52
-
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   36 rule: rname exprlist TOK_SIMP exprlist . TOK_SPIPE exprlist TOK_SEMI
-   39     | rname exprlist TOK_SIMP exprlist . TOK_SEMI
-
-    TOK_SEMI   shift, and go to state 67
-    TOK_COMMA  shift, and go to state 37
-    TOK_SPIPE  shift, and go to state 68
-
-
-state 53
-
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   37 rule: rname exprlist TOK_PROP exprlist . TOK_SPIPE exprlist TOK_SEMI
-   40     | rname exprlist TOK_PROP exprlist . TOK_SEMI
-
-    TOK_SEMI   shift, and go to state 69
-    TOK_COMMA  shift, and go to state 37
-    TOK_SPIPE  shift, and go to state 70
-
-
-state 54
-
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   35 rule: rname exprlist TOK_BSLASH exprlist . TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
-   38     | rname exprlist TOK_BSLASH exprlist . TOK_SIMP exprlist TOK_SEMI
-
-    TOK_COMMA  shift, and go to state 37
-    TOK_SIMP   shift, and go to state 71
-
-
-state 55
-
-   50 typelistc: typelistc TOK_COMMA type .
-   52 type: type . TOK_SYMB
-
-    TOK_SYMB  shift, and go to state 43
-
-    $default  reduce using rule 50 (typelistc)
-
-
-state 56
-
-   13 token: TOK_LCBRAC stokenlist TOK_RCBRAC .
+   13 token: literal .
 
     $default  reduce using rule 13 (token)
 
 
+state 40
+
+   27 exprlist: exprlist TOK_COMMA . tokenlist
+
+    $default  reduce using rule 6 (tokenlist)
+
+    tokenlist  go to state 56
+
+
+state 41
+
+   42 rule: rname exprlist TOK_SIMP . exprlist TOK_SPIPE exprlist TOK_SEMI
+   45     | rname exprlist TOK_SIMP . exprlist TOK_SEMI
+
+    TOK_TRUE  shift, and go to state 16
+
+    $default  reduce using rule 6 (tokenlist)
+
+    tokenlist  go to state 17
+    exprlist   go to state 57
+
+
+state 42
+
+   43 rule: rname exprlist TOK_PROP . exprlist TOK_SPIPE exprlist TOK_SEMI
+   46     | rname exprlist TOK_PROP . exprlist TOK_SEMI
+
+    TOK_TRUE  shift, and go to state 16
+
+    $default  reduce using rule 6 (tokenlist)
+
+    tokenlist  go to state 17
+    exprlist   go to state 58
+
+
+state 43
+
+   41 rule: rname exprlist TOK_BSLASH . exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   44     | rname exprlist TOK_BSLASH . exprlist TOK_SIMP exprlist TOK_SEMI
+
+    TOK_TRUE  shift, and go to state 16
+
+    $default  reduce using rule 6 (tokenlist)
+
+    tokenlist  go to state 17
+    exprlist   go to state 59
+
+
+state 44
+
+   54 constr: TOK_FUNC typelist TOK_RRBRAC . carglist
+
+    $default  reduce using rule 52 (carglist)
+
+    carglist  go to state 60
+
+
+state 45
+
+   58 typelistc: typelistc TOK_COMMA . type
+
+    TOK_SYMB  shift, and go to state 19
+
+    type  go to state 61
+
+
+state 46
+
+   60 type: type TOK_SYMB .
+
+    $default  reduce using rule 60 (type)
+
+
+state 47
+
+   51 constrlist: constrlist TOK_COMMA constr .
+
+    $default  reduce using rule 51 (constrlist)
+
+
+state 48
+
+   34 extlist: extlist TOK_COMMA TOK_SYMB .
+
+    $default  reduce using rule 34 (extlist)
+
+
+state 49
+
+    9 stokenlist: stokenlist . stoken
+   16 token: TOK_LCBRAC stokenlist . TOK_RCBRAC
+
+    TOK_LCBRAC   shift, and go to state 27
+    TOK_RCBRAC   shift, and go to state 62
+    TOK_SEMI     shift, and go to state 63
+    TOK_COMMA    shift, and go to state 28
+    TOK_AT       shift, and go to state 29
+    TOK_SPIPE    shift, and go to state 64
+    TOK_LRBRAC   shift, and go to state 30
+    TOK_FUNC     shift, and go to state 31
+    TOK_SYMBAT   shift, and go to state 65
+    TOK_CONST    shift, and go to state 32
+    TOK_SYMB     shift, and go to state 33
+    TOK_OP       shift, and go to state 34
+    TOK_BSTRING  shift, and go to state 35
+
+    functio  go to state 36
+    token    go to state 66
+    etoken   go to state 67
+    stoken   go to state 68
+    string   go to state 38
+    literal  go to state 39
+
+
+state 50
+
+   18 token: TOK_LRBRAC TOK_RRBRAC .
+
+    $default  reduce using rule 18 (token)
+
+
+state 51
+
+    7 etokenlist: etokenlist . etoken
+   31 arglist: etokenlist .
+
+    TOK_LCBRAC   shift, and go to state 27
+    TOK_AT       shift, and go to state 29
+    TOK_SPIPE    shift, and go to state 64
+    TOK_LRBRAC   shift, and go to state 30
+    TOK_FUNC     shift, and go to state 31
+    TOK_SYMBAT   shift, and go to state 65
+    TOK_CONST    shift, and go to state 32
+    TOK_SYMB     shift, and go to state 33
+    TOK_OP       shift, and go to state 34
+    TOK_BSTRING  shift, and go to state 35
+
+    $default  reduce using rule 31 (arglist)
+
+    functio  go to state 36
+    token    go to state 66
+    etoken   go to state 69
+    string   go to state 38
+    literal  go to state 39
+
+
+state 52
+
+   19 token: TOK_LRBRAC arglist . TOK_RRBRAC
+   32 arglist: arglist . TOK_COMMA etokenlist
+
+    TOK_COMMA   shift, and go to state 70
+    TOK_RRBRAC  shift, and go to state 71
+
+
+state 53
+
+   12 functio: TOK_FUNC TOK_RRBRAC .
+
+    $default  reduce using rule 12 (functio)
+
+
+state 54
+
+   11 functio: TOK_FUNC arglist . TOK_RRBRAC
+   32 arglist: arglist . TOK_COMMA etokenlist
+
+    TOK_COMMA   shift, and go to state 70
+    TOK_RRBRAC  shift, and go to state 72
+
+
+state 55
+
+   28 string: TOK_BSTRING stringparts . TOK_ESTRING
+   30 stringparts: stringparts . TOK_STRING
+
+    TOK_STRING   shift, and go to state 73
+    TOK_ESTRING  shift, and go to state 74
+
+
+state 56
+
+    5 tokenlist: tokenlist . token
+   27 exprlist: exprlist TOK_COMMA tokenlist .
+
+    TOK_LCBRAC   shift, and go to state 27
+    TOK_AT       shift, and go to state 29
+    TOK_LRBRAC   shift, and go to state 30
+    TOK_FUNC     shift, and go to state 31
+    TOK_CONST    shift, and go to state 32
+    TOK_SYMB     shift, and go to state 33
+    TOK_OP       shift, and go to state 34
+    TOK_BSTRING  shift, and go to state 35
+
+    $default  reduce using rule 27 (exprlist)
+
+    functio  go to state 36
+    token    go to state 37
+    string   go to state 38
+    literal  go to state 39
+
+
 state 57
 
-   21 stoken: TOK_SEMI .
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   42 rule: rname exprlist TOK_SIMP exprlist . TOK_SPIPE exprlist TOK_SEMI
+   45     | rname exprlist TOK_SIMP exprlist . TOK_SEMI
 
-    $default  reduce using rule 21 (stoken)
+    TOK_SEMI   shift, and go to state 75
+    TOK_COMMA  shift, and go to state 40
+    TOK_SPIPE  shift, and go to state 76
 
 
 state 58
 
-   18 etoken: TOK_SPIPE .
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   43 rule: rname exprlist TOK_PROP exprlist . TOK_SPIPE exprlist TOK_SEMI
+   46     | rname exprlist TOK_PROP exprlist . TOK_SEMI
 
-    $default  reduce using rule 18 (etoken)
+    TOK_SEMI   shift, and go to state 77
+    TOK_COMMA  shift, and go to state 40
+    TOK_SPIPE  shift, and go to state 78
 
 
 state 59
 
-   19 etoken: TOK_SYMBAT .
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   41 rule: rname exprlist TOK_BSLASH exprlist . TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI
+   44     | rname exprlist TOK_BSLASH exprlist . TOK_SIMP exprlist TOK_SEMI
 
-    $default  reduce using rule 19 (etoken)
+    TOK_COMMA  shift, and go to state 40
+    TOK_SIMP   shift, and go to state 79
 
 
 state 60
 
-   17 etoken: token .
+   53 carglist: carglist . functio
+   54 constr: TOK_FUNC typelist TOK_RRBRAC carglist .
 
-    $default  reduce using rule 17 (etoken)
+    TOK_FUNC  shift, and go to state 31
+
+    $default  reduce using rule 54 (constr)
+
+    functio  go to state 80
 
 
 state 61
 
-   20 stoken: etoken .
+   58 typelistc: typelistc TOK_COMMA type .
+   60 type: type . TOK_SYMB
 
-    $default  reduce using rule 20 (stoken)
+    TOK_SYMB  shift, and go to state 46
+
+    $default  reduce using rule 58 (typelistc)
 
 
 state 62
+
+   16 token: TOK_LCBRAC stokenlist TOK_RCBRAC .
+
+    $default  reduce using rule 16 (token)
+
+
+state 63
+
+   24 stoken: TOK_SEMI .
+
+    $default  reduce using rule 24 (stoken)
+
+
+state 64
+
+   21 etoken: TOK_SPIPE .
+
+    $default  reduce using rule 21 (etoken)
+
+
+state 65
+
+   22 etoken: TOK_SYMBAT .
+
+    $default  reduce using rule 22 (etoken)
+
+
+state 66
+
+   20 etoken: token .
+
+    $default  reduce using rule 20 (etoken)
+
+
+state 67
+
+   23 stoken: etoken .
+
+    $default  reduce using rule 23 (stoken)
+
+
+state 68
 
     9 stokenlist: stokenlist stoken .
 
     $default  reduce using rule 9 (stokenlist)
 
 
-state 63
-
-   16 token: TOK_LRBRAC etokenlist TOK_RRBRAC .
-
-    $default  reduce using rule 16 (token)
-
-
-state 64
+state 69
 
     7 etokenlist: etokenlist etoken .
 
     $default  reduce using rule 7 (etokenlist)
 
 
-state 65
+state 70
 
-   26 arglist: arglist TOK_COMMA . etokenlist
+   32 arglist: arglist TOK_COMMA . etokenlist
 
     $default  reduce using rule 8 (etokenlist)
 
-    etokenlist  go to state 72
-
-
-state 66
-
-   12 token: TOK_FUNC arglist TOK_RRBRAC .
-
-    $default  reduce using rule 12 (token)
-
-
-state 67
-
-   39 rule: rname exprlist TOK_SIMP exprlist TOK_SEMI .
-
-    $default  reduce using rule 39 (rule)
-
-
-state 68
-
-   36 rule: rname exprlist TOK_SIMP exprlist TOK_SPIPE . exprlist TOK_SEMI
-
-    TOK_TRUE  shift, and go to state 16
-
-    $default  reduce using rule 6 (tokenlist)
-
-    tokenlist  go to state 17
-    exprlist   go to state 73
-
-
-state 69
-
-   40 rule: rname exprlist TOK_PROP exprlist TOK_SEMI .
-
-    $default  reduce using rule 40 (rule)
-
-
-state 70
-
-   37 rule: rname exprlist TOK_PROP exprlist TOK_SPIPE . exprlist TOK_SEMI
-
-    TOK_TRUE  shift, and go to state 16
-
-    $default  reduce using rule 6 (tokenlist)
-
-    tokenlist  go to state 17
-    exprlist   go to state 74
+    etokenlist  go to state 81
 
 
 state 71
 
-   35 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP . exprlist TOK_SPIPE exprlist TOK_SEMI
-   38     | rname exprlist TOK_BSLASH exprlist TOK_SIMP . exprlist TOK_SEMI
+   19 token: TOK_LRBRAC arglist TOK_RRBRAC .
 
-    TOK_TRUE  shift, and go to state 16
-
-    $default  reduce using rule 6 (tokenlist)
-
-    tokenlist  go to state 17
-    exprlist   go to state 75
+    $default  reduce using rule 19 (token)
 
 
 state 72
 
-    7 etokenlist: etokenlist . etoken
-   26 arglist: arglist TOK_COMMA etokenlist .
+   11 functio: TOK_FUNC arglist TOK_RRBRAC .
 
-    TOK_LCBRAC  shift, and go to state 27
-    TOK_AT      shift, and go to state 29
-    TOK_SPIPE   shift, and go to state 58
-    TOK_LRBRAC  shift, and go to state 30
-    TOK_FUNC    shift, and go to state 31
-    TOK_SYMBAT  shift, and go to state 59
-    TOK_CONST   shift, and go to state 32
-    TOK_SYMB    shift, and go to state 33
-    TOK_OP      shift, and go to state 34
-
-    $default  reduce using rule 26 (arglist)
-
-    token    go to state 60
-    etoken   go to state 64
-    literal  go to state 36
+    $default  reduce using rule 11 (functio)
 
 
 state 73
 
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   36 rule: rname exprlist TOK_SIMP exprlist TOK_SPIPE exprlist . TOK_SEMI
+   30 stringparts: stringparts TOK_STRING .
 
-    TOK_SEMI   shift, and go to state 76
-    TOK_COMMA  shift, and go to state 37
+    $default  reduce using rule 30 (stringparts)
 
 
 state 74
 
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   37 rule: rname exprlist TOK_PROP exprlist TOK_SPIPE exprlist . TOK_SEMI
+   28 string: TOK_BSTRING stringparts TOK_ESTRING .
 
-    TOK_SEMI   shift, and go to state 77
-    TOK_COMMA  shift, and go to state 37
+    $default  reduce using rule 28 (string)
 
 
 state 75
 
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   35 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist . TOK_SPIPE exprlist TOK_SEMI
-   38     | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist . TOK_SEMI
+   45 rule: rname exprlist TOK_SIMP exprlist TOK_SEMI .
 
-    TOK_SEMI   shift, and go to state 78
-    TOK_COMMA  shift, and go to state 37
-    TOK_SPIPE  shift, and go to state 79
+    $default  reduce using rule 45 (rule)
 
 
 state 76
 
-   36 rule: rname exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI .
-
-    $default  reduce using rule 36 (rule)
-
-
-state 77
-
-   37 rule: rname exprlist TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI .
-
-    $default  reduce using rule 37 (rule)
-
-
-state 78
-
-   38 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI .
-
-    $default  reduce using rule 38 (rule)
-
-
-state 79
-
-   35 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE . exprlist TOK_SEMI
+   42 rule: rname exprlist TOK_SIMP exprlist TOK_SPIPE . exprlist TOK_SEMI
 
     TOK_TRUE  shift, and go to state 16
 
     $default  reduce using rule 6 (tokenlist)
 
     tokenlist  go to state 17
-    exprlist   go to state 80
+    exprlist   go to state 82
+
+
+state 77
+
+   46 rule: rname exprlist TOK_PROP exprlist TOK_SEMI .
+
+    $default  reduce using rule 46 (rule)
+
+
+state 78
+
+   43 rule: rname exprlist TOK_PROP exprlist TOK_SPIPE . exprlist TOK_SEMI
+
+    TOK_TRUE  shift, and go to state 16
+
+    $default  reduce using rule 6 (tokenlist)
+
+    tokenlist  go to state 17
+    exprlist   go to state 83
+
+
+state 79
+
+   41 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP . exprlist TOK_SPIPE exprlist TOK_SEMI
+   44     | rname exprlist TOK_BSLASH exprlist TOK_SIMP . exprlist TOK_SEMI
+
+    TOK_TRUE  shift, and go to state 16
+
+    $default  reduce using rule 6 (tokenlist)
+
+    tokenlist  go to state 17
+    exprlist   go to state 84
 
 
 state 80
 
-   24 exprlist: exprlist . TOK_COMMA tokenlist
-   35 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist . TOK_SEMI
+   53 carglist: carglist functio .
 
-    TOK_SEMI   shift, and go to state 81
-    TOK_COMMA  shift, and go to state 37
+    $default  reduce using rule 53 (carglist)
 
 
 state 81
 
-   35 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI .
+    7 etokenlist: etokenlist . etoken
+   32 arglist: arglist TOK_COMMA etokenlist .
 
-    $default  reduce using rule 35 (rule)
+    TOK_LCBRAC   shift, and go to state 27
+    TOK_AT       shift, and go to state 29
+    TOK_SPIPE    shift, and go to state 64
+    TOK_LRBRAC   shift, and go to state 30
+    TOK_FUNC     shift, and go to state 31
+    TOK_SYMBAT   shift, and go to state 65
+    TOK_CONST    shift, and go to state 32
+    TOK_SYMB     shift, and go to state 33
+    TOK_OP       shift, and go to state 34
+    TOK_BSTRING  shift, and go to state 35
+
+    $default  reduce using rule 32 (arglist)
+
+    functio  go to state 36
+    token    go to state 66
+    etoken   go to state 69
+    string   go to state 38
+    literal  go to state 39
+
+
+state 82
+
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   42 rule: rname exprlist TOK_SIMP exprlist TOK_SPIPE exprlist . TOK_SEMI
+
+    TOK_SEMI   shift, and go to state 85
+    TOK_COMMA  shift, and go to state 40
+
+
+state 83
+
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   43 rule: rname exprlist TOK_PROP exprlist TOK_SPIPE exprlist . TOK_SEMI
+
+    TOK_SEMI   shift, and go to state 86
+    TOK_COMMA  shift, and go to state 40
+
+
+state 84
+
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   41 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist . TOK_SPIPE exprlist TOK_SEMI
+   44     | rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist . TOK_SEMI
+
+    TOK_SEMI   shift, and go to state 87
+    TOK_COMMA  shift, and go to state 40
+    TOK_SPIPE  shift, and go to state 88
+
+
+state 85
+
+   42 rule: rname exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI .
+
+    $default  reduce using rule 42 (rule)
+
+
+state 86
+
+   43 rule: rname exprlist TOK_PROP exprlist TOK_SPIPE exprlist TOK_SEMI .
+
+    $default  reduce using rule 43 (rule)
+
+
+state 87
+
+   44 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SEMI .
+
+    $default  reduce using rule 44 (rule)
+
+
+state 88
+
+   41 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE . exprlist TOK_SEMI
+
+    TOK_TRUE  shift, and go to state 16
+
+    $default  reduce using rule 6 (tokenlist)
+
+    tokenlist  go to state 17
+    exprlist   go to state 89
+
+
+state 89
+
+   27 exprlist: exprlist . TOK_COMMA tokenlist
+   41 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist . TOK_SEMI
+
+    TOK_SEMI   shift, and go to state 90
+    TOK_COMMA  shift, and go to state 40
+
+
+state 90
+
+   41 rule: rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist TOK_SEMI .
+
+    $default  reduce using rule 41 (rule)

@@ -36,11 +36,12 @@ typedef struct {
 struct _expr_t_struct {
   alist_declare(token_t,list);
 };
-
+ 
 /* a constraint having a name and a list of arguments (the types) */
 typedef struct {
   char *name;
   alist_declare(char*,list);
+  alist_declare(expr_t,args);
 } constr_t;
 
 /* a list of expressions */
@@ -71,5 +72,6 @@ void destruct_exprlist_t (exprlist_t *exprl);
 void destruct_constr_t (constr_t *constr);
 void destruct_expr_t (expr_t *expr);
 void destruct_token_t (token_t *tok);
+
 
 #endif

@@ -1,7 +1,9 @@
-/* A Bison parser, made by GNU Bison 1.875d.  */
+/* A Bison parser, made by GNU Bison 2.2.  */
 
-/* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+/* Skeleton interface for Bison's Yacc-like parsers in C
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,13 +17,21 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
-/* As a special exception, when this file is copied by Bison into a
-   Bison output file, you may use that output file without restriction.
-   This special exception was added by the Free Software Foundation
-   in version 1.24 of Bison.  */
+/* As a special exception, you may create a larger work that contains
+   part or all of the Bison parser skeleton and distribute that work
+   under terms of your choice, so long as that work isn't itself a
+   parser generator using the skeleton or a modified version thereof
+   as a parser skeleton.  Alternatively, if you modify or redistribute
+   the parser skeleton itself, you may (at your option) remove this
+   special exception, which will cause the skeleton and the resulting
+   Bison output files to be licensed under the GNU General Public
+   License without this special exception.
+
+   This special exception was added by the Free Software Foundation in
+   version 2.2 of Bison.  */
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -48,12 +58,16 @@
      TOK_SYMB = 274,
      TOK_OP = 275,
      TOK_EXTERN = 276,
-     TOK_ERROR = 277,
-     PRE_ENDALIST = 278,
-     PRE_ELIST = 279,
-     PRE_ETLIST = 280
+     TOK_BSTRING = 277,
+     TOK_STRING = 278,
+     TOK_ESTRING = 279,
+     TOK_ERROR = 280,
+     PRE_ENDALIST = 281,
+     PRE_ELIST = 282,
+     PRE_ETLIST = 283
    };
 #endif
+/* Tokens.  */
 #define TOK_CONSTRAINT 258
 #define TOK_TRUE 259
 #define TOK_LCBRAC 260
@@ -73,26 +87,31 @@
 #define TOK_SYMB 274
 #define TOK_OP 275
 #define TOK_EXTERN 276
-#define TOK_ERROR 277
-#define PRE_ENDALIST 278
-#define PRE_ELIST 279
-#define PRE_ETLIST 280
+#define TOK_BSTRING 277
+#define TOK_STRING 278
+#define TOK_ESTRING 279
+#define TOK_ERROR 280
+#define PRE_ENDALIST 281
+#define PRE_ELIST 282
+#define PRE_ETLIST 283
 
 
 
 
-#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+typedef union YYSTYPE
 #line 47 "cchr.y"
-typedef union YYSTYPE {
+{
   char *lit;
   expr_t expr;
   token_t token;
   constr_t constr;
   cchr_t cchr;
   exprlist_t elist;
-} YYSTYPE;
-/* Line 1285 of yacc.c.  */
-#line 96 "intermediate/cchr.tab.h"
+}
+/* Line 1528 of yacc.c.  */
+#line 114 "intermediate/cchr.tab.h"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -100,7 +119,7 @@ typedef union YYSTYPE {
 
 
 
-#if ! defined (YYLTYPE) && ! defined (YYLTYPE_IS_DECLARED)
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
 typedef struct YYLTYPE
 {
   int first_line;
@@ -112,7 +131,5 @@ typedef struct YYLTYPE
 # define YYLTYPE_IS_DECLARED 1
 # define YYLTYPE_IS_TRIVIAL 1
 #endif
-
-
 
 

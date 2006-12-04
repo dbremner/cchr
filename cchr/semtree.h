@@ -29,12 +29,7 @@ typedef struct {
 	int pos; /* position in that rule */
 } sem_ruleocc_t;
 
-/* a constraint, having a name, a list of types, and a list of rule occurences */
-typedef struct {
-  char *name;
-  alist_declare(char*,types);
-  alist_declare(sem_ruleocc_t,occ);
-} sem_constr_t;
+typedef struct _sem_expr_t_struct sem_expr_t;
 
 /* the types of expression parts */
 typedef enum enum_sem_exprpart_type {
@@ -55,9 +50,20 @@ typedef struct {
 } sem_exprpart_t;
 
 /* an expression being a list of expression parts */
-typedef struct {
+struct _sem_expr_t_struct {
   alist_declare(sem_exprpart_t,parts);
-} sem_expr_t;
+};
+
+
+/* a constraint, having a name, a list of types, and a list of rule occurences */
+typedef struct {
+  char *name;
+  alist_declare(char*,types);
+  alist_declare(sem_ruleocc_t,occ);
+  sem_expr_t fmt;
+  sem_expr_t destr;
+  /*alist_declare(sem_expr_t,fmtargs);*/
+} sem_constr_t;
 
 /* an argument of a constraint occurence (being a var in head constraints, or an expr in body constraints) */ 
 typedef union {
@@ -80,10 +86,15 @@ typedef struct {
   sem_expr_t def; /* only when local==1, this variable's definition */ 
 } sem_var_t;
 
+/* variable table */
+typedef struct {
+  alist_declare(sem_var_t,vars);
+} sem_vartable_t;
+
 /* a rule, having a (optional) name, a list of variables, a list of constraint occurences (in head & body), and a guard */
 typedef struct {
   char *name;
-  alist_declare(sem_var_t,vars);
+  sem_vartable_t vt;
   alist_declare(sem_conocc_t,con[3]);
   alist_declare(sem_expr_t,guard);
   alist_declare(sem_expr_t,lstmt[2]);

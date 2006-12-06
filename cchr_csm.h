@@ -11,6 +11,8 @@
 
 /* we need dcls */
 #include "dcls.h"
+/* and alist.h */
+#include "alist.h"
 
 #define CSM_STRINGIFY_(X) #X
 #define CSM_STRINGIFY(X) CSM_STRINGIFY_(X)
@@ -52,7 +54,11 @@
 #define CSM_START_DEF2_(NAME) \
   typedef struct { \
     ARGLIST_##NAME(CSM_START_DEF2_1_,CSM_START_SEP2_1_) \
+    RULEHOOKS_##NAME(CSM_CB_CLPH_D,CSM_SB_CLPH_S,) \
   } cchr_cons_ ## NAME ## _t;
+
+#define CSM_CB_CLPH_D(T,V,A) alist_declare(int,_ph_##V);
+#define CSM_CB_CLPH_S
 
 #define CSM_START_SEP2_1_
 #define CSM_START_DEF2_1_(CON,NAME,TYPE) TYPE NAME;
@@ -143,23 +149,32 @@
 }
 #define CSM_DIFFSELF(VAR) (pid_self_ != pid_##VAR)
 #define CSM_DIFF(VAR1,VAR2) (pid_##VAR1 != pid_##VAR2)
+
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
 		DESTRUCT_##TYPE(self_); \
+		RULEHOOKS_##TYPE(CSM_CB_FPH_D,CSM_CB_FPH_S,self_); \
 		dcls_empty(_global_runtime.store,pid_self_); \
 		CSM_FMTOUT("kill %i (self)",(int)pid_self_); \
 	} \
 }
+
 #define CSM_KILL(VAR,TYPE) { \
 	DESTRUCT_##TYPE(VAR); \
+	RULEHOOKS_##TYPE(CSM_CB_FPH_D,CSM_CB_FPH_S,VAR); \
 	dcls_empty(_global_runtime.store,pid_##VAR); \
 	CSM_FMTOUT("kill %i",(int)pid_##VAR); \
 }
+
 #define CSM_LOOP(TYPE,VAR,CODE) { \
 	dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{ \
 		CODE \
 	}) \
 }
+
+#define CSM_CB_FPH_D(T,V,A) { alist_free(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V); }
+#define CSM_CB_FPH_S
+
 #define CSM_END { \
 	CSM_DEBUG( \
 		_global_runtime.debugindent--; \
@@ -176,7 +191,11 @@
 	} \
 	oldid=dcls_get(_global_runtime.store,pid_self_).id; \
 	oldgen=dcls_get(_global_runtime.store,pid_self_).gen_num; \
+	RULEHOOKS_##TYPE(CSM_CB_PHI_D,CSM_CB_PHI_S,); \
 }
+
+#define CSM_CB_PHI_D(T,V,A) alist_init(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V);
+#define CSM_CB_PHI_S
 
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid_self_) && dcls_get(_global_runtime.store,pid_self_).id == oldid)
 #define CSM_REGENSELF (dcls_get(_global_runtime.store,pid_self_).gen_num != oldgen)

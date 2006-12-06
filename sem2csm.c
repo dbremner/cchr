@@ -16,6 +16,13 @@
 #include <efence.h>
 #endif
 
+char static *copy_string(char *in) {
+  if (in==NULL) return NULL;
+  char *ret=malloc(strlen(in)+1);
+  strcpy(ret,in);
+  return ret;
+}
+
 /* do something sprintf-like, but put the output in a malloc'ed block */
 char static *make_message(const char *fmt, ...) {
     int n, size = 100;
@@ -310,6 +317,10 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 	output_char(out,'\n');
 }
 
+typedef struct {
+	alist_declare(char *,l);
+} strlist_t;
+
 /* generate code for a CCHR block (based on the semantic tree) */
 void csm_generate(sem_cchr_t *in,output_t *out) {
 	char buf[256];
@@ -321,6 +332,44 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		output_fmt(out,"DEF(%s)",buf);
 	}
 	output_fmt(out,"\n\n");
+	strlist_t *rhooks=malloc(sizeof(strlist_t)*alist_len(in->cons));
+	for (int j=0; j<alist_len(in->cons); j++) {
+		alist_init(rhooks[j].l);
+	}
+	for (int i=0; i<alist_len(in->rules); i++) {
+		sem_rule_t *r=alist_ptr(in->rules,i);
+		if (alist_len(r->con[SEM_RULE_LEVEL_REM])==0) {
+			char buf2[256];
+			csm_rule_getname(in,i,buf2,256);
+			output_fmt(out,"#undef PROPHIST_%s\n",buf2);
+			output_fmt(out,"#define PROPHIST_%s(DEF,SEP",buf2);
+			int bestcon=-1;
+			int bestpos=0;
+			int bestval=0;
+			for (int j=0; j<alist_len(r->con[SEM_RULE_LEVEL_KEPT]); j++) {
+				int constr=alist_get(r->con[SEM_RULE_LEVEL_KEPT],j).constr;
+				if (bestcon<0 || (alist_len(rhooks[constr].l)<bestval)) {
+					bestval=alist_len(rhooks[constr].l);
+					bestcon=constr;
+					bestpos=j;
+				}
+				output_fmt(out,",Pid%i",j+1);
+				
+			}
+			output_string(out,") ");
+			for (int j=0; j<alist_len(r->con[SEM_RULE_LEVEL_KEPT]); j++) {
+				if (j) output_string(out," SEP ");
+				output_fmt(out,"DEF(Pid%i)",j+1);
+			}
+			output_string(out,"\n");
+			csm_constr_getname(in,bestcon,buf,256);
+			output_fmt(out,"#undef PROPHIST_HOOKT_%s\n",buf2);
+			output_fmt(out,"#define PROPHIST_HOOKT_%s %s\n",buf2,buf);
+			output_fmt(out,"#undef PROPHIST_HOOKN_%s\n",buf2);
+			output_fmt(out,"#define PROPHIST_HOOKN_%s %i\n",buf2,bestpos+1);
+			alist_add(rhooks[bestcon].l,copy_string(buf2));
+		}
+	}
 	for (int i=0; i<alist_len(in->cons); i++) {
 		sem_constr_t *con=alist_ptr(in->cons,i);
 		char conn[256];
@@ -359,7 +408,15 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 			csm_generate_expr(&(con->destr),vt,out);
 		}
 		output_string(out,"\n");
-			
+		output_fmt(out,"#undef RULEHOOKS_%s\n",conn);
+		output_fmt(out,"#define RULEHOOKS_%s(DEF,SEP,ARG) ",conn);
+		for (int g=0; g<alist_len(rhooks[i].l); g++) {
+			if (g) output_string(out," SEP ");
+			output_fmt(out,"DEF(%s,%s,ARG)",conn,alist_get(rhooks[i].l,g));
+			free(alist_get(rhooks[i].l,g));
+		}
+		alist_free(rhooks[i].l);
+		output_string(out,"\n");
 		for (int j=0; j<alist_len(con->occ); j++) {
 			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
 			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
@@ -369,5 +426,6 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		csm_destruct_vartable_constr(con,vt);
 		output_fmt(out,"\n");
 	}
+	free(rhooks);
 	output_fmt(out,"#include \"cchr_csm.h\"\n");
 }

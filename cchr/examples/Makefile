@@ -24,6 +24,9 @@ gcd.2: gcd.1 arcs.gcd
 fib.c: fib.cchr bin/cchr
 	bin/cchr fib.cchr
 
+fib.c.c: fib.c
+	cpp <fib.c | egrep -v '^#' | indent -kr -l1024 >fib.c.c
+
 fib_gmp.c: fib_gmp.cchr bin/cchr
 	bin/cchr fib_gmp.cchr
 

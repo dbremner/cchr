@@ -34,6 +34,7 @@ char static *copy_string(char *in) {
 void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->types);
   alist_init(con->occ);
+  alist_init(con->hooked);
   /*alist_init(con->fmtargs);*/
   sem_expr_init(&(con->fmt));
   sem_expr_init(&(con->destr));
@@ -44,6 +45,7 @@ void static sem_constr_init(sem_constr_t* con,char *name) {
 void static sem_constr_destruct(sem_constr_t *con) {
   free(con->name);
   alist_free(con->occ);
+  alist_free(con->hooked);
   for (int i=0; i<alist_len(con->types); i++) {
     free(alist_get(con->types,i));
   }
@@ -165,6 +167,7 @@ void static sem_rule_init(sem_rule_t *rule, char *name) {
   alist_init(rule->guard);
   alist_init(rule->lstmt[0]);
   alist_init(rule->lstmt[1]);
+  rule->hook=-1;
 }
 
 /* destruct a sem_rule_t */
@@ -472,6 +475,26 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 	return 1;
 }
 
+void static sem_hook_rule(sem_cchr_t *out,int rulenum) {
+	sem_rule_t *rule=alist_ptr(out->rules,rulenum);
+	if (rule->hook<0 && alist_len(rule->con[SEM_RULE_LEVEL_REM])==0) {
+		int bestpos=-1; /* what conocc in KEPT is best (-1: none yet) */
+		int bestcon=0; /* what constraint is best */
+		int bestnum=0; /* how many hooks that contraint already has */
+		for (int j=0; j<alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); j++) {
+			sem_conocc_t *co=alist_ptr(rule->con[SEM_RULE_LEVEL_KEPT],j);
+			int num=alist_len(alist_get(out->cons,co->constr).hooked);
+			if (bestpos==-1 || num<bestnum) {
+				bestpos=j;
+				bestcon=co->constr;
+				bestnum=num;
+			}
+		}
+		alist_add(alist_get(out->cons,bestcon).hooked,rulenum);
+		rule->hook=bestpos;
+	}
+}
+
 /* generate a new rule in an output sem_cchr_t */
 int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	sem_rule_t n;
@@ -503,6 +526,7 @@ int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	}
 	if (doret && sem_rule_hnf(&n)) {
 		alist_add(out->rules,n);
+		sem_hook_rule(out,alist_len(out->rules)-1);
 		return 1;
 	} else {
 		sem_rule_destruct(&n);

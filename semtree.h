@@ -59,6 +59,7 @@ struct _sem_expr_t_struct {
 typedef struct {
   char *name;
   alist_declare(char*,types);
+  alist_declare(int,hooked);
   alist_declare(sem_ruleocc_t,occ);
   sem_expr_t fmt;
   sem_expr_t destr;
@@ -98,6 +99,8 @@ typedef struct {
   alist_declare(sem_conocc_t,con[3]);
   alist_declare(sem_expr_t,guard);
   alist_declare(sem_expr_t,lstmt[2]);
+  int hook; /* index into con[SEM_RULE_LEVEL_KEPT], denoting what conocc this
+               rule is hooked to */
 } sem_rule_t;
 
 /* a semantic tree, which is hardly a tree anymore */

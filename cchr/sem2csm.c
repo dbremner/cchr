@@ -334,11 +334,11 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 void csm_generate(sem_cchr_t *in,output_t *out) {
 	char buf[256];
 	output_fmt(out,"#undef CONSLIST\n");
-	output_fmt(out,"#define CONSLIST(DEF,SEP) ");
+	output_fmt(out,"#define CONSLIST(CB) ");
 	for (int i=0; i<alist_len(in->cons); i++) {
-		if (i) output_fmt(out," SEP ");
+		if (i) output_fmt(out," CB##_S ");
 		csm_constr_getname(in,i,buf,256);
-		output_fmt(out,"DEF(%s)",buf);
+		output_fmt(out,"CB##_D(%s)",buf);
 	}
 	output_fmt(out,"\n\n");
 	for (int i=0; i<alist_len(in->rules); i++) {

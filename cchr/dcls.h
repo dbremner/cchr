@@ -55,22 +55,23 @@ typedef uint32_t dcls_pid_t;
 
 #define dcls_used(var,pid) ((var)._d[(pid)]._prev != DCLS_EMPTY_PID)
 
-/* ensure a DCLS var has size positions (including the filled marked) */
+/* ensure a DCLS var has size positions (including the filled markers) */
 #define dcls_ensure(var,size) do {\
   dcls_pid_t _ns=(size);\
   if ((var)._s<_ns) {\
     (var)._d=realloc((var)._d,sizeof((var)._d[0])*_ns);\
-    while ((var)._s<_ns) { \
-      (var)._d[(var)._s]._prev=DCLS_EMPTY_PID; \
-      (var)._d[(var)._s]._next=(var)._fe; \
-      (var)._fe=(var)._s; \
-      (var)._s++;\
+    int _kp=_ns; \
+    while (_kp-- > (var)._s) { \
+      (var)._d[_kp]._prev=DCLS_EMPTY_PID; \
+      (var)._d[_kp]._next=(var)._fe; \
+      (var)._fe=_kp; \
     } \
+    (var)._s=_ns; \
   } \
 } while(0);
 
 /* allocate a position in DCLS var, and put it in pid */
-/* the result will neither be in the filled set, nor in the empty set */
+/* the result will neither be in a filled set, nor in the empty set */
 #define dcls_alloc(var,pid) do { \
   if ((var)._fe==DCLS_EMPTY_PID) dcls_ensure(var,(((var)._s+1)*5)/4+3); \
   (pid)=(var)._fe; \

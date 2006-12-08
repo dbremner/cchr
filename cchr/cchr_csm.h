@@ -31,7 +31,7 @@
 #define CSM_PRINTF(INIT,TYPE) CSM_DEBUG( \
 	CSM_INDENT \
 	{ \
-		fprintf(stderr,"%s%s: " FORMAT_##TYPE "#%i\n",INIT,#TYPE ARGLIST_##TYPE(CSM_START_DEF5_3_,CSM_START_SEP5_3_),(int)pid_self_); \
+		fprintf(stderr,"%s%s: " FORMAT_##TYPE " pid=%i id=%i\n",INIT,#TYPE ARGLIST_##TYPE(CSM_START_DEF5_3_,CSM_START_SEP5_3_),(int)pid_self_,pid_self_!= DCLS_EMPTY_PID ? dcls_get(_global_runtime.store,pid_self_).id : -1); \
 	} \
 )
 #define CSM_FMTOUT(FMT,...) CSM_DEBUG( \
@@ -40,10 +40,24 @@
 		fprintf(stderr,FMT "\n",__VA_ARGS__); \
 	} \
 )
+#define CSM_FMTOUTX(FMT,POS,...) CSM_DEBUG( \
+	{ \
+		if ((POS)==0) CSM_INDENT; \
+		fprintf(stderr,FMT,__VA_ARGS__); \
+		if ((POS)==2) fputs("\n",stderr); \
+	} \
+)
 #define CSM_STROUT(FMT) CSM_DEBUG( \
 	{ \
 		CSM_INDENT \
 		fputs(FMT "\n",stderr); \
+	} \
+)
+#define CSM_STROUTX(FMT,POS) CSM_DEBUG( \
+	{ \
+		if ((POS)==0) CSM_INDENT; \
+		fputs(FMT,stderr); \
+		if ((POS)==2) fputs("\n",stderr); \
 	} \
 )
 
@@ -57,7 +71,7 @@
     RULEHOOKS_##NAME(CSM_CB_CLPH_D,CSM_SB_CLPH_S,) \
   } cchr_cons_ ## NAME ## _t;
 
-#define CSM_CB_CLPH_D(T,V,A) alist_declare(int,_ph_##V);
+#define CSM_CB_CLPH_D(T,V,A) int _phl_##V; alist_declare(int,_ph_##V);
 #define CSM_CB_CLPH_S
 
 #define CSM_START_SEP2_1_
@@ -155,7 +169,7 @@
 		DESTRUCT_##TYPE(self_); \
 		RULEHOOKS_##TYPE(CSM_CB_FPH_D,CSM_CB_FPH_S,self_); \
 		dcls_empty(_global_runtime.store,pid_self_); \
-		CSM_FMTOUT("kill %i (self)",(int)pid_self_); \
+		CSM_FMTOUT("kill pid=%i (self)",(int)pid_self_); \
 	} \
 }
 
@@ -163,7 +177,7 @@
 	DESTRUCT_##TYPE(VAR); \
 	RULEHOOKS_##TYPE(CSM_CB_FPH_D,CSM_CB_FPH_S,VAR); \
 	dcls_empty(_global_runtime.store,pid_##VAR); \
-	CSM_FMTOUT("kill %i",(int)pid_##VAR); \
+	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
 }
 
 #define CSM_LOOP(TYPE,VAR,CODE) { \
@@ -209,7 +223,7 @@
 	if (doadd) { \
 		cchr_store(pid_self_); \
 		doadd=0; \
-		CSM_FMTOUT("store %i",(int)pid_self_); \
+		CSM_FMTOUT("store pid=%i",(int)pid_self_); \
 	} \
 }
 #define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR = EXPR;
@@ -222,6 +236,36 @@
 #define CSM_NATIVE(CODE) { \
 	CODE \
 }
+
+#define CSM_HISTCHECK(RULE,CODE,...) PROPHIST_##RULE(CSM_CB_HC,__VA_ARGS__,RULE,CODE)
+#define CSM_CB_HC_I(HOOK,RULE,CODE,COND) { \
+	int ok_=1; \
+	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
+	for (int i_=0; i_<p_->data.PROPHIST_HOOK_##RULE._phl_##RULE; i_++) { \
+		if (1 COND) { \
+			ok_=0; \
+			break; \
+		} \
+	} \
+	/*CSM_FMTOUT("histchk %s on id=%i%s",#RULE,dcls_get(_global_runtime.store,pid_##HOOK).id,ok_ ? ": ok" : "");*/ \
+	if (ok_) { \
+		CODE \
+	} \
+}
+#define CSM_CB_HC_D(PID,HOOK,POS,RULE,CODE) && (alist_get(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,(i_*((RULE_KEPT_##RULE)-1))+POS)==dcls_get(_global_runtime.store,pid_##PID).id)
+#define CSM_CB_HC_S(RULE,CODE)
+
+#define CSM_HISTADD(RULE,...) PROPHIST_##RULE(CSM_CB_HA,__VA_ARGS__,RULE)
+#define CSM_CB_HA_I(HOOK,RULE,COND) { \
+	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
+	int i_= ++(p_->data.PROPHIST_HOOK_##RULE._phl_##RULE); \
+	alist_ensure(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,(i_*((RULE_KEPT_##RULE)-1))); \
+	CSM_FMTOUTX("histadd %s (",0,#RULE); \
+	COND \
+	CSM_FMTOUTX(") to id=%i",2,dcls_get(_global_runtime.store,pid_##HOOK).id); \
+}
+#define CSM_CB_HA_D(PID,HOOK,POS,RULE) alist_add(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,dcls_get(_global_runtime.store,pid_##PID).id); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%i",1,dcls_get(_global_runtime.store,pid_##PID).id); );
+#define CSM_CB_HA_S(RULE)
 
 #define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
 #define CSM_MAKE_SEP1_ 

@@ -262,9 +262,9 @@
 	alist_ensure(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,(i_*((RULE_KEPT_##RULE)-1))); \
 	CSM_FMTOUTX("histadd %s (",0,#RULE); \
 	COND \
-	CSM_FMTOUTX(") to id=%i",2,dcls_get(_global_runtime.store,pid_##HOOK).id); \
+	CSM_FMTOUTX(") to %s:%i",2,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id); \
 }
-#define CSM_CB_HA_D(PID,HOOK,POS,RULE) alist_add(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,dcls_get(_global_runtime.store,pid_##PID).id); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%i",1,dcls_get(_global_runtime.store,pid_##PID).id); );
+#define CSM_CB_HA_D(PID,HOOK,POS,RULE) alist_add(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,dcls_get(_global_runtime.store,pid_##PID).id); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
 #define CSM_CB_HA_S(RULE)
 
 #define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;

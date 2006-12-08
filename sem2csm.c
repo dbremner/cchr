@@ -16,13 +16,6 @@
 #include <efence.h>
 #endif
 
-char static *copy_string(char *in) {
-  if (in==NULL) return NULL;
-  char *ret=malloc(strlen(in)+1);
-  strcpy(ret,in);
-  return ret;
-}
-
 /* do something sprintf-like, but put the output in a malloc'ed block */
 char static *make_message(const char *fmt, ...) {
     int n, size = 100;
@@ -262,6 +255,8 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 	sem_ruleocc_t *ro=alist_ptr(con->occ,occ);
 	int rem=ro->type==SEM_RULE_LEVEL_REM;
 	sem_rule_t *ru=alist_ptr(cchr->rules,ro->rule);
+	char buf3[256];
+	csm_rule_getname(cchr,ro->rule,buf3,256);
 	
 	output_fmt(out,"\n");
 	output_fmt(out,"#undef CODELIST_%s\n",buf);
@@ -310,10 +305,28 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 		}
 	}
 	char **tbl=csm_generate_vartable_rule(cchr,ru,rem,ro->pos);
+	char *end=NULL;
+	if (ru->hook>=0) {
+		output_fmt(out,"CSM_HISTCHECK(%s",buf3);
+		end=make_message("");
+		for (int ci=0; ci<ncons; ci++) {
+			if (ci==ro->pos) {
+				char *nend=make_message("%s,self_",end); free(end); end=nend;
+			} else {
+				char *nend=make_message("%s,K%i",end,ci+1); free(end); end=nend;
+			}
+		}
+		char *nend=make_message("%s) \\",end); free(end); end=nend;
+		output_indent(out,", \\",end);
+	}
 	csm_generate_guard(cchr,ru,tbl,out);
+	if (ru->hook>=0) {
+		output_fmt(out,"CSM_HISTADD(%s%s\n",buf3,end);
+	}
 	csm_generate_body(cchr,ru,rem,ro->pos,tbl,out);
 	csm_destruct_vartable_rule(ru,tbl);
 	output_unindent_till(out,0);
+	free(end);
 	output_char(out,'\n');
 }
 
@@ -334,19 +347,26 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 			char buf2[256];
 			csm_rule_getname(in,i,buf2,256);
 			output_fmt(out,"#undef PROPHIST_%s\n",buf2);
-			output_fmt(out,"#define PROPHIST_%s(INI,DEF,SEP",buf2);
+			output_fmt(out,"#define PROPHIST_%s(CB",buf2);
 			for (int j=0; j<alist_len(r->con[SEM_RULE_LEVEL_KEPT]); j++) {
 				output_fmt(out,",Pid%i",j+1);
 			}
-			output_fmt(out,",...) INI(Pid%i,__VA_ARGS__,",r->hook+1);
+			output_fmt(out,",...) CB##_I(Pid%i,__VA_ARGS__,",r->hook+1);
+			int jj=0;
 			for (int j=0; j<alist_len(r->con[SEM_RULE_LEVEL_KEPT]); j++) {
-				if (j) output_string(out," SEP ");
-				output_fmt(out,"DEF(Pid%i,__VA_ARGS__)",j+1);
+				if (j!=r->hook) {
+					if (j) output_string(out," CB##_S(__VA_ARGS__) ");
+					output_fmt(out,"CB##_D(Pid%i,Pid%i,%i,__VA_ARGS__)",j+1,r->hook+1,jj++);
+				}
 			}
 			output_string(out,")\n");
 			csm_constr_getname(in,alist_get(r->con[SEM_RULE_LEVEL_KEPT],r->hook).constr,buf,256);
 			output_fmt(out,"#undef PROPHIST_HOOK_%s\n",buf2);
 			output_fmt(out,"#define PROPHIST_HOOK_%s %s\n",buf2,buf);
+			output_fmt(out,"#undef RULE_KEPT_%s\n",buf2);
+			output_fmt(out,"#define RULE_KEPT_%s (%i)\n",buf2,alist_len(r->con[SEM_RULE_LEVEL_KEPT]));
+			output_fmt(out,"#undef RULE_REM_%s\n",buf2);
+			output_fmt(out,"#define RULE_REM_%s (%i)\n",buf2,alist_len(r->con[SEM_RULE_LEVEL_REM]));
 		}
 	}
 	for (int i=0; i<alist_len(in->cons); i++) {

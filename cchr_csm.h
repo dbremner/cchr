@@ -61,48 +61,14 @@
 	} \
 )
 
-#define CSM_START_SEP1_ ,
-#define CSM_START_DEF1_(NAME) CCHR_CONS_TYPE_ ## NAME
-
-#define CSM_START_SEP2_
-#define CSM_START_DEF2_(NAME) \
-  typedef struct { \
-    ARGLIST_##NAME(CSM_START_DEF2_1_,CSM_START_SEP2_1_) \
-    RULEHOOKS_##NAME(CSM_CB_CLPH_D,CSM_SB_CLPH_S,) \
-  } cchr_cons_ ## NAME ## _t;
-
 #define CSM_CB_CLPH_D(T,V,A) int _phl_##V; alist_declare(int,_ph_##V);
 #define CSM_CB_CLPH_S
 
 #define CSM_START_SEP2_1_
 #define CSM_START_DEF2_1_(CON,NAME,TYPE) TYPE NAME;
 
-#define CSM_START_SEP3_
-#define CSM_START_DEF3_(NAME) cchr_cons_ ## NAME ## _t NAME;
-
-#define CSM_START_SEP4_
-#define CSM_START_DEF4_(NAME) void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_START_DEF4_1_,CSM_START_SEP4_1_));
-
 #define CSM_START_SEP4_1_ ,
 #define CSM_START_DEF4_1_(CON,NAME,TYPE) TYPE NAME
-
-#define CSM_START_SEP5_
-#define CSM_START_DEF5_(NAME) \
-  void static inline cchr_fire_##NAME(dcls_pid_t pid_self_ ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
-    int doadd=(pid_self_==DCLS_EMPTY_PID); \
-    int oldid; \
-    int oldgen; \
-    CSM_DEBUG( \
-	  CSM_PRINTF("fire ",NAME); \
-      _global_runtime.debugindent++; \
-    ) \
-    RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
-    CSM_NEEDSELF \
-    CSM_END \
-  } \
-  void cchr_add_##NAME( ARGLIST_##NAME(CSM_START_DEF5_4_,CSM_START_SEP5_4_)) { \
-  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_START_DEF5_3_,CSM_START_SEP5_3_)); \
-  }
 
 #define CSM_START_SEP5_1_
 #define CSM_START_DEF5_1_(CON,NAME,TYPE) , TYPE arg_##NAME
@@ -116,16 +82,28 @@
 #define CSM_START_SEP5_4_ ,
 #define CSM_START_DEF5_4_(CON,NAME,TYPE) TYPE arg_##NAME
 
+#define CSM_CB_ENU_S ,
+#define CSM_CB_ENU_D(NAME) CCHR_CONS_TYPE_ ## NAME
+
+#define CSM_CB_DTD_S
+#define CSM_CB_DTD_D(NAME) \
+  typedef struct { \
+    ARGLIST_##NAME(CSM_START_DEF2_1_,CSM_START_SEP2_1_) \
+    RULEHOOKS_##NAME(CSM_CB_CLPH_D,CSM_SB_CLPH_S,) \
+  } cchr_cons_ ## NAME ## _t;
+
+#define CSM_CB_DUD_S
+#define CSM_CB_DUD_D(NAME) cchr_cons_ ## NAME ## _t NAME;
 
 #define CSM_START \
-  enum cchr_cons_type { CONSLIST(CSM_START_DEF1_,CSM_START_SEP1_) , CCHR_CONS_COUNT }; \
-  CONSLIST(CSM_START_DEF2_,CSM_START_SEP2_) \
+  enum cchr_cons_type { CONSLIST(CSM_CB_ENU) , CCHR_CONS_COUNT }; \
+  CONSLIST(CSM_CB_DTD) \
   typedef struct { \
     enum cchr_cons_type type; \
     int id; \
     int gen_num; \
     union { \
-      CONSLIST(CSM_START_DEF3_,CSM_START_SEP3_) \
+      CONSLIST(CSM_CB_DUD) \
     } data; \
   } cchr_entry_t; \
   typedef struct { \
@@ -150,9 +128,30 @@
   void static inline cchr_store(dcls_pid_t pid_self_) { \
     dcls_add_begin(_global_runtime.store,pid_self_,dcls_get(_global_runtime.store,pid_self_).type); \
   } \
-  CONSLIST(CSM_START_DEF4_,CSM_START_SEP4_) \
-  CONSLIST(CSM_START_DEF5_,CSM_START_SEP5_) \
+  CONSLIST(CSM_CB_FFD) \
+  CONSLIST(CSM_CB_FFC)
   
+#define CSM_CB_FFD_S
+#define CSM_CB_FFD_D(NAME) void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_START_DEF4_1_,CSM_START_SEP4_1_));
+
+#define CSM_CB_FFC_S
+#define CSM_CB_FFC_D(NAME) \
+  void static inline cchr_fire_##NAME(dcls_pid_t pid_self_ ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
+    int doadd=(pid_self_==DCLS_EMPTY_PID); \
+    int oldid; \
+    int oldgen; \
+    CSM_DEBUG( \
+	  CSM_PRINTF("fire ",NAME); \
+      _global_runtime.debugindent++; \
+    ) \
+    RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
+    CSM_NEEDSELF \
+    CSM_END \
+  } \
+  void cchr_add_##NAME( ARGLIST_##NAME(CSM_START_DEF5_4_,CSM_START_SEP5_4_)) { \
+  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_START_DEF5_3_,CSM_START_SEP5_3_)); \
+  }
+
 
 #define CSM_ARG(TYPE,NAME) (arg_##NAME)
 

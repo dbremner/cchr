@@ -374,22 +374,22 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		char conn[256];
 		csm_constr_getname(in,i,conn,256);
 		output_fmt(out,"#undef ARGLIST_%s\n",conn);
-		output_fmt(out,"#define ARGLIST_%s(DEF,SEP) ",conn);
+		output_fmt(out,"#define ARGLIST_%s(CB) ",conn);
 		for (int j=0; j<alist_len(con->types); j++) {
-			if (j) output_fmt(out," SEP ");
-			output_fmt(out,"DEF(%s,arg%i,%s)",conn,j+1,alist_get(con->types,j));
+			if (j) output_fmt(out," CB##_S ");
+			output_fmt(out,"CB##_D(%s,arg%i,%s)",conn,j+1,alist_get(con->types,j));
 		}
 		output_fmt(out,"\n");
 		output_fmt(out,"#undef RULELIST_%s\n",conn);
-		output_fmt(out,"#define RULELIST_%s(DEF,SEP) ",conn);
+		output_fmt(out,"#define RULELIST_%s(CB) ",conn);
 		int jj=0;
 		for (int j=0; j<alist_len(con->occ); j++) {
 			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
 			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
-				if (jj) output_fmt(out," SEP ");
+				if (jj) output_fmt(out," CB##_S ");
 				jj++;
 				csm_conocc_getname(in,i,j,buf,256);
-				output_fmt(out,"DEF(%s)",buf);
+				output_fmt(out,"CB##_D(%s)",buf);
 			}
 		}
 		output_char(out,'\n');
@@ -408,12 +408,12 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		}
 		output_string(out,"\n");
 		output_fmt(out,"#undef RULEHOOKS_%s\n",conn);
-		output_fmt(out,"#define RULEHOOKS_%s(DEF,SEP,...) ",conn);
+		output_fmt(out,"#define RULEHOOKS_%s(CB,...) ",conn);
 		for (int g=0; g<alist_len(con->hooked); g++) {
-			if (g) output_string(out," SEP ");
+			if (g) output_string(out," CD##_S ");
 			char bfk[256];
 			csm_rule_getname(in,alist_get(con->hooked,g),bfk,256);
-			output_fmt(out,"DEF(%s,%s,__VA_ARGS__)",conn,bfk);
+			output_fmt(out,"CB##_D(%s,%s,__VA_ARGS__)",conn,bfk);
 		}
 		output_string(out,"\n");
 		for (int j=0; j<alist_len(con->occ); j++) {

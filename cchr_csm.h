@@ -14,6 +14,7 @@
 /* and alist.h */
 #include "alist.h"
 
+/* some debug output macro's */
 #define CSM_STRINGIFY_(X) #X
 #define CSM_STRINGIFY(X) CSM_STRINGIFY_(X)
 
@@ -31,7 +32,7 @@
 #define CSM_PRINTF(INIT,TYPE) CSM_DEBUG( \
 	CSM_INDENT \
 	{ \
-		fprintf(stderr,"%s%s: " FORMAT_##TYPE " pid=%i id=%i\n",INIT,#TYPE ARGLIST_##TYPE(CSM_START_DEF5_3_,CSM_START_SEP5_3_),(int)pid_self_,pid_self_!= DCLS_EMPTY_PID ? dcls_get(_global_runtime.store,pid_self_).id : -1); \
+		fprintf(stderr,"%s%s: " FORMAT_##TYPE " pid=%i id=%i\n",INIT,#TYPE ARGLIST_##TYPE(CSM_CB_FFCFC),(int)pid_self_,pid_self_!= DCLS_EMPTY_PID ? dcls_get(_global_runtime.store,pid_self_).id : -1); \
 	} \
 )
 #define CSM_FMTOUT(FMT,...) CSM_DEBUG( \
@@ -61,40 +62,29 @@
 	} \
 )
 
-#define CSM_CB_CLPH_D(T,V,A) int _phl_##V; alist_declare(int,_ph_##V);
-#define CSM_CB_CLPH_S
-
-#define CSM_START_SEP2_1_
-#define CSM_START_DEF2_1_(CON,NAME,TYPE) TYPE NAME;
-
-#define CSM_START_SEP4_1_ ,
-#define CSM_START_DEF4_1_(CON,NAME,TYPE) TYPE NAME
-
-#define CSM_START_SEP5_1_
-#define CSM_START_DEF5_1_(CON,NAME,TYPE) , TYPE arg_##NAME
-
-#define CSM_START_SEP5_2_
-#define CSM_START_DEF5_2_(NAME) { CODELIST_##NAME }
-
-#define CSM_START_SEP5_3_
-#define CSM_START_DEF5_3_(CON,NAME,TYPE) , arg_##NAME
-
-#define CSM_START_SEP5_4_ ,
-#define CSM_START_DEF5_4_(CON,NAME,TYPE) TYPE arg_##NAME
-
 #define CSM_CB_ENU_S ,
 #define CSM_CB_ENU_D(NAME) CCHR_CONS_TYPE_ ## NAME
 
+/* callback macro for history-related data in constraint-specific suspensions */
+#define CSM_CB_DTDH_S
+#define CSM_CB_DTDH_D(T,V,...) int _phl_##V; alist_declare(int,_ph_##V);
+
+/* callback macro for the arguments of a constraint */
+#define CSM_CB_DTDAL_S
+#define CSM_CB_DTDAL_D(CON,NAME,TYPE) TYPE NAME;
+
+/* callback macro for constraint-specific data in suspensions */ 
 #define CSM_CB_DTD_S
 #define CSM_CB_DTD_D(NAME) \
   typedef struct { \
-    ARGLIST_##NAME(CSM_START_DEF2_1_,CSM_START_SEP2_1_) \
-    RULEHOOKS_##NAME(CSM_CB_CLPH_D,CSM_SB_CLPH_S,) \
+    ARGLIST_##NAME(CSM_CB_DTDAL) \
+    RULEHOOKS_##NAME(CSM_CB_DTDH,) \
   } cchr_cons_ ## NAME ## _t;
 
 #define CSM_CB_DUD_S
 #define CSM_CB_DUD_D(NAME) cchr_cons_ ## NAME ## _t NAME;
 
+/* main macro */
 #define CSM_START \
   enum cchr_cons_type { CONSLIST(CSM_CB_ENU) , CCHR_CONS_COUNT }; \
   CONSLIST(CSM_CB_DTD) \
@@ -130,13 +120,19 @@
   } \
   CONSLIST(CSM_CB_FFD) \
   CONSLIST(CSM_CB_FFC)
-  
-#define CSM_CB_FFD_S
-#define CSM_CB_FFD_D(NAME) void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_START_DEF4_1_,CSM_START_SEP4_1_));
 
+/* callback macro for declaration of fire functions */  
+#define CSM_CB_FFD_S
+#define CSM_CB_FFD_D(NAME) void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_CB_FFDAR));
+
+/* callback macro for arguments of declaration of fire functions */
+#define CSM_CB_FFDAR_S ,
+#define CSM_CB_FFDAR_D(CON,NAME,TYPE) TYPE NAME
+
+/* callback macro for code of fire functions */
 #define CSM_CB_FFC_S
 #define CSM_CB_FFC_D(NAME) \
-  void static inline cchr_fire_##NAME(dcls_pid_t pid_self_ ARGLIST_##NAME(CSM_START_DEF5_1_,CSM_START_SEP5_1_)) { \
+  void static inline cchr_fire_##NAME(dcls_pid_t pid_self_ ARGLIST_##NAME(CSM_CB_FFCAR)) { \
     int doadd=(pid_self_==DCLS_EMPTY_PID); \
     int oldid; \
     int oldgen; \
@@ -144,13 +140,29 @@
 	  CSM_PRINTF("fire ",NAME); \
       _global_runtime.debugindent++; \
     ) \
-    RULELIST_##NAME(CSM_START_DEF5_2_,CSM_START_SEP5_2_) \
+    RULELIST_##NAME(CSM_CB_FFCCO) \
     CSM_NEEDSELF \
     CSM_END \
   } \
-  void cchr_add_##NAME( ARGLIST_##NAME(CSM_START_DEF5_4_,CSM_START_SEP5_4_)) { \
-  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_START_DEF5_3_,CSM_START_SEP5_3_)); \
+  void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA)) { \
+  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_CB_FFCFC)); \
   }
+
+/* callback macro for arguments of code of fire functions */ 
+#define CSM_CB_FFCAR_S
+#define CSM_CB_FFCAR_D(CON,NAME,TYPE) , TYPE arg_##NAME
+
+/* callback macro for inclusion of constraint-occurrence code in fire functions */
+#define CSM_CB_FFCCO_S
+#define CSM_CB_FFCCO_D(NAME) { CODELIST_##NAME }
+
+/* callback macro for arguments of code of add functions */
+#define CSM_CB_FFCAA_S ,
+#define CSM_CB_FFCAA_D(CON,NAME,TYPE) TYPE arg_##NAME
+
+/* callback macro for arguments passed to fire function in add functions */
+#define CSM_CB_FFCFC_S
+#define CSM_CB_FFCFC_D(CON,NAME,TYPE) , arg_##NAME
 
 
 #define CSM_ARG(TYPE,NAME) (arg_##NAME)
@@ -163,10 +175,14 @@
 #define CSM_DIFFSELF(VAR) (pid_self_ != pid_##VAR)
 #define CSM_DIFF(VAR1,VAR2) (pid_##VAR1 != pid_##VAR2)
 
+/* callback macro for freeing propagation history records */ 
+#define CSM_CB_FPH_D(T,V,A) { alist_free(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V); }
+#define CSM_CB_FPH_S
+
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
 		DESTRUCT_##TYPE(self_); \
-		RULEHOOKS_##TYPE(CSM_CB_FPH_D,CSM_CB_FPH_S,self_); \
+		RULEHOOKS_##TYPE(CSM_CB_FPH,self_); \
 		dcls_empty(_global_runtime.store,pid_self_); \
 		CSM_FMTOUT("kill pid=%i (self)",(int)pid_self_); \
 	} \
@@ -174,7 +190,7 @@
 
 #define CSM_KILL(VAR,TYPE) { \
 	DESTRUCT_##TYPE(VAR); \
-	RULEHOOKS_##TYPE(CSM_CB_FPH_D,CSM_CB_FPH_S,VAR); \
+	RULEHOOKS_##TYPE(CSM_CB_FPH,VAR); \
 	dcls_empty(_global_runtime.store,pid_##VAR); \
 	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
 }
@@ -184,9 +200,6 @@
 		CODE \
 	}) \
 }
-
-#define CSM_CB_FPH_D(T,V,A) { alist_free(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V); }
-#define CSM_CB_FPH_S
 
 #define CSM_END { \
 	CSM_DEBUG( \
@@ -199,13 +212,17 @@
 #define CSM_MAKE(TYPE) { \
 	if (doadd && pid_self_==DCLS_EMPTY_PID) { \
 		pid_self_=cchr_make_entry(CCHR_CONS_TYPE_##TYPE); \
-		ARGLIST_##TYPE(CSM_MAKE_DEF1_,CSM_MAKE_SEP1_); \
+		ARGLIST_##TYPE(CSM_CB_MAKSA); \
 		CSM_PRINTF("make ",TYPE); \
 	} \
 	oldid=dcls_get(_global_runtime.store,pid_self_).id; \
 	oldgen=dcls_get(_global_runtime.store,pid_self_).gen_num; \
-	RULEHOOKS_##TYPE(CSM_CB_PHI_D,CSM_CB_PHI_S,); \
+	RULEHOOKS_##TYPE(CSM_CB_PHI,); \
 }
+
+/* callback macro for constraint suspension argument setting */ 
+#define CSM_CB_MAKSA_S 
+#define CSM_CB_MAKSA_D(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
 
 #define CSM_CB_PHI_D(T,V,A) alist_init(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V);
 #define CSM_CB_PHI_S
@@ -265,9 +282,6 @@
 }
 #define CSM_CB_HA_D(PID,HOOK,POS,RULE) alist_add(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,dcls_get(_global_runtime.store,pid_##PID).id); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
 #define CSM_CB_HA_S(RULE)
-
-#define CSM_MAKE_DEF1_(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
-#define CSM_MAKE_SEP1_ 
 
 #endif
 

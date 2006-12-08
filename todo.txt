@@ -1,8 +1,6 @@
-- error handling in abs2sem
 - built-in constraint store (macros?)
 - hashtable interface (macros?)
 - other data structures (next to dcls)
-- propagation history (using hastables?)
 - lookups instead of loops (for some constraint arguments)
 - user-defined destructors for constraints
 - output header files
@@ -20,3 +18,5 @@
 - local vars/statements in guard (done: 29/11/2006)
 - debug mode (done: 3/12/2006)
 - destructors (done: 4/12/2006)
+- propagation history (done: 8/12/2006)
+

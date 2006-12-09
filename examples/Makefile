@@ -10,7 +10,7 @@ else
     CFLAGS := -O0 -ggdb3 -DUSE_EFENCE
     LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
   else
-    CFLAGS := -O3 -g0 -fomit-frame-pointer
+    CFLAGS := -O3 -g0 -fomit-frame-pointer -march=athlon64 -frename-registers -ftracer -fweb
     LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
   endif
 endif
@@ -48,6 +48,11 @@ fib: fib.c cchr_csm.h Makefile
 
 fib_gmp: fib_gmp.c cchr_csm.h Makefile
 	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp fib_gmp.c
+
+fib_gmp.p: fib_gmp.c cchr_csm.h Makefile
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-generate -o fib_gmp.a fib_gmp.c
+	time ./fib_gmp.a 3000 >/dev/null
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-use -o fib_gmp.p fib_gmp.c
 
 fib.debug: fib.c cchr_csm.h Makefile
 	$(CC) -DCSM_CONF_DEBUG $(CFLAGS) $(LDFLAGS) -o fib.debug fib.c

@@ -24,6 +24,14 @@
 #define CSM_DEBUG(...)
 #endif
 
+#ifdef CSM_CONF_NOPROP
+#define CSM_PROP(...)
+#define CSM_NOPROP(...) __VA_ARGS__
+#else
+#define CSM_PROP(...) __VA_ARGS__
+#define CSM_NOPROP(...)
+#endif
+
 #define CSM_INDENT { \
 	CSM_DEBUG( \
 		for (int i=0; i<_global_runtime.debugindent; i++) fprintf(stderr,"  "); \
@@ -78,7 +86,7 @@
 #define CSM_CB_DTD_D(NAME) \
   typedef struct { \
     ARGLIST_##NAME(CSM_CB_DTDAL) \
-    RULEHOOKS_##NAME(CSM_CB_DTDH,) \
+    CSM_PROP(RULEHOOKS_##NAME(CSM_CB_DTDH,)) \
   } cchr_cons_ ## NAME ## _t;
 
 #define CSM_CB_DUD_S
@@ -182,7 +190,7 @@
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
 		DESTRUCT_##TYPE(self_); \
-		RULEHOOKS_##TYPE(CSM_CB_FPH,self_); \
+		CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,self_);) \
 		dcls_empty(_global_runtime.store,pid_self_); \
 		CSM_FMTOUT("kill pid=%i (self)",(int)pid_self_); \
 	} \
@@ -190,7 +198,7 @@
 
 #define CSM_KILL(VAR,TYPE) { \
 	DESTRUCT_##TYPE(VAR); \
-	RULEHOOKS_##TYPE(CSM_CB_FPH,VAR); \
+	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
 	dcls_empty(_global_runtime.store,pid_##VAR); \
 	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
 }
@@ -224,7 +232,7 @@
 #define CSM_CB_MAKSA_S 
 #define CSM_CB_MAKSA_D(CON,NAME,TYPE) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
 
-#define CSM_CB_PHI_D(T,V,A) alist_init(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V);
+#define CSM_CB_PHI_D(T,V,A) CSM_PROP(alist_init(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V);)
 #define CSM_CB_PHI_S
 
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid_self_) && dcls_get(_global_runtime.store,pid_self_).id == oldid)
@@ -253,7 +261,7 @@
 	CODE \
 }
 
-#define CSM_HISTCHECK(RULE,CODE,...) PROPHIST_##RULE(CSM_CB_HC,__VA_ARGS__,RULE,CODE)
+#define CSM_HISTCHECK(RULE,CODE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HC,__VA_ARGS__,RULE,CODE)) CSM_NOPROP({CODE})
 #define CSM_CB_HC_I(HOOK,RULE,CODE,COND) { \
 	int ok_=1; \
 	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
@@ -271,7 +279,7 @@
 #define CSM_CB_HC_D(PID,HOOK,POS,RULE,CODE) && (alist_get(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,(i_*((RULE_KEPT_##RULE)-1))+POS)==dcls_get(_global_runtime.store,pid_##PID).id)
 #define CSM_CB_HC_S(RULE,CODE)
 
-#define CSM_HISTADD(RULE,...) PROPHIST_##RULE(CSM_CB_HA,__VA_ARGS__,RULE)
+#define CSM_HISTADD(RULE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HA,__VA_ARGS__,RULE))
 #define CSM_CB_HA_I(HOOK,RULE,COND) { \
 	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
 	int i_= ++(p_->data.PROPHIST_HOOK_##RULE._phl_##RULE); \

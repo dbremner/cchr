@@ -10,8 +10,8 @@ cchr {
   
   begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
   calc @  init(Max), fib(N-1,M1), fib(N,M2) ==> int NP=N, {NP++;}, NP<=Max | int Sum=M1+M2, {if (0) {NP--;}}, fib(NP, Sum);
-  fini @ init(_) <=> true; /* this removes init_1 before any fib_2 is generated */
-//  fini @ fib(Max,_) \ init(Max) <=> true;
+//  fini @ init(_) <=> true; /* this removes init_1 before any fib_2 is generated */
+  fini @ fib(Max,_) \ init(Max) <=> true;
 }
 
 int main(int argc, char **argv) {

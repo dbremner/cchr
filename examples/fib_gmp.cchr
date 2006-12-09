@@ -37,7 +37,8 @@ cchr {
   	  fib(N+1, Sum);
 
   fini @ 
-  	  init(_) 
+/*  	  fib(Max,_) \ init(Max)  */
+          init(_)
   	<=>
   	  true;
 }

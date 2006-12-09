@@ -8,4 +8,4 @@
 
 begin @ init(_) ==> fib(0,1), fib(1,1).
 calc @ init(Max),fib(N1,M1),fib(N2,M2) ==> N2 is N1+1, N2<Max | N3 is N2+1, M3 is M1+M2, fib(N3,M3).
-fini @ init(_) <=> true.
+fini @ fib(Max,_) \ init(Max) <=> true.

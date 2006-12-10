@@ -1,7 +1,6 @@
 \documentclass{beamer}
 \usepackage{beamerthemesidebar}
 \usepackage{amsmath}
-\usepackage{algorithm2e}
 
 \title{De Parser}
 \subtitle{Compiler Constructie: Les 2}
@@ -235,20 +234,6 @@ S$\rightarrow$print E            & E$\rightarrow$num = num \\
     Z$\rightarrow$d & Y$\rightarrow$ & X$\rightarrow$Y \\
     Z$\rightarrow$X Y Z & Y$\rightarrow$c & X$\rightarrow$a \\
   \end{tabular} \\
-  {\tiny \begin{algorithm}[H]
-  Initialiseer FIRST en FOLLOW leeg, en nullable overal false\;
-  \ForEach{TS $Z$}{FIRST[$Z$] $\leftarrow$ $\{Z\}$}
-  \Repeat{FIRST, FOLLOW, nullable veranderen niet meer}{
-    \ForEach{productie $X \rightarrow Y_1 Y_2 \cdots Y_k$}{
-      \lFor{$i=1$ to $k$,}{\For{$j=i+1$ to $k$}{
-        \If{alle $Y_i$ zijn nullable}{nullable[$X$] $\leftarrow$ true}
-        \If{$Y_1 \cdots Y_{i-1}$ zijn nullable}{FIRST[$X$] $\leftarrow$ FIRST[$X$] $\cup$ FIRST[$Y_i$]}
-        \If{$Y_{i+1} \cdots Y_k$ zijn nullable}{FOLLOW[$Y_i$] $\leftarrow$ FOLLOW[$Y_i$] $\cup$ FOLLOW[$X$]}
-        \If{$Y_{i+1} \cdots Y_{j-1}$ zijn nullable}{FOLLOW[$Y_i$] $\leftarrow$ FOLLOW[$Y_i$] $\cup$ FIRST[$Y_j$]}
-      }}
-    }
-  }
-  \end{algorithm}}
 }
 \frame{\frametitle{Uitgewerkt voorbeeld}
   \begin{tabular}{l l l}

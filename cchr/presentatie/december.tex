@@ -2,8 +2,8 @@
 \usepackage{beamerthemesidebar}
 \usepackage{amsmath}
 
-\title{De Parser}
-\subtitle{Compiler Constructie: Les 2}
+\title{CCHR}
+\subtitle{De snelste CHR implementatie}
 
 \author{Pieter Wuille}
 \date{\today}
@@ -26,121 +26,69 @@
   \end{frame}
 }
 
-\section{Introductie}
+\section{Algemeen}
+\subsection{Waarom CCHR}
+\frame{\frametitle{Waarom CHR in C?}
+  \begin{itemize}
+  \item De mogelijkheid om CHR te gebruiken in pure C programma's
+  \item CHR compiler veel vrijheid geven inzake datastructuren
+  \end{itemize}
+}
+
 \subsection{Structuur}
-\frame{\frametitle{Plaats in Compiler Schema}
-  \begin{itemize}
-  \item Source $\xrightarrow{Lex}$ Tokens
-  \item {\bf Tokens $\xrightarrow{Parse}$ Reductions}
-  \item Reductions $\xrightarrow{Parse Actions}$ Abstract Syntax
-  \item ...
-  \end{itemize}
-  Parser: zet tokens om in reducties
+\frame{\frametitle{Opbouw CCHR}
+  De verschillende stappen bij het gebruik van CCHR zijn:
+  \begin{enumerate}
+    \item Schrijven van C code met "cchr \{ \ldots \}" blokken in
+    \item CCHR compiler zet blokken om in een hoop macro's
+    \item C preprocessor zet macro's om in C code
+    \item C compiler compileert verder (assembler, object, executable)
+  \end{enumerate}
 }
 
-\section{Van woorden naar zinnen}
-\subsection{Wat we hebben}
-\frame{\frametitle{Wat we hebben}
-  \begin{itemize}
-  \item Voorlopig hebben we ``woorden''
-  \item Slechts opeenvolging van lexer tokens
-  \item Geen hierarchische structuur
-  \item Elk token kan op elke plaats
-  \end{itemize}
-  Besluit: we willen zinsstructuur bepalen
-}
-\subsection{Kan dat niet met lex?}
-\frame{\frametitle{Kan dat niet met lex?}
-  \begin{itemize}
-  \item Lex staat afkortingen toe van stukjes syntax
-  \item Stel: \\
-    $digits$ = [0 - 9]+ \\
-    $sum$ = ($digits$ ``+'')* $digits$
-  \item Nu herkennen we 28+301+9 als token
-  \item Maar stel: \\
-    $digits$ = [0 - 9]+ \\
-    $sum$ = $expr$ ``+'' $expr$ \\
-    $expr$ = ``('' $sum$ ``)'' $|$ $digits$
-  \item Herkennen we 28+(301+9) nu als token?
-  \end{itemize}
-}
-\frame{\frametitle{Gebrek aan recursie}
-  We hebben recursie nodig \\
-  Dit vereenvoudigt de notatie ook:
-  \begin{itemize}
-  \item $expr$ = ab(c $|$ d)e wordt:\\
-    \quad $aux$ = c \\
-    \quad $aux$ = d \\
-    \quad $expr$ = a b $aux$ e
-  \item $expr$ = (a b c)* wordt:\\
-    \quad $expr$ = (a b c) expr\\
-    \quad $expr$ = $\epsilon$
-  \end{itemize}
-}
-\frame{\frametitle{Context-Free Grammar}
-  De verkregen taal heet ``Context-Free Grammar''
-  \begin{itemize}
-  \item Definieert syntactische structuur
-  \item Flexibeler dan reguliere expressies
-  \item Kunnen ook lexicale tokens definieren
-  \item DFA's niet krachtig genoeg voor parsen ervan
-  \end{itemize}
-}
-\subsection{Context-Free Grammar}
-\frame{\frametitle{CFG definitie}
-  CFG's worden gedefinieerd door productieregels van de vorm
-  $symbool$ $\rightarrow$ $symbool$ $symbool$ $\cdots$ $symbool$.
-  \begin{itemize}
-  \item Symbolen zijn terminaal (TS) of niet-terminaal (NTS)
-  \item Terminale symbolen zijn lexer tokens
-  \item Links van $\rightarrow$ staat NTS
-  \item Er is een startsymbool (NTS)
-  \end{itemize}
-}
-\frame{\frametitle{Afleidingen}
-  De taal gedefinieerd door een grammatica is de verzameling van alle opeenvolgingen van TS'en die
-  afgeleid kunnen worden van het startsymbool.
-  \begin{itemize}
-  \item NTS worden (volgens productieregels) vervangen
-  \item Men stopt als enkel TS (tokens) overblijven
-  \end{itemize}
-  De parse-boom onstaat door elk symbool te verbinden met hetgeen het van afgeleid is.
-}
-\frame{\frametitle{Ambiguiteit}
-  Een grammatica wordt ambigu genoemd als eenzelfde zin (opeenvolging van tokens) meerdere
-  parse-bomen kan hebben.
-  \begin{itemize}
-  \item Parse-trees worden gebruikt om betekenis te bepalen
-  \item We willen geen zinnen met meerdere betekenissen
-  \item Bv: $1-2-3$ zou $(1-2)-3$ of $1-(2-3)$ kunnen betekenen
-  \end{itemize}
+\section{Implementatie}
+\subsection{Overzicht}
+\frame{\frametitle{Overizcht}
+  De huidige versie van de CCHR Compiler werkt in deze stappen:
+  \begin{enumerate}
+    \item Algemene routine die "cchr \{ \ldots \}" blokken detecteert
+    \item Een lexer, gegenereerd mbv. Flex
+    \item Een parser, gegenereerd mbv. Bison
+    \item Semantische acties in Bison die eerste data structuur opbouwen
+    \item Een analyse-fase die code en constraint- en variabelenamen herkent 
+          en bv. HNF omzetting doet
+    \item Een code-generatie fase die een lijst C macro definities genereert
+    \item Een outputroutine die wat indentatie doet
+  \end{enumerate}
 }
 
-\frame{\frametitle{Ambiguiteit wegwerken}
-  Een ambigue grammatica kan vaak omgezet worden in een niet-ambigue. \\
-  \quad \\
-  Bv.: Een ambigue taal met $+$ en $*$: \\
-  \begin{tabular}{ll}
-    E$\rightarrow$id  & E$\rightarrow$(E) \\
-    E$\rightarrow$E+E & E$\rightarrow$E*E \\
-  \end{tabular} \\
-  Wordt: \\
-  \begin{tabular}{lll}
-    E$\rightarrow$E+T & T$\rightarrow$T*F & F$\rightarrow$id \\
-    E$\rightarrow$T   & T$\rightarrow$F   & F$\rightarrow$(E) \\
-  \end{tabular} \\
-  \quad \\
-  Een taal die niet niet-ambigu te schrijven is, is meestal niet geschikt als programmeertaal
-}
-
-\subsection{Het parsen}
-\frame{\frametitle{Het parsen}
-  Uiteindelijk wat de parser doet is:
+\subsection{De "main" module}
+\frame{\frametitle{De "main" module}
   \begin{itemize}
-  \item E\'en voor \'e\'en de lexer tokens (TS) opvragen
-  \item Groepjes symbolen samennemen tot NTS (reducties)
-  \item Deze reducties zijn de ``output'' van de parser
+    \item Bevat de main() C routine
+    \item Overloopt alle opgegeven sourcefiles
+    \item Vervangt .chr of .cchr door .c voor output
+    \item Kopieert input naar output, behalve cchr-blokken
+    \item Voor cchr blokken worden lexer, parser, analyser en code-generator aangeroepen
   \end{itemize}
+}
+\subsection{De lexer \& parser}
+\frame{\frametitle{De lexer \& parser}
+  De lexer:
+  \begin{itemize}
+    \item Geschreven mbv. Flex (die lexer genereert in C)
+    \item Herkent operatoren, haakjes, symbolen
+    \item Parser vraagt deze "tokens" op aan lexer
+  \end{itemize}
+
+  De parser:
+  \begin{itemize}
+    \item Geschreven mbv. Bison (die parser genereert in C)
+    \item Herkent regels, blokken, code, argumenten, constraints, \ldots
+  \end{itemize}
+}
+\subsection{De analyse}
+\frame{\frametitle{De analyse}
 }
 
 \section{Predictive parsing}

@@ -47,8 +47,22 @@
 }
 
 \section{Implementatie}
+\subsection{Mogelijkheden}
+\frame{\frametitle{Mogelijkheden}
+  Momenteel geimplementeerd:
+  \begin{itemize}
+    \item CHR Constraints (willekeurige ariteit, en bijna alle C-datatypes)
+    \item CHR Rules (propagation, simplification, simpagation)
+    \item Variabelen in rules (in head, guard of body gedefinieerd)
+    \item Rules in niet-HNF vorm
+    \item Willekeurige C-expressies als guards of constraint-argumenten
+    \item C code (statements) in guard of body
+    \item Debug modus
+    \item User-definied destructors
+  \end{itemize}
+}
 \subsection{Overzicht}
-\frame{\frametitle{Overizcht}
+\frame{\frametitle{Overzicht}
   De huidige versie van de CCHR Compiler werkt in deze stappen:
   \begin{enumerate}
     \item Algemene routine die "cchr \{ \ldots \}" blokken detecteert
@@ -61,8 +75,6 @@
     \item Een outputroutine die wat indentatie doet
   \end{enumerate}
 }
-
-\subsection{De "main" module}
 \frame{\frametitle{De "main" module}
   \begin{itemize}
     \item Bevat de main() C routine
@@ -72,7 +84,6 @@
     \item Voor cchr blokken worden lexer, parser, analyser en code-generator aangeroepen
   \end{itemize}
 }
-\subsection{De lexer \& parser}
 \frame{\frametitle{De lexer \& parser}
   De lexer:
   \begin{itemize}
@@ -84,172 +95,61 @@
   De parser:
   \begin{itemize}
     \item Geschreven mbv. Bison (die parser genereert in C)
-    \item Herkent regels, blokken, code, argumenten, constraints, \ldots
+    \item Herkent regels, code-blokken, argumenten, constraints, \ldots
   \end{itemize}
 }
-\subsection{De analyse}
 \frame{\frametitle{De analyse}
+  De analyzer:
+  \begin{itemize}
+    \item Analyseert output van de parser (abstract syntax tree)
+    \item Genereert nieuwe data structuur met expressions, variabelen, constraints, regels, \ldots
+    \item Doet conversie naar Head Normal Form
+    \item Analyseert gebruik van variabelen, waar propagation history bij te houden, \ldots
+  \end{itemize}
 }
+\frame{\frametitle{De code-generatie}
+  De code-generatie:
+  \begin{itemize}
+    \item Gebruikt de gegevens genereerd door analyser
+    \item Genereert een aantal macro's voor elke constraint/regel
+    \item Voor elke constraint occurrence een macro met code
+  \end{itemize}
+}
+\section{Moeilijkheden en ontwerpbeslissingen}
+\subsection{Geheugenallocatie}
+\frame{\frametitle{Geheugenallocatie}
+  \begin{itemize}
+    \item Alle ge-malloc()-ed geheugen wordt ge-free()-d
+    \item Garbage Collector is niet noodzakelijk, dmv. user-defined destructors
+    \item Eventueel kan alternatieve malloc()/free() gebruikt worden (eg. Boehm)
+  \end{itemize}
+}
+\subsection{Macro's}
+\frame{\frametitle{Gebruik van C macro's}
+  Voordelen van gebruik van macro's:
+  \begin{itemize}
+    \item Minder echte code in CCHR compiler zelf (hardcoded)
+    \item Keuze van eg. datastructuren kan buiten compiler
+    \item Overzichtelijkere outputcode
+    \item Debug-mode door simpel optie meegeven aan C compiler
+  \end{itemize}
+  Nadelen:
+  \begin{itemize}
+    \item Veel moeilijker locatie van bugs te vinden
+    \item Macro definities redelijk moeilijk leesbare code
+  \end{itemize}
+}
+\section{Performantie}
+\frame{\frametitle{Algemeen}
+  \begin{itemize}
+    \item HW: AMD Athlon64 3500+, 1Gb PC3200 DDR RAM
+    \item C Compiler: GCC 4.1.1, -O3 -march=athlon64
+    \item Java: Sun JRE 1.5 64-bit Hotspot; JCHR 1.5
+    \item Prolog: v5.6.24 for amd64
+  \end{itemize}
+}
+\subsection{GCD Example}
 
-\section{Predictive parsing}
-\subsection{Eenvoudige grammatica}
-\frame{\frametitle{Predictive parsing}
-  De eenvoudigste grammatica's $\rightarrow$ predictive parsing
-  \begin{itemize}
-  \item Ook wel recursive-descent genaamd (top-down)
-  \item Elk NTS wordt \'e\'en functie
-  \item Elke functie beslist op basis van volgend token welke productieregel te gebruiken
-  \item Dit is eigenlijk ``gokken'' welke regel te gebruiken
-  \end{itemize}
-}
-\frame[containsverbatim]{\frametitle{Recursive descent voorbeeld}
-\begin{tabular}{l l}
-S$\rightarrow$if E then S else S & L$\rightarrow$end \\
-S$\rightarrow$begin S L          & L$\rightarrow$; S L \\
-S$\rightarrow$print E            & E$\rightarrow$num = num \\
-\end{tabular} \\
-\quad \\
-{\tiny \begin{verbatim}
-  enum token{IF, THEN, ELSE, BEGIN, PRINT, SEMI, NUM, EQ};
-  extern enum token getToken(void);
-  
-  enum token tok;
-  void advance() {tok=getToken();}
-  void eat(enum token t) {if (tok==t) advance(); else error();}
-  
-  void S(void) {switch(tok) {
-    case IF:  eat(IF); E(); eat(THEN); S(); eat(ELSE); S(); break;
-    case BEGIN: eat(BEGIN); S(); L(); break;
-    case PRINT: eat(PRINT); E(); break;
-    default: error();
-  }}
-  void L(void) {switch(tok) {
-    case END: eat(END); break;
-    case SEMI: eat(SEMI); S(); L(); break;
-    default: error();
-  }
-  void E(void) {switch(tok) {
-    eat(NUM); eat(EQ); eat(NUM);
-  }
-\end{verbatim}}
-}
-\frame[containsverbatim]{\frametitle{Grenzen van Recursive Descent}
-  We moeten op basis van het actieve NTS en het volgende token beslissen welke productie regel te gebruiken.\\
-  Stel: \begin{tabular}{lll}
-    S$\rightarrow$E \$ & (\$: end-of-file) & \\
-    E$\rightarrow$E+T & T$\rightarrow$T*F & F$\rightarrow$num \\
-    E$\rightarrow$T   & T$\rightarrow$F   & F$\rightarrow$(E) \\
-  \end{tabular}
-{\tiny \begin{verbatim}
-  void S(void) { E(); eat(EOF); }
-  void E(void) {switch(tok) {
-    case ?: E(); eat(PLUS); T(); break;
-    case ?: T(); break;
-    default: error();
-  }
-  void T(void) {switch(tok) {
-    case ?: T(); eat(TIMES); F(); break;
-    case ?: F(); break;
-    default: error();
-  }
-  void F(void) {...}
-\end{verbatim}}
-  Bv.: (1*2+3)+4 en (1*2+3). De E() functie heeft hier duidelijk geen manier om te bepalen
-  bij het begin of er E$\rightarrow$E+T of gewoon E$\rightarrow$T gebruikt moet worden.
-}
-\subsection{First en Follow sets}
-\frame{\frametitle{FIRST en FOLLOW sets}
-  Om te bepalen welke tokens welke productieregel impliceren, introduceren we de FIRST en FOLLOW sets.
-  \begin{itemize}
-  \item FIRST set: FIRST($\gamma$) is de verzameling van alle TS die eerste teken in een zin afgeleid van $\gamma$ kunnen zijn.
-  \item FOLLOW set: FOLLOW(X) is de verzameling van alle TS die in een afleiding X kunnen opvolgen.
-  \end{itemize}
-  Als 2 productieregels X$\rightarrow \alpha$ en X$\rightarrow \beta$ een overlappende FIRST($\alpha$) en FIRST($\beta$) hebben, kan predictive parsing niet.
-}
-\frame{\frametitle{Voorbeeld}
-  \begin{tabular}{l l l}
-    Z$\rightarrow$d & Y$\rightarrow$ & X$\rightarrow$Y \\
-    Z$\rightarrow$X Y Z & Y$\rightarrow$c & X$\rightarrow$a \\
-  \end{tabular} \\
-  \begin{itemize}
-    \item Het lijkt dat FIRST(Z) gelijk zou moeten zijn aan FIRST(X)
-    \item FIRST(X) kan echter ook $\epsilon$ afleiden (het is nullable)
-    \item FIRST(Y) behoort dus ook tot FIRST(Z)
-  \end{itemize}
-}
-\frame{\frametitle{Algoritme}
-  \begin{tabular}{l l l}
-    Z$\rightarrow$d & Y$\rightarrow$ & X$\rightarrow$Y \\
-    Z$\rightarrow$X Y Z & Y$\rightarrow$c & X$\rightarrow$a \\
-  \end{tabular} \\
-}
-\frame{\frametitle{Uitgewerkt voorbeeld}
-  \begin{tabular}{l l l}
-    Z$\rightarrow$d & Y$\rightarrow$ & X$\rightarrow$Y \\
-    Z$\rightarrow$X Y Z & Y$\rightarrow$c & X$\rightarrow$a \\
-  \end{tabular} \\
-  \quad \\
-  \begin{tabular}{l|ccc}
-    & nullable & FIRST & FOLLOW \\
-    \hline
-    X & yes & a c & a c d \\
-    Y & yes & c & a c d \\
-    Z & no & a c d & \\
-  \end{tabular}
-}
-\subsection{De predictive parser}
-\frame{\frametitle{Predictive Parsing Tabel}
-  \begin{tabular}{l|ccc}
-    & nullable & FIRST & FOLLOW \\
-    \hline
-    X & yes & a c & a c d \\
-    Y & yes & c & a c d \\
-    Z & no & a c d & \\
-  \end{tabular} \\
-  Hieruit kunnen we een Predictive Parsing Tabel opstellen:
-  \begin{itemize}
-    \item Links NTS, bovenaan TS
-    \item In elk vakje de producties die ermee overeenkomen
-  \end{itemize}
-  \begin{tabular}{l|lll}
-    & a & c & d \\
-    \hline
-    X & X$\rightarrow$a, X$\rightarrow$Y & X$\rightarrow$Y & X$\rightarrow$Y \\
-    Y & Y$\rightarrow$ & Y$\rightarrow$, Y$\rightarrow$c & Y$\rightarrow$ \\
-    Z & Z$\rightarrow$XYZ & Z$\rightarrow$XYZ & Z$\rightarrow$d, Z$\rightarrow$XYZ \\
-  \end{tabular}
-}
-\subsection{LL(k)-grammatica}
-\frame{\frametitle{LL(k)-grammatica}
-  \begin{itemize}
-  \item Talen die geen dubbele ingangen in de Predictive Parsing Table hebben, worden LL(1)
-        genoemd.
-  \item LL(k) staat voor ``Left-to-right parse, Leftmost-derivation, k-symbol lookahead''
-  \item Dit wil zeggen: \begin{itemize}
-    \item Left-to-right parse: het parsen gebeurt van links naar rechts
-    \item Leftmost-derivation: linkse afleiding: steeds het meest linkse NTS vervangen
-    \item k-symbol lookahead: beslissen welke productie gebeurt op basis van komende k tokens (hier 1).
-    \end{itemize}
-  \end{itemize}
-}
-\frame{\frametitle{Veelvoorkomende problemen}
-  \begin{itemize}
-  \item Linkse recursie \begin{itemize}
-    \item Bv. E$\rightarrow$E+T, E$\rightarrow$T
-    \item FIRST($T$) en FIRST($E+T$) overlappen zowiezo: LL(1) werkt niet
-    \item Linkse recursie moet in rechtse worden omgezet
-    \end{itemize}
-  \item ``Left factoring'' \begin{itemize}
-    \item Bv. S$\rightarrow$if E then S else S, S$\rightarrow$if E then S
-    \item Twee producties voor zelfde NTS beginnen met zelfde deel
-    \item Left factoring: $\rightarrow$ S$\rightarrow$if E then S X, X$\rightarrow$, X$\rightarrow$else S
-    \end{itemize}
-  \item Foutherstelling \begin{itemize}
-    \item Voortgaan na een fout is informatiever
-    \item Tokens overslaan, vervangen of invoegen
-    \end{itemize}
-  \end{itemize}
-}
 \section{LR Parsing}
 \subsection{Techniek}
 \frame{\frametitle{De zwakte van LL}

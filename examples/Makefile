@@ -1,4 +1,4 @@
-CC := gcc -Wall -pipe -std=c99
+eCC := gcc -Wall -pipe -std=c99
 
 #MODE := efence
 
@@ -23,15 +23,16 @@ clean:
 bin:
 	ln -s ../bin bin
 
-gcd.1: gcd.cchr Makefile
-	bin/cchr gcd.cchr && $(CC) -x c $(CFLAGS) $(LDFLAGS) -o gcd.1 gcd.c
+gcd.c: gcd.cchr bin/cchr Makefile
+	bin/cchr gcd.cchr
 
-arcs.gcd: gcd.cchr Makefile
-	bin/cchr gcd.cchr && $(CC) -fprofile-arcs -x c $(CFLAGS) $(LDFLAGS) -o arcs.gcd gcd.c
+gcd: gcd.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o gcd gcd.c
 
-gcd.2: gcd.1 arcs.gcd Makefile
-	./arcs.gcd 135 501000
-	bin/cchr gcd.cchr && $(CC) -fbranch-probabilities -x c $(CFLAGS) $(LDFLAGS) -o gcd.2 gcd.c
+gcd.p: gcd.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o gcd.a gcd.c
+	time ./gcd.a 50000000 5 >/dev/null
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o gcd.p gcd.c
 
 fib.c: fib.cchr bin/cchr Makefile
 	bin/cchr fib.cchr

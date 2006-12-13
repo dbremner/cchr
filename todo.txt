@@ -2,7 +2,6 @@
 - hashtable interface (macros?)
 - other data structures (next to dcls)
 - lookups instead of loops (for some constraint arguments)
-- user-defined destructors for constraints
 - output header files
 - output constraint-store accessor functions
 - intermediate representation before actual code generation (?)

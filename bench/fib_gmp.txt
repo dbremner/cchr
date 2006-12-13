@@ -15,6 +15,6 @@ fib_gmp (init(_) <=> true version):
 
 fib_gmp (fib(Max,_) \ init(Max) <=> true version):
 - cchr: 1.37s [profiled: 1.22s]
-- cchr(no-ph): 0.514s [profiled: 0.505s]
+- cchr(no prop hist): 0.514s [profiled: 0.505s]
 - java: 0.149s
 - swi: 294s

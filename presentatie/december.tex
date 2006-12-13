@@ -54,6 +54,7 @@
     \item CHR Constraints (willekeurige ariteit, en bijna alle C-datatypes)
     \item CHR Rules (propagation, simplification, simpagation)
     \item Variabelen in rules (in head, guard of body gedefinieerd)
+    \item Propagation history (enkel rules zonder removed constraints)
     \item Rules in niet-HNF vorm
     \item Willekeurige C-expressies als guards of constraint-argumenten
     \item C code (statements) in guard of body
@@ -110,7 +111,7 @@
 \frame{\frametitle{De code-generatie}
   De code-generatie:
   \begin{itemize}
-    \item Gebruikt de gegevens genereerd door analyser
+    \item Gebruikt de gegevens gegenereerd door analyser
     \item Genereert een aantal macro's voor elke constraint/regel
     \item Voor elke constraint occurrence een macro met code
   \end{itemize}
@@ -149,189 +150,68 @@
   \end{itemize}
 }
 \subsection{GCD Example}
+\frame{\frametitle{GCD Voorbeeld}
+  constraint gcd(uint64\_t); \\
+  triv @ gcd(0ULL) $<=>$ true; \\
+  dec @ gcd(N) $\backslash$ gcd(M) $<=>$ M$>=$N $|$ gcd(M-N); \\
+  \vspace{2ex}
+  Beginnen met: gcd(100000000),gcd(5). \\
+  \vspace{2ex}
+  \begin{tabular}{c|cc}
+    implementatie & runtime & cycles/iteratie \\
+    \hline
+    swi-prolog & 37.1s & 4100 \\
+    cchr       & 0.08s & 8.8
+  \end{tabular}
+}
+\subsection{FIB Example}
+\frame{\frametitle{FIB Voorbeeld (met GMP library)}
+  typedef struct \{ mpz\_t v; \} bigint\_t; \\
+  \vspace{2ex}
+  constraint fib(int,bigint\_t) destr(mpz\_clear(Arg2.v)); \\
+  constraint init(int); \\
+  \vspace{2ex}
+  begin @ init(\_) $==>$ bigint\_t Z=, bigint\_t Y=, \{ \\
+  \quad mpz\_init\_set\_si(Z.v,1); \\
+  \quad mpz\_init\_set\_si(Y.v,1); \\
+  \}, fib(0,Z), fib(1,Y); \\
+  \vspace{2ex}
+  calc @ init(Max), fib(N-1,M1), fib(N,M2) $==>$ N$<$Max $|$ bigint\_t Sum=, \{ \\
+  \quad mpz\_init(Sum.v); \\
+  \quad mpz\_add(Sum.v,M1.v,M2.v); \\
+  \}, fib(N+1, Sum); \\
+  \vspace{2ex}
+  fini @ init(\_) $<=>$ true; \\
+}
+\frame{\frametitle{Resultaten FIB}
+  Beginnen met: init(7499). \\
+  Versie 2 gebruikt: \\
+  \quad fini @ fib(Max,\_) $\backslash$ init(Max) $<=>$ true; \\
+  in plaats van: \\
+  \quad fini @ init(\_) $<=>$ true; \\
+  \vspace{2ex}
+  \begin{tabular}{c|cc}
+    implementatie & runtime(v1) & runtime(v2) \\
+    \hline
+    swi-prolog & 740s & 294s \\
+    jchr & 4.56s & 0.149s \\
+    cchr & 2.06s & 1.22s \\
+    cchr (no hist) & - & 0.505s
+  \end{tabular}
+}
 
-\section{LR Parsing}
-\subsection{Techniek}
-\frame{\frametitle{De zwakte van LL}
-  LL(k) parsers zijn niet krachtig genoeg
+\section{Gepland werk}
+\frame{\frametitle{Gepland werk}
   \begin{itemize}
-  \item LL(k) parsers voorspellen welke productie te gebruiken
-  \item Ze kennen enkel de k eerste tokens van de afleiding
-  \item We willen die beslissing achteraf pas nemen
-  \end{itemize}
-  $\rightarrow$ LR(k) Parsing
-  \begin{itemize}
-  \item ``Left-to-right parse, {\bf Rightmost-derivation}, k-token lookahead''
-  \item Left-to-right parse: we parseren van links naar rechts
-  \item Rightmost-derivation: rechte afleiding: steeds het meest rechtse NTS vervangen
-  \item k-symbol lookahead: k tekens vooruit kijken (zelden $>1$)
+    \item Meer optimalisaties (statische analyse)
+    \item Built-in constraints (mbv. union find) \& reactivatie
+    \item Meer datastructuren (eg. hashtables)
+    \item Functies om over constraint store te itereren
   \end{itemize}
 }
-\frame{\frametitle{LR(k) techniek}
-  \begin{itemize}
-  \item Hoe kunnen we een rechtse afleiding doen als parser links begint?
-  \item Door een stack van symbolen (TS en NTS) bij te houden
-  \item Op basis van de inhoud van de stack en komende symbolen: \begin{itemize}
-    \item Ofwel een token uit input op stack zetten
-    \item Ofwel aantal symbolen bovenop stack tot 1 NTS reduceren
-    \end{itemize}
-  \end{itemize}
-}
-\frame{\frametitle{Gebruik van DFA}
-  Hoe implementeren we zo'n LR(k) parser?
-  \begin{itemize}
-  \item Zoals aangetoond zijn DFA's niet voldoende krachtig
-  \item We kunnen DFA wel gebruiken op stack ipv input
-  \item Elke ``positie'' in een productieregel is een toestand
-  \item Overgangen tussen toestanden zijn symbolen (TS of NTS)
-  \end{itemize}
-}
-\frame{\frametitle{Werking van DFA in LR parser}
-  We kunnen bij elke toevoeging van een element onthouden in welke
-  toestand de DFA daarmee komt, zodat niet telkens de hele stack doorlopen
-  moet worden. Zie figuur 3.17 in boek. \\
-  De acties in deze tabel: \begin{description}
-  \item[Shift(n)] Zet volgend token met state n op stack
-  \item[Reduce(k)] {\scriptsize \begin{itemize}
-    \item Haal (\# symbolen in rechterkant regel k) van stack
-    \item Noem X de NTS aan linkerkant van regel k
-    \item Zoek in state nu bovenop stack de actie voor X
-    \item Volg de ``goto b'' daar, zet X (met state n) bovenop stack
-    \end{itemize}}
-  \item[Accept] Shiften van \$: klaar
-  \item[Error] (lege plaats) ongeldige input
-  \end{description}
-}
-\subsection{LR(0) parsers}
-\frame{\frametitle{Opstellen states en overgangstabel}
-  Eerst moeten we alle states opstellen: \begin{itemize}
-  \item We beginnen met de S'$\rightarrow$.S\$ state
-  \item de ``.'' duidt het einde van de stack aan
-  \item Volg nu volgende regels: \begin{itemize}
-    \item ``.'' staat voor NTS X: voeg alle X$\rightarrow$.$\alpha$ regels toe aan state (closure)
-    \item ``.'' staat voor symbool $\gamma$: maak state n met zelfde regel maar ``.'' na $\gamma$ (goto) \begin{description}
-      \item[NTS] zet goto(n) in overgangstabel
-      \item[TS] zet shift(n) in overgangstabel
-      \end{description}
-    \item ``.'' staat op einde regel k: zet reduce(k) in overgangstabel
-    \item shift van \$ is een accept
-    \end{itemize}
-  \item Ga door tot er geen nieuwe states meer zijn.
-  \end{itemize}
-}
-\subsection{SLR parsers}
-\frame{\frametitle{Shift-Reduce conflicten}
-  Stel we proberen een LR(0) parser voor deze grammatica:
-  \begin{tabular}{ll}
-    S$\rightarrow$E\$ & E$\rightarrow$T \\
-    E$\rightarrow$T+E & T$\rightarrow$x \\
-  \end{tabular}
-  \quad \\
-  $\rightarrow$ toestand ``E$\rightarrow$T.+E'' en ``E$\rightarrow$T.'' als regels.
-  $\rightarrow$ Als er ``+'' volgt, moet zowel een shift als een reduce gebeuren. \\
-  Dit heet een {\bf shift-reduce conflict}. \\
-  $\rightarrow$ Deze grammatica is niet LR(0). \\
-  $\rightarrow$ We hebben iets krachtiger nodig
-}
-\frame{\frametitle{SLR Parser generatie}
-  \begin{tabular}{ll}
-    S$\rightarrow$E\$ & E$\rightarrow$T \\
-    E$\rightarrow$T+E & T$\rightarrow$x \\
-  \end{tabular}
-  \quad \\
-  \begin{itemize}
-  \item LR(0) zet reduce op elk token in tabel
-  \item Beter: enkel bij tokens uit FOLLOW(A) (bij A$\rightarrow \alpha$ regel) $\rightarrow$ minder Shift-Reduce conflicten (wegens minder Reduce's)
-  \item Dit heet SLR (Simple LR)
-  \item Bovenstaande grammatica is SLR
-  \item SLR is krachtiger dan LR(0)
-  \end{itemize}
-}
-\subsection{LR(1) parsers}
-\frame{\frametitle{Nog krachtiger dan SLR}
-  SLR vermijdt een deel overbodige reduce's, maar echt reduce's laten afhangen van volgend token kan niet.
-  $\rightarrow$ LR(1) parsers \begin{itemize}
-  \item In toestandstabellen wordt extra volgend token opgenomen (niet na \$)
-  \item Toestanden zijn verschillend als volgend token verschilt
-  \item Reduce acties worden enkel geplaatst bij die volgende tokens.
-  \end{itemize}
-  $\rightarrow$ zeer veel toestanden
-}
-\frame{\frametitle{LALR(1) parsers}
-  Omdat LR(1) tables heel groot kunnen worden, voert men een vereenvoudiging door: \begin{itemize}
-  \item Toestanden die op volgend token na identiek zijn worden samengenomen
-  \item De bekomen parser heet LALR(1) (Look-Ahead LR(1))
-  \item LALR(1) is krachtiger dan SLR (een SLR taal is ook LALR(1))
-  \item LALR(1) is wel zwakker dan LR(1)
-  \item Bijna alle praktische talen zijn LALR(1)
-  \end{itemize}
-  $\rightarrow$ er zijn veel LALR(1) parser generators beschikbaar (yacc, bison)
-}
-\frame{\frametitle{Ambiguiteit en Shift-Reduce conflicten}
-  \begin{itemize}
-  \item Stel een grammatica als: ``S$\rightarrow$if E then S else S'', ``S$\rightarrow$if E then S''.
-  \item Dit laat zinnen als ``if a then if b then s1 else s2'' toe
-  \item Er zijn 2 interpretaties: \begin{itemize}
-    \item if a then \{ if b then s1 else s2 \}
-    \item if a then \{ if b then s1 \} else s2
-    \end{itemize}
-  \item Dit wordt een shift-reduce conflict in een LR parse table
-  \item We kunnen kiezen om toch te shiften, door voor het eerste te kiezen
-  \item Dit is gevaarlijk, maar laat toe ambigue talen te parsen
-  \end{itemize}
-}
-\section{Parser generators}
-\subsection{YACC}
-\frame{\frametitle{YACC}
-  Het genereren van LR(1) (en vooral LALR(1)) parse tables kan geautomatiseerd worden.
-  
-  De traditionale applicatie hiervoor is YACC (Yet Another Compiler-Compiler), \\
-  maar er zijn modernere implementaties zoals Bison. \\
-  Werking: \begin{itemize}
-  \item Neemt als input een ``grammar file''
-  \item LALR(1) parse table wordt opgesteld
-  \item Parse table + LALR(1) parse algoritme $\rightarrow$ C code 
-  \item Code bevat functie yyparse() \begin{itemize}
-    \item roept functie yylex() aan om de tokens te verkrijgen
-    \item roept functie yyerror() aan bij een fout
-    \item voert acties uit grammar file uit bij elke reductie
-    \end{itemize}
-  \end{itemize}
-}
-\frame{\frametitle{YACC grammar}
-  De syntax van YACC grammar files:
-  \begin{itemize}
-  \item Eerst een specifieke header voor declaratie yylex() en yyparse()
-  \item Vernoeming alle lexer tokens (TS)
-  \item Vernoemen startsymbool
-  \item Eventueel wat opties zoals voorrangsregels
-  \item Dan een lijst met alle productieregels
-  \end{itemize}
-  (zie voorbeeld)
-}
-\subsection{Conflicten}
-\frame{\frametitle{YACC en conflicten}
-  \begin{itemize}
-  \item YACC detecteert shift-reduce en reduce-reduce conflicten
-  \item Standaard is dit geen error, maar wordt dit gedaan: \begin{itemize}
-    \item Bij Shift-Reduce conflicten wordt shift gekozen
-    \item Bij Reduce-Reduce conflicten wordt eerst vermeldde regel gekozen
-    \end{itemize}
-  \item Er kunnen prioriteitsregels gegeven worden om dit gedrag te veranderen
-  \end{itemize}
-  (zie voorbeeld)
-}
-\subsection{Voor volgende week}
-\frame{\frametitle{Semantiek is voor volgende week}
-  Men kan geneigd zijn een parser teveel te laten doen:
-  \begin{itemize}
-  \item De parser moet enkel de structuur van de zinnen achterhalen
-  \item Niet alle operatoren mogen misschien op alle argumenten
-  \item Zaken als data-types horen niet thuis in de grammatica
-  \end{itemize}
-  $\rightarrow$ Deze dingen worden in de semantische analyse gedaan
-}
-\frame{\frametitle{THE END}
-  \begin{center} {\huge EINDE} \end{center}
+
+\section*{Einde}
+\frame{\frametitle{Nog vragen?}
+  Einde
 }
 \end{document}

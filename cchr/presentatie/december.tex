@@ -1,19 +1,46 @@
 \documentclass{beamer}
-\usepackage{beamerthemesidebar}
+
+\mode<article>
+{
+  \usepackage{fullpage}
+  \usepackage{hyperref}
+}
+
+\mode<presentation>
+{
+  \setbeamertemplate{background canvas}[vertical shading][bottom=red!10,top=blue!10]
+  \usetheme{Frankfurt}
+  \usefonttheme[onlysmall]{structurebold}
+}
+
 \usepackage{amsmath}
+\usepackage{pst-tree}
+\usepackage{pst-node}
+\usepackage{pst-eps}
+\usepackage{pstcol}
+\usepackage{pstricks}
+\usepackage{listings}
+\usepackage{color}
+\usepackage[dutch]{babel}
 \usepackage{fancyvrb}
+\usepackage{ulem}
+
+\renewcommand{\emph}[1]{\textit{{#1}}}
+
+\setbeamercolor{background canvas}{bg=white}
+%\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
 
 \title{CCHR}
 \subtitle{De snelste CHR implementatie}
 
 \author{Pieter Wuille}
-\date{\today}
+\date{20 december 2006}
 
 \begin{document}
 
 \frame{\titlepage}
 
-\section[Overzicht]{}
 \begin{frame}
   \frametitle{Overzicht}
   {\scriptsize \tableofcontents}
@@ -38,46 +65,145 @@
 
 \subsection{Structuur}
 \frame{\frametitle{Opbouw CCHR}
-  De verschillende stappen bij het gebruik van CCHR zijn:
-  \begin{enumerate}
-    \item Schrijven van C code met "cchr \{ \ldots \}" blokken in
-    \item CCHR compiler zet blokken om in een hoop macro's
-    \item C preprocessor zet macro's om in C code
-    \item C compiler compileert verder (assembler, object, executable)
-  \end{enumerate}
+  De verschillende stappen bij het gebruik van CCHR zijn: \\
+  \vspace{2ex}
+  \begin{psmatrix}[rowsep=0.3,colsep=0.3]
+    \psshadowbox{CCHR code} & \\
+                            & CCHR Compiler \\
+    \psshadowbox{C macro's} & \\
+                            & C Preprocessor \\
+    \psshadowbox{C code}    & \\
+                             & C Compiler \\
+    \psshadowbox{Executable} &
+    \ncline[linecolor=red]{->}{1,1}{3,1}
+    \ncline{->}{3,1}{5,1}
+    \ncline{->}{5,1}{7,1}
+  \end{psmatrix}
+  %\begin{enumerate}
+   % \item Schrijven van C code met "cchr \{ \ldots \}" blokken in
+    %\item CCHR compiler zet blokken om in een hoop macro's
+    %\item C preprocessor zet macro's om in C code
+    %\item C compiler compileert verder (assembler, object, executable)
+  %\end{enumerate}
 }
 
 \section{Implementatie}
 \subsection{Mogelijkheden}
-\frame{\frametitle{Mogelijkheden}
-  Momenteel geimplementeerd:
+\frame[containsverbatim]{\frametitle{Mogelijkheden}
+  CHR Constraints zijn ge\"implementeerd:
   \begin{itemize}
-    \item CHR Constraints (willekeurige ariteit, en bijna alle C-datatypes)
-    \item CHR Rules (propagation, simplification, simpagation)
-    \item Variabelen in rules (in head, guard of body gedefinieerd)
-    \item Propagation history (enkel rules zonder removed constraints)
-    \item Rules in niet-HNF vorm
-    \item Willekeurige C-expressies als guards of constraint-argumenten
-    \item C code (statements) in guard of body
-    \item Debug modus
-    \item User-definied destructors
+    \item Willekeurige ariteit
+    \item Alle C datatypes (behalve arrays) als argumenten
+    \item Extra parameters voor weergave of voor destructors
+  \end{itemize}
+  
+  \begin{block}{voorbeeld}
+  \begin{Verbatim}
+constraint init(int),fib(int,bignum_t)
+  destr(destruct_bignum(&Arg2));
+  \end{Verbatim}
+  \end{block}
+}
+
+\frame[containsverbatim]{\frametitle{Mogelijkheden}
+  CHR Rules zijn ge\"implementeerd:
+  \begin{itemize}
+    \item Propagation ($ K,\ldots ==> \ldots $)
+    \item Simplification ($ R,\ldots <=> \ldots $)
+    \item Simpagation ($ K,\ldots \backslash R,\ldots <=> \ldots $)
+  \end{itemize}
+  
+  \begin{block}{voorbeeld}
+  \begin{Verbatim}
+begin @ init(_) ==> fib(0,1), fib(1,1);
+triv @ gcd(0) <=> true;
+dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
+  \end{Verbatim}
+  \end{block}
+}
+
+\frame[containsverbatim]{\frametitle{Mogelijkheden}
+  Variabelen in CHR Rules zijn geimplementeerd:
+  \begin{itemize}
+    \item Als constraint-argument in head
+    \item Als lokale variabele in guard
+    \item Als lokale variabele in body
+  \end{itemize}
+  
+  \begin{block}{voorbeeld}
+  \begin{Verbatim}
+con(N) ==> N>0 | cons(N-1);
+con(N) ==> int M=N-1, M>=0 | con(M);
+con(N) ==> N>0 | int M=N-1, con(M);
+  \end{Verbatim}
+  \end{block}
+}
+
+\frame[containsverbatim]{\frametitle{Mogelijkheden}
+  Het is mogelijk CHR Rules die niet in HNF (Head-Normal Form) staan te gebruiken:
+  \begin{itemize}
+    \item Er kunnen C-expressies als argument voorkomen
+    \item Een variabele mag meermaals voorkomen
+    \item Een variabele mag in een expressie voorkomen
+  \end{itemize}
+  
+  \begin{block}{voorbeeld}
+  \begin{Verbatim}
+con(0) <=> true;
+fib(N,_) \ init(N) <=> true;
+fib(N-1,M1), fib(N,M2) ==> fib(N+1,M1+M2);
+  \end{Verbatim}
+  \end{block}
+}
+
+\frame[containsverbatim]{\frametitle{Mogelijkheden}
+  Het is mogelijk willekeurige C statements in guard of body te plaatsen:
+  \begin{itemize}
+   \item Moet tussen \{ \ldots \}
+   \item Bv initialisatie van ingwikkelde argumenten
+  \end{itemize}
+
+  \begin{block}{voorbeeld}
+  \begin{Verbatim}
+str(Str1) ==> 
+  char *Str2=malloc(2*strlen(Str1)), {
+    strcpy(Str2,Str1);
+    strcat(Str2,Str1;
+  }, dblstr(Str2);
+  \end{Verbatim}
+  \end{block}
+}
+
+\frame[containsverbatim]{\frametitle{Mogelijkheden}
+  Er is een debug modus:
+  \begin{itemize}
+    \item Door een optie aan C compiler mee te geven
+    \item Print alle constraints, uitgevoerde regels, propagation history toevoegingen, \ldots uit
+    \item vereist een debug(``printf string'') tag bij alle constraints
   \end{itemize}
 }
+
 \subsection{Overzicht}
 \frame{\frametitle{Overzicht}
-  De huidige versie van de CCHR Compiler werkt in deze stappen:
-  \begin{enumerate}
-    \item Algemene routine die "cchr \{ \ldots \}" blokken detecteert
-    \item Een lexer, gegenereerd mbv. Flex
-    \item Een parser, gegenereerd mbv. Bison
-    \item Semantische acties in Bison die eerste data structuur opbouwen
-    \item Een analyse-fase die code en constraint- en variabelenamen herkent 
-          en bv. HNF omzetting doet
-    \item Een code-generatie fase die een lijst C macro definities genereert
-    \item Een outputroutine die wat indentatie doet
-  \end{enumerate}
+  \begin{psmatrix}[rowsep=0.3,colsep=0.1]
+     \psovalbox{Source} & \\
+     & \psovalbox{CCHR} \\
+     \psframebox{main} & \psframebox{parser \& lexer} \\
+     & \psframebox{analyse} \\
+     & \psframebox{code generatie} \\
+     \psovalbox{C code + macro's}
+     \ncline{->}{1,1}{3,1}
+     \ncline{->}{3,1}{2,2}
+     \ncline{->}{2,2}{3,2}
+     \ncline{->}{3,2}{4,2}
+     \ncline{->}{4,2}{5,2}
+     \ncline{->}{5,2}{3,1}
+     \ncline{->}{3,1}{6,1}
+  \end{psmatrix}
 }
-\frame{\frametitle{De "main" module}
+
+\frame{\frametitle{Overzicht}
+  \begin{block}{de main module}
   \begin{itemize}
     \item Bevat de main() C routine
     \item Overloopt alle opgegeven sourcefiles
@@ -85,41 +211,47 @@
     \item Kopieert input naar output, behalve cchr-blokken
     \item Voor cchr blokken worden lexer, parser, analyser en code-generator aangeroepen
   \end{itemize}
+  \end{block}
 }
-\frame{\frametitle{De lexer \& parser}
-  De lexer:
+\frame{\frametitle{Overzicht}
+  \begin{block}{de lexer}
   \begin{itemize}
     \item Geschreven mbv. Flex (die lexer genereert in C)
     \item Herkent operatoren, haakjes, symbolen
-    \item Parser vraagt deze "tokens" op aan lexer
+    \item Parser vraagt deze 'tokens'  op aan lexer
   \end{itemize}
+  \end{block}
 
-  De parser:
+  \begin{block}{de parser}
   \begin{itemize}
     \item Geschreven mbv. Bison (die parser genereert in C)
     \item Herkent regels, code-blokken, argumenten, constraints, \ldots
   \end{itemize}
+  \end{block}
 }
-\frame{\frametitle{De analyse}
-  De analyzer:
+\frame{\frametitle{Overzicht}
+  \begin{block}{de analyser}
   \begin{itemize}
     \item Analyseert output van de parser (abstract syntax tree)
     \item Genereert nieuwe data structuur met expressions, variabelen, constraints, regels, \ldots
     \item Doet conversie naar Head Normal Form
     \item Analyseert gebruik van variabelen, waar propagation history bij te houden, \ldots
   \end{itemize}
+  \end{block}
 }
-\frame{\frametitle{De code-generatie}
-  De code-generatie:
+\frame{\frametitle{Overzicht}
+  \begin{block}{de code-generator}
   \begin{itemize}
     \item Gebruikt de gegevens gegenereerd door analyser
     \item Genereert een aantal macro's voor elke constraint/regel
     \item Voor elke constraint occurrence een macro met code
   \end{itemize}
+  \end{block}
 }
 \section{Moeilijkheden en ontwerpbeslissingen}
 \subsection{Geheugenallocatie}
 \frame{\frametitle{Geheugenallocatie}
+  Geheugenallocatie:
   \begin{itemize}
     \item Alle ge-malloc()-ed geheugen wordt ge-free()-d
     \item Garbage Collector is niet noodzakelijk, dmv. user-defined destructors
@@ -128,18 +260,21 @@
 }
 \subsection{Macro's}
 \frame{\frametitle{Gebruik van C macro's}
-  Voordelen van gebruik van macro's:
+  Gebruik van C macro's:
+  \begin{block}{voordelen}
   \begin{itemize}
     \item Minder echte code in CCHR compiler zelf (hardcoded)
     \item Keuze van eg. datastructuren kan buiten compiler
     \item Overzichtelijkere outputcode
     \item Debug-mode door simpel optie meegeven aan C compiler
   \end{itemize}
-  Nadelen:
+  \end{block}
+  \begin{block}{nadelen}
   \begin{itemize}
     \item Veel moeilijker locatie van bugs te vinden
     \item Macro definities redelijk moeilijk leesbare code
   \end{itemize}
+  \end{block}
 }
 \section{Performantie}
 \frame{\frametitle{Algemeen}
@@ -151,46 +286,63 @@
   \end{itemize}
 }
 \subsection{GCD Voorbeeld}
-\frame{\frametitle{GCD Voorbeeld}
-  constraint gcd(uint64\_t); \\
-  triv @ gcd(0ULL) $<=>$ true; \\
-  dec @ gcd(N) $\backslash$ gcd(M) $<=>$ M$>=$N $|$ gcd(M-N); \\
+\frame[containsverbatim]{\frametitle{GCD Voorbeeld}
+  \begin{Verbatim}
+constraint gcd(uint64_t);
+triv @ gcd(0ULL) <=> true;
+dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
+  \end{Verbatim}
   \vspace{2ex}
   Beginnen met: gcd(100000000),gcd(5). \\
   \vspace{2ex}
+  \begin{block}{resultaten}
   \begin{tabular}{c|cc}
     implementatie & runtime & cycles/iteratie \\
     \hline
     swi-prolog & 37.1s & 4100 \\
-    cchr       & 0.08s & 8.8
+    cchr       & 0.08s & 8.8 \\
   \end{tabular}
+  \end{block}
+  \vspace{2ex}
+  Java heeft geen tail recursion $\rightarrow$ stack overflow
 }
 \subsection{FIB Voorbeeld}
-\frame{\frametitle{FIB Voorbeeld (met GMP library)}
-  typedef struct \{ mpz\_t v; \} bigint\_t; \\
-  \vspace{2ex}
-  constraint fib(int,bigint\_t) destr(mpz\_clear(Arg2.v)); \\
-  constraint init(int); \\
-  \vspace{2ex}
-  begin @ init(\_) $==>$ bigint\_t Z=, bigint\_t Y=, \{ \\
-  \quad mpz\_init\_set\_si(Z.v,1); \\
-  \quad mpz\_init\_set\_si(Y.v,1); \\
-  \}, fib(0,Z), fib(1,Y); \\
-  \vspace{2ex}
-  calc @ init(Max), fib(N-1,M1), fib(N,M2) $==>$ N$<$Max $|$ bigint\_t Sum=, \{ \\
-  \quad mpz\_init(Sum.v); \\
-  \quad mpz\_add(Sum.v,M1.v,M2.v); \\
-  \}, fib(N+1, Sum); \\
-  \vspace{2ex}
-  fini @ init(\_) $<=>$ true; \\
+\frame[containsverbatim] {
+\frametitle{FIB Voorbeeld (met GMP library)}
+\scriptsize \begin{Verbatim}
+typedef struct { mpz_t v; } bigint_t;
+  
+constraint fib(int,bigint_t) destr(mpz_clear(Arg2.v));
+constraint init(int);
+  
+begin @ init(_) ==> bigint_t Z=, bigint_t Y=, {
+    mpz_init_set_si(Z.v,1);
+    mpz_init_set_si(Y.v,1);
+  }, fib(0,Z), fib(1,Y);
+  
+calc @ init(Max), fib(N-1,M1), fib(N,M2) ==> N<Max | 
+  bigint_t Sum=, {
+    mpz_init(Sum.v);
+    mpz_add(Sum.v,M1.v,M2.v);
+  }, fib(N+1, Sum);
+  
+fini @ init(_) <=> true;
+\end{Verbatim}
 }
-\frame{\frametitle{Resultaten FIB}
+
+
+\frame[containsverbatim]{\frametitle{FIB Voorbeeld: resultaten}
   Beginnen met: init(7499). \\
-  Versie 2 gebruikt: \\
-  \quad fini @ fib(Max,\_) $\backslash$ init(Max) $<=>$ true; \\
-  in plaats van: \\
-  \quad fini @ init(\_) $<=>$ true; \\
+  Versie 2 gebruikt:
+\begin{Verbatim}
+  fini @ fib(Max,_) \  init(Max) <=> true;
+\end{Verbatim}
+in plaats van:
+\begin{Verbatim}
+  fini @ init(_) <=> true;
+\end{Verbatim}
   \vspace{2ex}
+  \begin{block}{resultaten}
   \begin{tabular}{c|cc}
     implementatie & runtime(v1) & runtime(v2) \\
     \hline
@@ -199,22 +351,45 @@
     cchr & 2.06s & 1.22s \\
     cchr (no hist) & - & 0.505s
   \end{tabular}
+  \end{block}
 }
-\frame{\frametitle{Primes voorbeeld}
+
+\subsection{Primes voorbeeld}
+\frame[containsverbatim] {
+\frametitle{Primes voorbeeld}
+
+\small \begin{Verbatim}
+constraint candidate(int),prime(int);
+candidate(1) <=> true;
+candidate(N) <=> prime(N), candidate(N-1);
+prime(Y) \  prime(X) <=> (X%Y)==0 | true;
+\end{Verbatim}
+  Beginnen met: candidate(23000). \\
+  \vspace{2ex}
+  \begin{block}{resultaten}
+  \begin{tabular}{c|c}
+    implementatie & runtime \\
+    \hline
+    swi-prolog & 330s \\
+    jchr & 48.5s \\
+    cchr & 8.9s
+  \end{tabular}
+  \end{block}
 }
-  
+
 \section{Gepland werk}
+\subsection{Gepland werk}
 \frame{\frametitle{Gepland werk}
   \begin{itemize}
     \item Meer optimalisaties (statische analyse)
     \item Built-in constraints (mbv. union find) \& reactivatie
     \item Meer datastructuren (eg. hashtables)
     \item Functies om over constraint store te itereren
+    \item Parameters bij rules (pragma's, eg. ``passive'')
   \end{itemize}
 }
 
-\section*{Einde}
-\frame{\frametitle{Nog vragen?}
-  Einde
+\frame{\frametitle{Einde}
+  Nog vragen?
 }
 \end{document}

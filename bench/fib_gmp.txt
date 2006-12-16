@@ -33,3 +33,4 @@ test: prime(10000).
 - swi: 330s
 - java15: 48.5s
 - cchr: 8.9s
+	

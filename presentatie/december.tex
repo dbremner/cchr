@@ -1,6 +1,7 @@
 \documentclass{beamer}
 \usepackage{beamerthemesidebar}
 \usepackage{amsmath}
+\usepackage{fancyvrb}
 
 \title{CCHR}
 \subtitle{De snelste CHR implementatie}
@@ -149,7 +150,7 @@
     \item Prolog: v5.6.24 for amd64
   \end{itemize}
 }
-\subsection{GCD Example}
+\subsection{GCD Voorbeeld}
 \frame{\frametitle{GCD Voorbeeld}
   constraint gcd(uint64\_t); \\
   triv @ gcd(0ULL) $<=>$ true; \\
@@ -164,7 +165,7 @@
     cchr       & 0.08s & 8.8
   \end{tabular}
 }
-\subsection{FIB Example}
+\subsection{FIB Voorbeeld}
 \frame{\frametitle{FIB Voorbeeld (met GMP library)}
   typedef struct \{ mpz\_t v; \} bigint\_t; \\
   \vspace{2ex}
@@ -199,7 +200,9 @@
     cchr (no hist) & - & 0.505s
   \end{tabular}
 }
-
+\frame{\frametitle{Primes voorbeeld}
+}
+  
 \section{Gepland werk}
 \frame{\frametitle{Gepland werk}
   \begin{itemize}

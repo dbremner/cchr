@@ -18,3 +18,18 @@ fib_gmp (fib(Max,_) \ init(Max) <=> true version):
 - cchr(no prop hist): 0.514s [profiled: 0.505s]
 - java: 0.149s
 - swi: 294s
+
+--------------------
+
+cchr {
+    constraint candidate(int),prime(int);
+    triv @ candidate(1) <=> true;
+    addcan @ candidate(N) <=> prime(N), candidate(N-1);
+    absorb @ prime(Y) \ prime(X) <=> (X%Y)==0 | true;
+}
+
+test: prime(10000).
+
+- swi: 330s
+- java15: 48.5s
+- cchr: 8.9s

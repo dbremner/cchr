@@ -1,4 +1,4 @@
-eCC := gcc -Wall -pipe -std=c99
+CC := gcc -Wall -pipe -std=c99
 
 #MODE := efence
 
@@ -33,6 +33,17 @@ gcd.p: gcd.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o gcd.a gcd.c
 	time ./gcd.a 50000000 5 >/dev/null
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o gcd.p gcd.c
+
+primes.c: primes.cchr bin/cchr Makefile
+	bin/cchr primes.cchr
+
+primes: primes.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o primes primes.c
+
+primes.p: primes.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o primes.a primes.c
+	time ./primes.a 5000 5 >/dev/null
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o primes.p primes.c
 
 fib.c: fib.cchr bin/cchr Makefile
 	bin/cchr fib.cchr

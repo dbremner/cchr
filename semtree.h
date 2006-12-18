@@ -60,6 +60,7 @@ typedef struct {
   char *name;
   alist_declare(char*,types);
   alist_declare(int,hooked);
+  alist_declare(int,related); /* list of constr id's that are related to this one */
   alist_declare(sem_ruleocc_t,occ);
   sem_expr_t fmt;
   sem_expr_t destr;

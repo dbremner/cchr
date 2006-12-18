@@ -392,6 +392,14 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 				output_fmt(out,"CB##_D(%s)",buf);
 			}
 		}
+		output_string(out,"\n");
+		output_fmt(out,"#undef RELATEDLIST_%s\n",conn);
+		output_fmt(out,"#define RELATEDLIST_%s(CB) ",conn);
+		for (int j=0; j<alist_len(con->related); j++) {
+			if (j) output_fmt(out," CB##_S ");
+			csm_constr_getname(in,alist_get(con->related,j),buf,256);
+			output_fmt(out,"CS##_D(%s)",buf);
+		}
 		output_char(out,'\n');
 		char **vt=csm_generate_vartable_constr(in,i);
 		if (alist_len(con->fmt.parts)>0) {

@@ -35,6 +35,7 @@ void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->types);
   alist_init(con->occ);
   alist_init(con->hooked);
+  alist_init(con->related);
   /*alist_init(con->fmtargs);*/
   sem_expr_init(&(con->fmt));
   sem_expr_init(&(con->destr));
@@ -46,6 +47,7 @@ void static sem_constr_destruct(sem_constr_t *con) {
   free(con->name);
   alist_free(con->occ);
   alist_free(con->hooked);
+  alist_free(con->related);
   for (int i=0; i<alist_len(con->types); i++) {
     free(alist_get(con->types,i));
   }
@@ -144,7 +146,7 @@ void static sem_vartable_init_args(sem_vartable_t *vt, int nargs) {
 	sem_vartable_init(vt);
 	for (int i=0; i<nargs; i++) {
 		char c[16];
-		snprintf(c,16,"Arg%i",i+1);
+		snprintf(c,16,"$%i",i+1);
 		sem_var_t var;
 		sem_var_init(&var,copy_string(c),NULL);
 		alist_add(vt->vars,var);
@@ -495,6 +497,29 @@ void static sem_hook_rule(sem_cchr_t *out,int rulenum) {
 	}
 }
 
+void static sem_rule_related(sem_cchr_t *out,sem_rule_t *rule) {
+	for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_REM])+alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); i++) {
+		int ik=(i>=alist_len(rule->con[SEM_RULE_LEVEL_REM]));
+		int in=i-ik*alist_len(rule->con[SEM_RULE_LEVEL_REM]);
+		sem_constr_t *cons=alist_ptr(out->cons,alist_get(rule->con[ik ? SEM_RULE_LEVEL_KEPT : SEM_RULE_LEVEL_REM],in).constr);
+		for (int j=0; j<alist_len(rule->con[SEM_RULE_LEVEL_REM])+alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); j++) {
+			if (i!=j) {
+				int jk=(j>=alist_len(rule->con[SEM_RULE_LEVEL_REM]));
+				int jn=j-jk*alist_len(rule->con[SEM_RULE_LEVEL_REM]);
+				int conid=alist_get(rule->con[jk ? SEM_RULE_LEVEL_KEPT : SEM_RULE_LEVEL_REM],jn).constr;
+				int k=0;
+				while (k<alist_len(cons->related)) {
+					if (alist_get(cons->related,k) == conid) break;
+					k++;
+				}
+				if (k==alist_len(cons->related)) {
+					alist_add(cons->related,conid);
+				}
+			}
+		}
+	}
+}
+
 /* generate a new rule in an output sem_cchr_t */
 int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	sem_rule_t n;
@@ -525,6 +550,7 @@ int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 		if (!ok) {fprintf(stderr,"In rule %s: unable to parse body part %i\n",n.name ? n.name : "<anonymous>",i+1);doret=0;}
 	}
 	if (doret && sem_rule_hnf(&n)) {
+		sem_rule_related(out,&n);
 		alist_add(out->rules,n);
 		sem_hook_rule(out,alist_len(out->rules)-1);
 		return 1;

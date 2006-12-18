@@ -12,7 +12,7 @@
 #include "alist.h"
 #include "parsestr.h"
 #include "semtree.h"
-#include "abs2sem.h"
+#include "analyse.h"
 
 #ifdef USE_EFENCE
 #include <efence.h>

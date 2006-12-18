@@ -43,6 +43,7 @@ typedef enum  {
 	} \
 }
 
+/* @pre: var is unitialised */
 #define logical_init(var) { \
 	(var)=malloc(sizeof((var)[0])); \
 	(var)->_type=LOGICAL_NONE_TYPE_ROOT; \
@@ -50,7 +51,7 @@ typedef enum  {
 	(var)->_rank=0; \
 }
 
-/* @pre: var is normalized (or points to root) */
+/* @pre: var is normalized */
 #define logical_setval(var,val,type) { \
 	(var)->_type=LOGICAL_NODE_TYPE_VAL; \
 	(var)->_data.val=val; \
@@ -62,9 +63,13 @@ typedef enum  {
 	if ((var1)->_rank<(var2)->_rank) { \
 		type _tmp=(var1); \
 		(var1)=(var2); \
-		(var2=_tmp; \
+		(var2)=_tmp; \
 	} \
 	(var2)->_data.par=(var1); \
+	if ((var2)->_type==LOGICAL_NODE_TYPE_VAL) { \
+		(var1)->_type=LOGICAL_NODE_TYPE_VAL; \
+		(var1)->_data.val=(var2)->_data.val; \
+	}
 	if ((var1)->_rank==(var2)->_rank) (var1)->rank++; \
 }
 

@@ -11,8 +11,8 @@
 
 #include "parsestr.h"
 #include "semtree.h"
-#include "abs2sem.h"
-#include "sem2csm.h"
+#include "analyse.h"
+#include "codegen.h"
 #include "output.h"
 
 #ifdef USE_EFENCE

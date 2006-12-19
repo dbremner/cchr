@@ -18,4 +18,4 @@
 - debug mode (done: 3/12/2006)
 - destructors (done: 4/12/2006)
 - propagation history (done: 8/12/2006)
-
+- logical variables with GUF (done: 19/12/2006)

@@ -1,6 +1,6 @@
 CC := gcc -Wall -pipe -std=c99
 
-#MODE := efence
+MODE := efence
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3
@@ -68,3 +68,6 @@ fib_gmp.p: fib_gmp.c cchr_csm.h Makefile
 
 fib.debug: fib.c cchr_csm.h Makefile
 	$(CC) -DCSM_CONF_DEBUG $(CFLAGS) $(LDFLAGS) -o fib.debug fib.c
+
+logtest: logtest.c ../logical.h
+	$(CC) $(CFLAGS) $(LDFLAGS) -o logtest logtest.c

@@ -44,7 +44,7 @@ void strip_sl(char *c);
 
 white_space       [ \t\n]*
 digit             [0-9]
-alpha             [A-Za-z_]
+alpha             [A-Za-z_$]
 alpha_num         ({alpha}|{digit})
 hex_digit         [0-9A-F]
 identifier        {alpha}{alpha_num}*

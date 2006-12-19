@@ -26,13 +26,17 @@
 \usepackage{ulem}
 
 \renewcommand{\emph}[1]{\textit{{#1}}}
+\newcommand{\bs}{$\backslash$}
 
 \setbeamercolor{background canvas}{bg=white}
 %\setbeamertemplate{footline}[frame number]
 \setbeamertemplate{navigation symbols}{}
 
-\title{CCHR}
-\subtitle{De snelste CHR implementatie}
+\title{CCHR: De snelste CHR implementatie}
+\subtitle{Promotor: \\
+Prof. Dr. Bart Demoen \\
+Begeleider: \\
+Dr. ir. Tom Schrijvers}
 
 \author{Pieter Wuille}
 \date{20 december 2006}
@@ -57,18 +61,22 @@
 \section{Algemeen}
 \subsection{Waarom CCHR}
 \frame{\frametitle{Waarom CHR in C?}
+  \begin{block}{Waarom CHR in C?}
   \begin{itemize}
   \item De mogelijkheid om CHR te gebruiken in pure C programma's
-  \item CHR compiler veel vrijheid geven inzake datastructuren
+  \item Een poging tot CHR heel snel maken (oa. door grote vrijheid in C datastructuren)
   \end{itemize}
+  \end{block}
 }
 
 \subsection{Structuur}
 \frame{\frametitle{Opbouw CCHR}
   De verschillende stappen bij het gebruik van CCHR zijn: \\
   \vspace{2ex}
-  \begin{psmatrix}[rowsep=0.3,colsep=0.3]
-    \psshadowbox{CCHR code} & \\
+  \begin{columns}
+  \column{0.45\textwidth}
+  \begin{psmatrix}[rowsep=0.3,colsep=0.2]
+    \psshadowbox{CCHR code} \\
                             & CCHR Compiler \\
     \psshadowbox{C macro's} & \\
                             & C Preprocessor \\
@@ -79,12 +87,15 @@
     \ncline{->}{3,1}{5,1}
     \ncline{->}{5,1}{7,1}
   \end{psmatrix}
-  %\begin{enumerate}
-   % \item Schrijven van C code met "cchr \{ \ldots \}" blokken in
-    %\item CCHR compiler zet blokken om in een hoop macro's
-    %\item C preprocessor zet macro's om in C code
-    %\item C compiler compileert verder (assembler, object, executable)
-  %\end{enumerate}
+  \column{0.55\textwidth}
+  \begin{block}{CCHR code}
+    \begin{itemize}
+      \item Gewone C broncode
+      \item Met ``cchr \{ \ldots \}'' blokken in
+      \item Deze blokken worden vervangen door C macro's
+    \end{itemize}
+  \end{block}
+  \end{columns}
 }
 
 \section{Implementatie}
@@ -100,9 +111,9 @@
   \end{block}
   
   \begin{block}{voorbeeld}
-  \begin{Verbatim}
-constraint init(int),fib(int,bignum_t)
-  destr(destruct_bignum(&Arg2));
+  \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{red}{constraint} init(int),fib(int,bignum_t)
+  \textcolor{red}{destr}(destruct_bignum(&$2))\textcolor{blue}{;}
   \end{Verbatim}
   \end{block}
 }
@@ -111,17 +122,17 @@ constraint init(int),fib(int,bignum_t)
   \begin{block}{CHR Rules}
   CHR Rules zijn ge\"implementeerd:
   \begin{itemize}
-    \item Propagation ($ K,\ldots ==> \ldots $)
-    \item Simplification ($ R,\ldots <=> \ldots $)
-    \item Simpagation ($ K,\ldots \backslash R,\ldots <=> \ldots $)
+    \item Propagation ($ K,\ldots \textcolor{blue}{==>} \ldots $)
+    \item Simplification ($ R,\ldots \textcolor{blue}{<=>} \ldots $)
+    \item Simpagation ($ K,\ldots \textcolor{blue}{\backslash}\ R,\ldots \textcolor{blue}{<=>} \ldots $)
   \end{itemize}
   \end{block}
   
   \begin{block}{voorbeelden}
-  \begin{Verbatim}
-begin @ init(_) ==> fib(0,1), fib(1,1);
-triv @ gcd(0) <=> true;
-dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
+  \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{blue}{begin @} init(_) \textcolor{blue}{==>} fib(0,1), fib(1,1)\textcolor{blue}{;}
+\textcolor{blue}{triv @} gcd(0) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
+\textcolor{blue}{dec @} gcd(N) \textcolor{blue}{\bs} gcd(M) \textcolor{blue}{<=>} M>=N \textcolor{blue}{|} gcd(M-N)\textcolor{blue}{;}
   \end{Verbatim}
   \end{block}
 }
@@ -137,10 +148,10 @@ dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
   \end{block}
   
   \begin{block}{voorbeelden}
-  \begin{Verbatim}
-con(N) ==> N>0 | cons(N-1);
-con(N) ==> int M=N-1, M>=0 | con(M);
-con(N) ==> N>0 | int M=N-1, con(M);
+  \begin{Verbatim}[commandchars=\\\{\}]
+con(N) \textcolor{blue}{==>} N>0 \textcolor{blue}{|} cons(N-1)\textcolor{blue}{;}
+con(N) \textcolor{blue}{==>} int M=N-1, M>=0 \textcolor{blue}{|} con(M)\textcolor{blue}{;}
+con(N) \textcolor{blue}{==>} N>0 \textcolor{blue}{|} int M=N-1, con(M)\textcolor{blue}{;}
   \end{Verbatim}
   \end{block}
 }
@@ -156,10 +167,10 @@ con(N) ==> N>0 | int M=N-1, con(M);
   \end{block}
   
   \begin{block}{voorbeelden}
-  \begin{Verbatim}
-con(0) <=> true;
-fib(N,_) \ init(N) <=> true;
-fib(N-1,M1), fib(N,M2) ==> fib(N+1,M1+M2);
+  \begin{Verbatim}[commandchars=\\\{\}]
+con(0) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
+fib(N,_) \textcolor{blue}{\bs} init(N) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
+fib(N-1,M1), fib(N,M2) \textcolor{blue}{==>} fib(N+1,M1+M2)\textcolor{blue}{;}
   \end{Verbatim}
   \end{block}
 }
@@ -174,12 +185,12 @@ fib(N-1,M1), fib(N,M2) ==> fib(N+1,M1+M2);
   \end{block}
 
   \begin{block}{voorbeeld}
-  \begin{Verbatim}
-str(Str1) ==> 
-  char *Str2=malloc(2*strlen(Str1)), {
+  \begin{Verbatim}[commandchars=\\\{\}]
+str(Str1) \textcolor{blue}{==>} 
+  char *Str2=malloc(2*strlen(Str1)), \textcolor{blue}{\{}
     strcpy(Str2,Str1);
     strcat(Str2,Str1);
-  }, dblstr(Str2);
+  \textcolor{blue}{\}}, dblstr(Str2)\textcolor{blue}{;}
   \end{Verbatim}
   \end{block}
 }
@@ -319,10 +330,10 @@ str(Str1) ==>
 
 \subsection{GCD Voorbeeld}
 \frame[containsverbatim]{\frametitle{GCD Voorbeeld}
-  \begin{Verbatim}
-constraint gcd(uint64_t);
-triv @ gcd(0ULL) <=> true;
-dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
+  \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{red}{constraint} gcd(uint64_t)\textcolor{blue}{;}
+\textcolor{blue}{triv @} gcd(0ULL) \textcolor{blue}{<=>} true\textcolor{blue}{;}
+\textcolor{blue}{dec @} gcd(N) \textcolor{blue}{\bs} gcd(M) \textcolor{blue}{<=>} M>=N \textcolor{blue}{|} gcd(M-N)\textcolor{blue}{;}
   \end{Verbatim}
   \vspace{2ex}
   Beginnen met: gcd(100000000),gcd(5). \\
@@ -341,24 +352,26 @@ dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
 \subsection{FIB Voorbeeld}
 \frame[containsverbatim] {
 \frametitle{FIB Voorbeeld (met GMP library)}
-\scriptsize \begin{Verbatim}
-typedef struct { mpz_t v; } bigint_t;
+\scriptsize \begin{Verbatim}[commandchars=\\\{\}]
+typedef struct \{ mpz_t v; \} bigint_t;
+
+cchr \{
+  \textcolor{red}{constraint} fib(int,bigint_t) \textcolor{red}{destr}(mpz_clear($2.v))\textcolor{blue}{;}
+  \textcolor{red}{constraint} init(int)\textcolor{blue}{;}
   
-constraint fib(int,bigint_t) destr(mpz_clear(Arg2.v));
-constraint init(int);
-  
-begin @ init(_) ==> bigint_t Z=, bigint_t Y=, {
+  \textcolor{blue}{begin @} init(_) \textcolor{blue}{==>} bigint_t Z=, bigint_t Y=, \textcolor{blue}{\{}
     mpz_init_set_si(Z.v,1);
     mpz_init_set_si(Y.v,1);
-  }, fib(0,Z), fib(1,Y);
+  \textcolor{blue}{\}}, fib(0,Z), fib(1,Y)\textcolor{blue}{;}
   
-calc @ init(Max), fib(N-1,M1), fib(N,M2) ==> N<Max | 
-  bigint_t Sum=, {
-    mpz_init(Sum.v);
-    mpz_add(Sum.v,M1.v,M2.v);
-  }, fib(N+1, Sum);
+  \textcolor{blue}{calc @} init(Max), fib(N-1,M1), fib(N,M2) \textcolor{blue}{==>} N<Max \textcolor{blue}{|}
+    bigint_t Sum=, \textcolor{blue}{\{}
+      mpz_init(Sum.v);
+      mpz_add(Sum.v,M1.v,M2.v);
+    \textcolor{blue}{\}}, fib(N+1, Sum)\textcolor{blue}{;}
   
-fini @ init(_) <=> true;
+  \textcolor{blue}{fini @} init(_) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
+\}
 \end{Verbatim}
 }
 
@@ -366,12 +379,12 @@ fini @ init(_) <=> true;
 \frame[containsverbatim]{\frametitle{FIB Voorbeeld: resultaten}
   Beginnen met: init(7499). \\
   Versie 2 gebruikt:
-\begin{Verbatim}
-  fini @ fib(Max,_) \  init(Max) <=> true;
+\begin{Verbatim}[commandchars=\\\{\}]
+  \textcolor{blue}{fini @} fib(Max,_) \textcolor{blue}{\bs} init(Max) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
 \end{Verbatim}
 in plaats van:
-\begin{Verbatim}
-  fini @ init(_) <=> true;
+\begin{Verbatim}[commandchars=\\\{\}]
+  \textcolor{blue}{fini @} init(_) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
 \end{Verbatim}
   \vspace{2ex}
   \begin{block}{resultaten}
@@ -386,15 +399,15 @@ in plaats van:
   \end{block}
 }
 
-\subsection{Primes voorbeeld}
+\subsection{Primes Voorbeeld}
 \frame[containsverbatim] {
-\frametitle{Primes voorbeeld}
+\frametitle{Primes Voorbeeld}
 
-\small \begin{Verbatim}
-constraint candidate(int),prime(int);
-candidate(1) <=> true;
-candidate(N) <=> prime(N), candidate(N-1);
-prime(Y) \  prime(X) <=> (X%Y)==0 | true;
+\small \begin{Verbatim}[commandchars=\\\{\}]
+\textcolor{red}{constraint} candidate(int),prime(int)\textcolor{blue}{;}
+candidate(1) \textcolor{blue}{<=>} true\textcolor{blue}{;}
+candidate(N) \textcolor{blue}{<=>} prime(N), candidate(N-1)\textcolor{blue}{;}
+prime(Y) \textcolor{blue}{\bs} prime(X) \textcolor{blue}{<=>} (X%Y)==0 \textcolor{blue}{|} \textcolor{red}{true}\textcolor{blue}{;}
 \end{Verbatim}
   Beginnen met: candidate(23000). \\
   \vspace{2ex}

@@ -1,4 +1,4 @@
-CC := gcc -Wall -pipe -std=c99
+CC := gcc -Wall -pipe -std=c99 -pedantic
 INTDIR := intermediate
 
 #MODE := efence

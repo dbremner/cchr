@@ -8,7 +8,7 @@
 #define _alist_h_ 1
 
 /* declare var to be a 'alist' of type 'type' */
-#define alist_declare(type,var) struct { int _n,_a; type *_d; } var;
+#define alist_declare(type,var) struct { int _n,_a; type *_d; } var
 
 /* initialize an alist */
 #define alist_init(var) do {(var)._n=0; (var)._a=0; (var)._d=NULL; } while(0);
@@ -53,7 +53,7 @@
 /* free the data occupied by alist 'var' WARNING: free the memory of the elements before calling this */
 #define alist_free(var) do { free((var)._d); (var)._d=NULL; (var)._n=0; (var)._a=0; } while(0);
 
-/* add all elements in alist 'var1' at the end of alist 'var2' */
+/* add all elements in alist 'var2' at the end of alist 'var1' */
 #define alist_addall(var1,var2) do { \
   alist_ensure((var1),((var1)._n+(var2)._n)); \
   int _j=0; \

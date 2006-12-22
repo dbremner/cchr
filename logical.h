@@ -16,10 +16,10 @@ typedef enum  {
 } logical_node_type_t;
 
 
-#define logical_typedef(in,out) \
+#define logical_header(in,out) \
 	typedef struct _##out##_struct_ *out; \
 	typedef struct { \
-		void (*cb)(out,void*); \
+		void (*cb)(void*); \
 		void *data; \
 	} out##_cb_data_t; \
 	struct _##out##_struct_ { \
@@ -37,14 +37,26 @@ typedef enum  {
 		} _data; \
 		int _refcount; /* reference count */ \
 	}; \
+	void static inline out##_init(out* var); \
+	void static inline out##_setval(out* var,in value); \
+	void static out##_seteq(out* var1, out* var2); \
+	void static inline out##_destruct(out *var,void (*cb)(in)); \
+	int static inline out##_testeq(out *var1, out *var2); \
+	int static inline out##_hasval(out *var); \
+	in static inline out##_getval(out *var); \
+	void static inline out##_setcb(out* var,void (*cb)(void*),void *data); \
+	void static inline out##_addcb(out* var,void (*cb)(void*),void *data);
+	
+#define logical_code(in,out) \
+	logical_header(in,out) \
 	/* requires normalized argument */ \
 	void static out##_docallbacks(out* var) { \
 		if ((*var)->_data.root.cb.cb) { \
-			(*var)->_data.root.cb.cb(*var,(*var)->_data.root.cb.data); \
+			(*var)->_data.root.cb.cb((*var)->_data.root.cb.data); \
 		} \
 		for (int i=0; i<alist_len((*var)->_data.root.cbs); i++) { \
 			out##_cb_data_t *cbd=alist_ptr((*var)->_data.root.cbs,i); \
-			cbd->cb(*var,cbd->data); \
+			cbd->cb(cbd->data); \
 		} \
 	} \
 	void static out##_normalize(out* var) { \
@@ -130,12 +142,12 @@ typedef enum  {
 		out##_normalize(var); \
 		return (*var)->_data.root.val; \
 	} \
-	void static inline out##_setcb(out* var,void (*cb)(out,void*),void *data) { \
+	void static inline out##_setcb(out* var,void (*cb)(void*),void *data) { \
 		out##_normalize(var); \
 		(*var)->_data.root.cb.cb=cb; \
 		(*var)->_data.root.cb.data=data; \
 	} \
-	void static inline out##_addcb(out* var,void (*cb)(out,void*),void *data) { \
+	void static inline out##_addcb(out* var,void (*cb)(void*),void *data) { \
 		out##_normalize(var); \
 		out##_cb_data_t cbd; \
 		cbd.cb=cb; \

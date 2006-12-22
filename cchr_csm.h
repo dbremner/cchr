@@ -123,15 +123,26 @@
     dcls_get(_global_runtime.store,ret).type=type; \
     return ret; \
   } \
+  void static cchr_reactivate_all(void *); \
   void static inline cchr_store(dcls_pid_t pid_self_) { \
     dcls_add_begin(_global_runtime.store,pid_self_,dcls_get(_global_runtime.store,pid_self_).type); \
   } \
   CONSLIST(CSM_CB_FFD) \
-  CONSLIST(CSM_CB_FFC)
+  CONSLIST(CSM_CB_FFC) \
+  void static cchr_reactivate_all(void *dummy) { \
+  	CONSLIST(CSM_CB_REC) \
+  }
+
+#define CSM_CB_REC_S
+#define CSM_CB_REC_D(NAME) cchr_reactivate_all_##NAME();
 
 /* callback macro for declaration of fire functions */  
 #define CSM_CB_FFD_S
-#define CSM_CB_FFD_D(NAME) void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_CB_FFDAR));
+#define CSM_CB_FFD_D(NAME) \
+  void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_CB_FFDAR)); \
+  void static inline cchr_add_##NAME(ARGLIST_##NAME(CSM_CB_FFDAR)); \
+  void static inline cchr_reactivate_##NAME(dcls_pid_t);
+
 
 /* callback macro for arguments of declaration of fire functions */
 #define CSM_CB_FFDAR_S ,
@@ -154,7 +165,18 @@
   } \
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA)) { \
   	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_CB_FFCFC)); \
+  } \
+  void cchr_reactivate_##NAME(dcls_pid_t pid_self_) { \
+  	cchr_fire_##NAME(pid_self_ ARGLIST_##NAME(CSM_CB_FFCRA)); \
+  } \
+  void cchr_reactivate_all_##NAME() { \
+  	CSM_LOOP(NAME,C, \
+  	  cchr_reactivate_##NAME(pid_C); \
+  	) \
   }
+  
+#define CSM_CB_FFCRA_S
+#define CSM_CB_FFCRA_D(CON,NAME,TYPE) ,CSM_LARG(CON,self_,NAME)
 
 /* callback macro for arguments of code of fire functions */ 
 #define CSM_CB_FFCAR_S

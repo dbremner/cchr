@@ -418,7 +418,7 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		output_fmt(out,"#undef RULEHOOKS_%s\n",conn);
 		output_fmt(out,"#define RULEHOOKS_%s(CB,...) ",conn);
 		for (int g=0; g<alist_len(con->hooked); g++) {
-			if (g) output_string(out," CD##_S ");
+			if (g) output_string(out," CB##_S ");
 			char bfk[256];
 			csm_rule_getname(in,alist_get(con->hooked,g),bfk,256);
 			output_fmt(out,"CB##_D(%s,%s,__VA_ARGS__)",conn,bfk);

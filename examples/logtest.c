@@ -8,7 +8,7 @@
 
 #include "../logical.h"
 
-logical_typedef(int,int_log_t);
+logical_code(int,int_log_t);
 
 int main(int argc,char **argv) {
 	int_log_t v1;

@@ -23,7 +23,7 @@ typedef uint32_t dcls_pid_t;
  */
  
 /* declare var to be a DCLS of type type */
-#define dcls_declare(type,var) struct { dcls_pid_t _s,_fe; struct { type _data; dcls_pid_t _prev,_next;  } *_d;} var;
+#define dcls_declare(type,var) struct { dcls_pid_t _s,_fe; struct { type _data; dcls_pid_t _prev,_next;  } *_d;} var
 
 /* initialize a DCLS var */
 #define dcls_init(var,types) do {\

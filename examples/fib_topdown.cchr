@@ -7,54 +7,29 @@
 logical_code(int,log_int_t);
 
 cchr {
-  constraint fib(int,log_int_t) destr(log_int_t_destruct(&$2,NULL)) fmt("fib(%i,%p)");
+  constraint fib(int,log_int_t) destr(log_int_t_destruct($2,NULL)) fmt("fib(%i,%p)");
   
-  extern log_int_t_hasval, log_int_t_getval, log_int_t_setval, log_int_t_seteq;
+  extern log_int_t_hasval, log_int_t_getval, log_int_t_setval, log_int_t_seteq, log_int_t_create;
   
-  dup @
-    fib(N,M1)
-  \
-    fib(N,M2)
-  <=>
-    {
-      log_int_t_seteq(&M1,&M2);
-    }
-  ;
+  dup @ fib(N,M1) \ fib(N,M2) <=> { log_int_t_seteq(M1,M2); };
     
-  f01 @ 
-    fib(N,M) 
-  ==> 
-    (N==0 || N==1)
-  | { 
-    log_int_t_setval(&M,1);
-  };
+  f01 @ fib(N,M) ==> (N==0 || N==1) | { log_int_t_setval(M,1); };
 
-  fn @ 
-    fib(N,M) 
-  ==> 
-    N>=2
-  | 
-    log_int_t M1=, 
-    log_int_t M2=, {
-      log_int_t_init(&M1); 
-      log_int_t_init(&M2); 
-      log_int_t_setcb(&M1,cchr_reactivate_all,NULL); 
-      log_int_t_setcb(&M2,cchr_reactivate_all,NULL);
-    }, fib(N-2,M1), fib(N-1,M2), {
-      if (log_int_t_hasval(&M1) && log_int_t_hasval(&M2)) {
-        log_int_t_setval(&M,log_int_t_getval(&M1)+log_int_t_getval(&M2));
-      }
-    }
-  ;
+  fn @ fib(N,M) ==> N>=2 | 
+    log_int_t M1=log_int_t_create(), 
+    log_int_t M2=log_int_t_create(), 
+    {log_int_t_setcb(M1,cchr_reactivate_all,NULL); log_int_t_setcb(M2,cchr_reactivate_all,NULL);},
+    fib(N-2,M1), fib(N-1,M2),
+    {if (log_int_t_hasval(M1) && log_int_t_hasval(M2)) { log_int_t_setval(M,log_int_t_getval(M1)+log_int_t_getval(M2)); }};
 
 }
 
 int main(int argc, char **argv) {
   cchr_runtime_init();
   int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
-  log_int_t answer;
-  log_int_t_init(&answer);
+  log_int_t answer=log_int_t_create();
   cchr_add_fib_2(a,answer);
   printf("answer=%i\n",log_int_t_getval(&answer));
+  log_int_t_destroy(answer);
   return 0;
 }

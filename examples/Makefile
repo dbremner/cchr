@@ -71,3 +71,7 @@ fib.debug: fib.c cchr_csm.h Makefile
 
 logtest: logtest.c ../logical.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o logtest logtest.c
+
+logtest.c.debug: logtest.c ../logical.h
+	cpp -P <logtest.c | indent -kr >logtest.c.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o logtest.c.debug logtest.c.c

@@ -97,34 +97,74 @@ void static sem_expr_destruct(sem_expr_t *expr) {
 }
 
 /* initialize a sem_conocc_t */
-void static sem_conocc_init(sem_conocc_t *occ, int constr) {
+void static sem_conocc_init(sem_conocc_t *occ,int constr) {
   alist_init(occ->args);
   occ->constr=constr;
 }
 
 /* destruct a sem_conocc_t */
-void static sem_conocc_destruct(sem_conocc_t *con,int type) {
+void static sem_conocc_destruct(sem_conocc_t *con) {
+  alist_free(con->args);
+}
+
+/* initialize a sem_conocc_t */
+void static sem_conoccout_init(sem_conoccout_t *occ, int constr) {
+  alist_init(occ->args);
+  occ->constr=constr;
+}
+
+/* destruct a sem_conocc_t */
+void static sem_conoccout_destruct(sem_conoccout_t *con) {
   for (int i=0; i<alist_len(con->args); i++) {
-    if (type==SEM_RULE_LEVEL_BODY) {
-      sem_expr_destruct(&(alist_get(con->args,i).expr));
-    }
+    sem_expr_destruct(&(alist_get(con->args,i)));
   }
   alist_free(con->args);
 }
 
+void static sem_out_init_con(sem_out_t *out, sem_conoccout_t *con) {
+	out->type=SEM_OUT_TYPE_CON;
+	out->data.con=*con;
+}
+
+void static sem_out_init_stmt(sem_out_t *out, sem_expr_t *stmt) {
+	out->type=SEM_OUT_TYPE_STM;
+	out->data.lstmt=*stmt;
+}
+
+void static sem_out_init_var(sem_out_t *out, int var) {
+	out->type=SEM_OUT_TYPE_VAR;
+	out->data.var=var;
+}
+
+void static sem_out_destruct(sem_out_t *out) {
+	switch (out->type) {
+		case SEM_OUT_TYPE_CON:
+			sem_conoccout_destruct(&(out->data.con));
+			break;
+		case SEM_OUT_TYPE_STM:
+			sem_expr_destruct(&(out->data.lstmt));
+			break;
+		case SEM_OUT_TYPE_VAR:
+			break;
+	}
+}
+
 /* initialize a sem_var_t */
-void static sem_var_init(sem_var_t *var, char *name, char *type) {
+void static sem_var_init(sem_var_t *var, char *name, char *type, int anon) {
   var->name=name;
   var->type=type;
   var->local=0;
+  var->anon=anon;
   var->occ[SEM_RULE_LEVEL_KEPT]=0;
   var->occ[SEM_RULE_LEVEL_REM]=0;
+  var->occ[SEM_RULE_LEVEL_GUARD]=0;
+  var->occ[SEM_RULE_LEVEL_BODY]=0;
   sem_expr_init(&(var->def));
 }
 
 /* initialize a variable as local */
 void static sem_var_init_local(sem_var_t *var, char *name, char *type, sem_expr_t *def, int body) {
-	sem_var_init(var,name,type);
+	sem_var_init(var,name,type,0);
 	var->local=body+1;
 	var->def = *def;
 }
@@ -141,14 +181,14 @@ void static sem_vartable_init(sem_vartable_t *vt) {
   alist_init(vt->vars);
 }
 
-/* initialize a vartable to have only Arg%i vars */
+/* initialize a vartable to have only $%i vars */
 void static sem_vartable_init_args(sem_vartable_t *vt, int nargs) {
 	sem_vartable_init(vt);
 	for (int i=0; i<nargs; i++) {
 		char c[16];
 		snprintf(c,16,"$%i",i+1);
 		sem_var_t var;
-		sem_var_init(&var,copy_string(c),NULL);
+		sem_var_init(&var,copy_string(c),NULL,0);
 		alist_add(vt->vars,var);
 	}
 }
@@ -163,12 +203,10 @@ void static sem_vartable_destruct(sem_vartable_t *vr) {
 void static sem_rule_init(sem_rule_t *rule, char *name) {
   rule->name=name;
   sem_vartable_init(&(rule->vt));
-  alist_init(rule->con[SEM_RULE_LEVEL_KEPT]);
-  alist_init(rule->con[SEM_RULE_LEVEL_REM]);
-  alist_init(rule->con[SEM_RULE_LEVEL_BODY]);
-  alist_init(rule->guard);
-  alist_init(rule->lstmt[0]);
-  alist_init(rule->lstmt[1]);
+  alist_init(rule->head[SEM_RULE_LEVEL_KEPT]);
+  alist_init(rule->head[SEM_RULE_LEVEL_REM]);
+  alist_init(rule->out[0]);
+  alist_init(rule->out[1]);
   rule->hook=-1;
 }
 
@@ -176,18 +214,14 @@ void static sem_rule_init(sem_rule_t *rule, char *name) {
 void static sem_rule_destruct(sem_rule_t *rule) {
   free(rule->name);
   sem_vartable_destruct(&(rule->vt));
-  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_KEPT],i),SEM_RULE_LEVEL_KEPT);
-  alist_free(rule->con[SEM_RULE_LEVEL_KEPT]);
-  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_REM]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_REM],i),SEM_RULE_LEVEL_REM);
-  alist_free(rule->con[SEM_RULE_LEVEL_REM]);
-  for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_BODY]); i++) sem_conocc_destruct(alist_ptr(rule->con[SEM_RULE_LEVEL_BODY],i),SEM_RULE_LEVEL_BODY);
-  alist_free(rule->con[SEM_RULE_LEVEL_BODY]);
-  for (int i=0; i<alist_len(rule->guard); i++) sem_expr_destruct(alist_ptr(rule->guard,i));
-  alist_free(rule->guard);
-  for (int i=0; i<alist_len(rule->lstmt[0]); i++) sem_expr_destruct(alist_ptr(rule->lstmt[0],i));
-  alist_free(rule->lstmt[0]);
-  for (int i=0; i<alist_len(rule->lstmt[1]); i++) sem_expr_destruct(alist_ptr(rule->lstmt[1],i));
-  alist_free(rule->lstmt[1]);
+  for (int i=0; i<alist_len(rule->head[SEM_RULE_LEVEL_KEPT]); i++) sem_conocc_destruct(alist_ptr(rule->head[SEM_RULE_LEVEL_KEPT],i));
+  alist_free(rule->head[SEM_RULE_LEVEL_KEPT]);
+  for (int i=0; i<alist_len(rule->head[SEM_RULE_LEVEL_REM]); i++) sem_conocc_destruct(alist_ptr(rule->head[SEM_RULE_LEVEL_REM],i));
+  alist_free(rule->head[SEM_RULE_LEVEL_BODY]);
+  for (int i=0; i<alist_len(rule->out[0]); i++) sem_out_destruct(alist_ptr(rule->out[0],i));
+  alist_free(rule->out[0]);
+  for (int i=0; i<alist_len(rule->out[1]); i++) sem_out_destruct(alist_ptr(rule->out[1],i));
+  alist_free(rule->out[1]);
 }
 
 /* initialize a sem_cchr_t */
@@ -224,7 +258,7 @@ int static sem_generate_random_var(sem_vartable_t *vt) {
 		j++;
 	} while(1);
 	sem_var_t var;
-	sem_var_init(&var,copy_string(test),NULL);
+	sem_var_init(&var,copy_string(test),NULL,1);
 	int ret=alist_len(vt->vars);
 	alist_add(vt->vars,var);
 	return ret;
@@ -235,8 +269,9 @@ struct {
 	int ar;
 } sem_stmsym;
 
+/* store<0: not, >=0: in that place in var->occ[] */
 /* generate a sem_expr_t from a expr_t */
-int static sem_generate_expr(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cchr,expr_t *in,char *desc,int pos, int stmt) {
+int static sem_generate_expr(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cchr,expr_t *in,char *desc,int pos, int stmt, int store) {
 	int ok=1;
 	for (int j=pos; j<alist_len(in->list); j++) {
 		token_t *tok=alist_ptr(in->list,j);
@@ -263,7 +298,9 @@ int static sem_generate_expr(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cch
 				}
 				if (ie) break;
 				if (!stmt && vt && tok->data[0]=='_') { /* anonymous variable */
-					sem_exprpart_init_var(&se,sem_generate_random_var(vt));
+					int anvar=sem_generate_random_var(vt);
+					sem_exprpart_init_var(&se,anvar);
+					if (store>=0) alist_get(vt->vars,anvar).occ[store]++;
 					alist_add(expr->parts,se);
 					ie=1;
 					break;
@@ -271,6 +308,7 @@ int static sem_generate_expr(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cch
 				if (vt) { for (int i=0; i<alist_len(vt->vars); i++) { /* look for existing var */
 					if (!strcmp(tok->data,alist_get(vt->vars,i).name)) {
 						sem_exprpart_init_var(&se,i);
+						if (store>=0) alist_get(vt->vars,i).occ[store]++;
 						alist_add(expr->parts,se);
 						ie=1;
 						break;
@@ -290,7 +328,8 @@ int static sem_generate_expr(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cch
 						if (vt) {
 							int nvp=alist_len(vt->vars);
 							sem_var_t nv;
-							sem_var_init(&nv,copy_string(tok->data),NULL);
+							sem_var_init(&nv,copy_string(tok->data),NULL,0);
+							if (store>=0) alist_get(vt->vars,nvp).occ[store]++;
 							alist_add(vt->vars,nv);
 							sem_exprpart_init_var(&se,nvp);
 							alist_add(expr->parts,se);
@@ -310,7 +349,7 @@ int static sem_generate_expr(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cch
 					sem_exprpart_init_lit(&se,copy_string(","));
 					alist_add(expr->parts,se);
 				}
-				if (!sem_generate_expr(expr,vt,cchr,alist_ptr(tok->args,l),desc,0,stmt)) ok=0;
+				if (!sem_generate_expr(expr,vt,cchr,alist_ptr(tok->args,l),desc,0,stmt,store)) ok=0;
 			}
 			sem_exprpart_init_lit(&se,copy_string(")"));
 			alist_add(expr->parts,se);
@@ -329,8 +368,10 @@ int static sem_generate_localstm(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr,
 	destruct_token_t(&b);
 	sem_expr_t se;
 	sem_expr_init(&se);
-	if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,1,1)) return 0;
-	alist_add(rule->lstmt[body],se);
+	if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,1,1,body ? SEM_RULE_LEVEL_BODY : SEM_RULE_LEVEL_GUARD)) return 0;
+	sem_out_t out;
+	sem_out_init_stmt(&out,&se);
+	alist_add(rule->out[body],out);
 	return 1;
 }
 
@@ -353,11 +394,14 @@ int static sem_generate_localvar(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr,
 				sem_expr_t se;
 				sem_expr_init(&se);
 				if (j<alist_len(expr->list)-1) {
-					if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,j+1,0)) return 0;
+					if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,j+1,0,body ? SEM_RULE_LEVEL_BODY : SEM_RULE_LEVEL_GUARD)) return 0;
 				}
 				sem_var_t var;
 				sem_var_init_local(&var,copy_string(pep->data),type,&se,body);
 				alist_add(rule->vt.vars,var);
+				sem_out_t out;
+				sem_out_init_var(&out,alist_len(rule->vt.vars)-1);
+				alist_add(rule->out[body],out);
 				return 1;
 			}
 			return 0;
@@ -390,12 +434,16 @@ int static sem_generate_conocc_arg(sem_rule_t *rule,sem_cchr_t *cchr,sem_expr_t 
 	alist_free(expr->parts);
 	sem_exprpart_init_lit(&nexp,copy_string(")"));
 	alist_add(nex.parts,nexp);
-	alist_add(rule->guard,nex);
+	sem_out_t out;
+	sem_out_init_stmt(&out,&nex);
+	alist_get(rule->vt.vars,var).occ[2]++;
+	alist_add(rule->out[0],out);
 	return var;
 }
 
-/* return 0 if no constraint occurence can be derived from the expression 'in' */
+/* return 0 if no constraint occurrence can be derived from the expression 'in' */
 /* generate a conocc (given its functional form in a expr_t) */
+/* type cannot be SEM_RULE_LEVEL_GUARD (no conocc's there) */
 int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int type) {
 	int ok=1;
 	if (alist_len(in->list) != 1) return 0;
@@ -404,30 +452,39 @@ int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 	for (int j=0; j<alist_len(cchr->cons); j++) {
 		sem_constr_t *cons=alist_ptr(cchr->cons,j);
 		if ((alist_len(tok->args) == alist_len(cons->types)) && !strcmp(tok->data,cons->name)) {
-			sem_conocc_t n;
-			sem_conocc_init(&n,j);
+			sem_conocc_t n1;
+			sem_conoccout_t n2;
 			sem_ruleocc_t r;
-			r.pos=alist_len(rule->con[type]);
 			r.rule=alist_len(cchr->rules);
 			r.type=type;
+			if (type==SEM_RULE_LEVEL_BODY) {
+				sem_conoccout_init(&n2,j);
+				r.pos=alist_len(rule->out[1]);
+			} else {
+				sem_conocc_init(&n1,j);
+				r.pos=alist_len(rule->head[type]);
+			}
 			alist_add(cons->occ,r);
 			for (int s=0; s<alist_len(tok->args); s++) {
 				expr_t *expr=alist_ptr(tok->args,s);
-				sem_conoccarg_t coa;
 				sem_expr_t se;
 				sem_expr_init(&se);
-				if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,0,0)) ok=0;
-				if (type==SEM_RULE_LEVEL_KEPT || type==SEM_RULE_LEVEL_REM) {
-				  int var=sem_generate_conocc_arg(rule,cchr,&se);
-				  coa.var=var;
-				  alist_add(n.args,coa);
-				  alist_get(rule->vt.vars,var).occ[type]++;
+				if (!sem_generate_expr(&se,&(rule->vt),cchr,expr,rule->name,0,0,type)) ok=0;
+				if (type==SEM_RULE_LEVEL_BODY) {
+					alist_add(n2.args,se);
 				} else {
-					coa.expr=se;
-					alist_add(n.args,coa);
+				  	int var=sem_generate_conocc_arg(rule,cchr,&se);
+				  	alist_add(n1.args,var);
+				  	alist_get(rule->vt.vars,var).occ[type]++;
 				}
 			}
-			alist_add(rule->con[type],n);
+			if (type==SEM_RULE_LEVEL_BODY) {
+				sem_out_t out;
+				sem_out_init_con(&out,&n2);
+				alist_add(rule->out[1],out);
+			} else {
+				alist_add(rule->head[type],n1);
+			}
 			return ok;
 		}
 	}
@@ -446,14 +503,14 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 		if (bnd>1) { // split variable
 			int oc=0;
 			for (int p=SEM_RULE_LEVEL_KEPT; p<=SEM_RULE_LEVEL_REM; p++) { // KEPT & REM
-				for (int k=0; k<alist_len(rule->con[p]); k++) { // all conocc's
-					sem_conocc_t *cot=alist_ptr(rule->con[p],k);
+				for (int k=0; k<alist_len(rule->head[p]); k++) { // all conocc's
+					sem_conocc_t *cot=alist_ptr(rule->head[p],k);
 					for (int l=0; l<alist_len(cot->args); l++) { // all args of conocc
-						int kv=alist_get(cot->args,l).var;
+						int kv=alist_get(cot->args,l);
 						if (kv==j) {
 							if (oc) {
 								int nv=sem_generate_random_var(&(rule->vt));
-								alist_get(cot->args,l).var=nv;
+								alist_get(cot->args,l)=nv;
 								sem_expr_t ne;
 								sem_expr_init(&ne);
 								sem_exprpart_t nep;
@@ -463,9 +520,13 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 								alist_add(ne.parts,nep);
 								sem_exprpart_init_var(&nep,nv);
 								alist_add(ne.parts,nep);
-								alist_add(rule->guard,ne);
+								sem_out_t out;
+								sem_out_init_stmt(&out,&ne);
+								alist_add(rule->out[0],out);
 								var->occ[p]--;
 								alist_get(rule->vt.vars,nv).occ[p]++;
+								alist_get(rule->vt.vars,nv).occ[SEM_RULE_LEVEL_GUARD]++;
+								alist_get(rule->vt.vars,kv).occ[p]--;
 							}
 							oc=1;
 						}
@@ -479,12 +540,12 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 
 void static sem_hook_rule(sem_cchr_t *out,int rulenum) {
 	sem_rule_t *rule=alist_ptr(out->rules,rulenum);
-	if (rule->hook<0 && alist_len(rule->con[SEM_RULE_LEVEL_REM])==0) {
+	if (rule->hook<0 && alist_len(rule->head[SEM_RULE_LEVEL_REM])==0) {
 		int bestpos=-1; /* what conocc in KEPT is best (-1: none yet) */
 		int bestcon=0; /* what constraint is best */
 		int bestnum=0; /* how many hooks that contraint already has */
-		for (int j=0; j<alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); j++) {
-			sem_conocc_t *co=alist_ptr(rule->con[SEM_RULE_LEVEL_KEPT],j);
+		for (int j=0; j<alist_len(rule->head[SEM_RULE_LEVEL_KEPT]); j++) {
+			sem_conocc_t *co=alist_ptr(rule->head[SEM_RULE_LEVEL_KEPT],j);
 			int num=alist_len(alist_get(out->cons,co->constr).hooked);
 			if (bestpos==-1 || num<bestnum) {
 				bestpos=j;
@@ -498,15 +559,15 @@ void static sem_hook_rule(sem_cchr_t *out,int rulenum) {
 }
 
 void static sem_rule_related(sem_cchr_t *out,sem_rule_t *rule) {
-	for (int i=0; i<alist_len(rule->con[SEM_RULE_LEVEL_REM])+alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); i++) {
-		int ik=(i>=alist_len(rule->con[SEM_RULE_LEVEL_REM]));
-		int in=i-ik*alist_len(rule->con[SEM_RULE_LEVEL_REM]);
-		sem_constr_t *cons=alist_ptr(out->cons,alist_get(rule->con[ik ? SEM_RULE_LEVEL_KEPT : SEM_RULE_LEVEL_REM],in).constr);
-		for (int j=0; j<alist_len(rule->con[SEM_RULE_LEVEL_REM])+alist_len(rule->con[SEM_RULE_LEVEL_KEPT]); j++) {
+	for (int i=0; i<alist_len(rule->head[SEM_RULE_LEVEL_REM])+alist_len(rule->head[SEM_RULE_LEVEL_KEPT]); i++) {
+		int ik=(i>=alist_len(rule->head[SEM_RULE_LEVEL_REM]));
+		int in=i-ik*alist_len(rule->head[SEM_RULE_LEVEL_REM]);
+		sem_constr_t *cons=alist_ptr(out->cons,alist_get(rule->head[ik ? SEM_RULE_LEVEL_KEPT : SEM_RULE_LEVEL_REM],in).constr);
+		for (int j=0; j<alist_len(rule->head[SEM_RULE_LEVEL_REM])+alist_len(rule->head[SEM_RULE_LEVEL_KEPT]); j++) {
 			if (i!=j) {
-				int jk=(j>=alist_len(rule->con[SEM_RULE_LEVEL_REM]));
-				int jn=j-jk*alist_len(rule->con[SEM_RULE_LEVEL_REM]);
-				int conid=alist_get(rule->con[jk ? SEM_RULE_LEVEL_KEPT : SEM_RULE_LEVEL_REM],jn).constr;
+				int jk=(j>=alist_len(rule->head[SEM_RULE_LEVEL_REM]));
+				int jn=j-jk*alist_len(rule->head[SEM_RULE_LEVEL_REM]);
+				int conid=alist_get(rule->head[jk ? SEM_RULE_LEVEL_KEPT : SEM_RULE_LEVEL_REM],jn).constr;
 				int k=0;
 				while (k<alist_len(cons->related)) {
 					if (alist_get(cons->related,k) == conid) break;
@@ -532,8 +593,10 @@ int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 		if (!ok) {
 			sem_expr_t expr;
 			sem_expr_init(&expr);
-			if (!sem_generate_expr(&expr,&(n.vt),out,alist_ptr(in->guard.list,i),n.name,0,0)) doret=0;
-			alist_add(n.guard,expr);
+			if (!sem_generate_expr(&expr,&(n.vt),out,alist_ptr(in->guard.list,i),n.name,0,0,SEM_RULE_LEVEL_GUARD)) doret=0;
+			sem_out_t ot;
+			sem_out_init_stmt(&ot,&expr);
+			alist_add(n.out[0],ot);
 		}
 	}
 	for (int i=0; i<alist_len(in->removed.list); i++) {
@@ -576,7 +639,7 @@ void static sem_generate_cons(sem_cchr_t *out,constr_t *in) {
   	if (t->type==TOKEN_TYPE_FUNC) {
   		if (!ok && !strcmp(t->data,"fmt")) {
   			sem_expr_init(&(n.fmt));
-  			sem_generate_expr(&(n.fmt),NULL,out,alist_ptr(t->args,0),n.name,0,1);
+  			sem_generate_expr(&(n.fmt),NULL,out,alist_ptr(t->args,0),n.name,0,1,-1);
   			/*for (int j=1; j<alist_len(t->args); j++) {
   				sem_expr_t ar;
   				sem_expr_init(&ar);
@@ -587,7 +650,7 @@ void static sem_generate_cons(sem_cchr_t *out,constr_t *in) {
   		}
   		if (!ok && !strcmp(t->data,"destr")) {
   			sem_expr_init(&(n.destr));
-  			sem_generate_expr(&(n.destr),&svt,out,alist_ptr(t->args,0),n.name,0,1);
+  			sem_generate_expr(&(n.destr),&svt,out,alist_ptr(t->args,0),n.name,0,1,-1);
   			ok=1;  			
   		}
   		if (!ok) {

@@ -22,7 +22,7 @@ typedef enum enum_sem_rule_level {
 #define SEM_RULE_LEVEL_BODY 2
 #define SEM_RULE_LEVEL_GUARD 3
 
-/* a rule occurence, listing in what rule and where a specific constraint occurs */
+/* a rule occurrence, listing in what rule and where a specific constraint occurs */
 typedef struct {
 	int rule; /* what rule? */
 	sem_rule_level_t type; /* in which clause of that rule */
@@ -67,24 +67,25 @@ typedef struct {
   /*alist_declare(sem_expr_t,fmtargs);*/
 } sem_constr_t;
 
-/* an argument of a constraint occurence (being a var in head constraints, or an expr in body constraints) */ 
-typedef union {
-	sem_expr_t expr; /* for BODY */
-	int var; /* for KEPT & REM */
-} sem_conoccarg_t;
-
-/* a constraint occurence, with a number referring to a constraint, and a list of arguments */
+/* a constraint occurrence, with a number referring to a constraint, and a list of arguments */
 typedef struct {
   int constr;
-  alist_declare(sem_conoccarg_t,args); /* in KEPT & REM: just one var ID */
+  alist_declare(int,args); /* in KEPT & REM: just one var ID */
 } sem_conocc_t;
+
+/* a constraint occurrence in a body */
+typedef struct {
+  int constr;
+  alist_declare(sem_expr_t,args);
+} sem_conoccout_t;
 
 /* a variable, with a name, a type (unused ftm), and occurence counts in both head constraints of rules */
 typedef struct {
   char *name;
   char *type; /* copy of constr->types[], do not free */
-  int occ[2]; /* occurences in removed,kept */
+  int occ[4]; /* occurences in removed,kept */
   int local; /* whether is variable is local in the body; 1=guard, 2=body */
+  int anon;
   sem_expr_t def; /* only when local==1, this variable's definition */ 
 } sem_var_t;
 
@@ -93,13 +94,31 @@ typedef struct {
   alist_declare(sem_var_t,vars);
 } sem_vartable_t;
 
+typedef enum _sem_out_type_t_enum {
+	SEM_OUT_TYPE_CON, /* an added constraint (not for guard) */
+	SEM_OUT_TYPE_VAR, /* a local variable */
+	SEM_OUT_TYPE_STM /* a statement(for body) or expression(for guard) */
+} sem_out_type_t;
+
+typedef struct {
+	sem_out_type_t type;
+	union {
+		sem_conoccout_t con;
+		int var;
+		sem_expr_t lstmt;
+	} data;
+} sem_out_t;
+
+#define SEM_OUT_TYPE_CON 0
+#define SEM_OUT_TYPE_VAR 1
+#define SEM_OUT_TYPE_STM 2
+
 /* a rule, having a (optional) name, a list of variables, a list of constraint occurences (in head & body), and a guard */
 typedef struct {
   char *name;
   sem_vartable_t vt;
-  alist_declare(sem_conocc_t,con[3]);
-  alist_declare(sem_expr_t,guard);
-  alist_declare(sem_expr_t,lstmt[2]);
+  alist_declare(sem_conocc_t,head[2]);
+  alist_declare(sem_out_t,out[2]);
   int hook; /* index into con[SEM_RULE_LEVEL_KEPT], denoting what conocc this
                rule is hooked to */
 } sem_rule_t;

@@ -13,14 +13,14 @@
 typedef enum enum_sem_rule_level {
   SEM_RULE_LEVEL_KEPT=0,
   SEM_RULE_LEVEL_REM=1,
-  SEM_RULE_LEVEL_BODY=2,
-  SEM_RULE_LEVEL_GUARD=3
+  SEM_RULE_LEVEL_GUARD=2,
+  SEM_RULE_LEVEL_BODY=3
 } sem_rule_level_t;
 
 #define SEM_RULE_LEVEL_KEPT 0
 #define SEM_RULE_LEVEL_REM 1
-#define SEM_RULE_LEVEL_BODY 2
-#define SEM_RULE_LEVEL_GUARD 3
+#define SEM_RULE_LEVEL_GUARD 2
+#define SEM_RULE_LEVEL_BODY 3
 
 /* a rule occurrence, listing in what rule and where a specific constraint occurs */
 typedef struct {
@@ -83,7 +83,7 @@ typedef struct {
 typedef struct {
   char *name;
   char *type; /* copy of constr->types[], do not free */
-  int occ[4]; /* occurences in removed,kept */
+  int occ[4]; /* occurrences in removed,kept,guard,body */
   int local; /* whether is variable is local in the body; 1=guard, 2=body */
   int anon;
   sem_expr_t def; /* only when local==1, this variable's definition */ 
@@ -96,8 +96,9 @@ typedef struct {
 
 typedef enum _sem_out_type_t_enum {
 	SEM_OUT_TYPE_CON, /* an added constraint (not for guard) */
-	SEM_OUT_TYPE_VAR, /* a local variable */
-	SEM_OUT_TYPE_STM /* a statement(for body) or expression(for guard) */
+	SEM_OUT_TYPE_VAR, /* a local variable definition */
+	SEM_OUT_TYPE_STM, /* a local statement */
+	SEM_OUT_TYPE_EXP  /* an expression (only guard) */
 } sem_out_type_t;
 
 typedef struct {
@@ -105,7 +106,7 @@ typedef struct {
 	union {
 		sem_conoccout_t con;
 		int var;
-		sem_expr_t lstmt;
+		sem_expr_t exp;
 	} data;
 } sem_out_t;
 

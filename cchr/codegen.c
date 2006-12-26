@@ -90,10 +90,10 @@ char static **csm_generate_vartable_rule(sem_cchr_t *chr,sem_rule_t *rule,int ar
 			tbl[i]=make_message("CSM_LOCAL(L_%s)",var->name);
 		} else { /* variable defined by head of rule */
 			sem_rule_level_t isrem=var->occ[SEM_RULE_LEVEL_REM] ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT;
-			for (int j=0; j<alist_len(rule->con[isrem]); j++) { /* search what rule defines it */
-				sem_conocc_t *co=alist_ptr(rule->con[isrem],j);
+			for (int j=0; j<alist_len(rule->head[isrem]); j++) { /* search what rule defines it */
+				sem_conocc_t *co=alist_ptr(rule->head[isrem],j);
 				for (int k=0; k<alist_len(co->args); k++) { /* search which argument of that rule defines it */
-					if (alist_get(co->args,k).var==i) {
+					if (alist_get(co->args,k)==i) {
 						char cona[256];
 						csm_constr_getname(chr,co->constr,cona,256);
 						if (arem==isrem && j==aid) { /* if this is the active rule, use ARG instead of LARG */

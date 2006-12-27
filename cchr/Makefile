@@ -1,7 +1,7 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 INTDIR := intermediate
 
-MODE := efence
+#MODE := debug
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3
@@ -43,8 +43,8 @@ $(INTDIR):
 # EXECUTABLES #
 ###############
 
-$(OUTDIR)/cchr: $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o
-	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o
+$(OUTDIR)/cchr: $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o
+	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o
 
 ######################
 # INTERMEDIATE FILES #

@@ -155,6 +155,8 @@ void static sem_var_init(sem_var_t *var, char *name, char *type, int anon) {
   var->name=name;
   var->type=type;
   var->local=0;
+  var->pos=-1;
+  var->poss=-1;
   var->anon=anon;
   var->occ[SEM_RULE_LEVEL_KEPT]=0;
   var->occ[SEM_RULE_LEVEL_REM]=0;
@@ -247,7 +249,7 @@ int static sem_generate_random_var(sem_vartable_t *vt) {
 	int j=0;
 	char test[32];
 	do {
-		snprintf(test,32,"_tmp%i_",j);
+		snprintf(test,32,"_%i",j);
 		int found=0;
 		for (j=0; j<alist_len(vt->vars); j++) {
 			if (!strcmp(alist_get(vt->vars,j).name,test)) {
@@ -384,12 +386,20 @@ void static sem_expr_assign(sem_expr_t *expr,sem_vartable_t *vt, int type, int m
 }
 
 /* assign a rule to its vartable (update occurrence counts in variables) */
-void static sem_rule_assign(sem_rule_t *rule,int mult) {
+void static sem_rule_assign(sem_cchr_t *cchr,sem_rule_t *rule,int mult) {
 	for (int type=0; type<2; type++) {
 		for (int j=0; j<alist_len(rule->head[type]); j++) {
 			sem_conocc_t *co=alist_ptr(rule->head[type],j);
 			for (int k=0; k<alist_len(co->args); k++) {
-				alist_get(rule->vt.vars,alist_get(co->args,k)).occ[type]+=mult;
+				sem_var_t *var=alist_ptr(rule->vt.vars,alist_get(co->args,k));
+				var->occ[type]+=mult;
+				if (var->pos<0) {
+					var->pos=j;
+					var->poss=k;
+				}
+				if (var->type == NULL) {
+					var->type=copy_string(alist_get(alist_get(cchr->cons,co->constr).types,k));
+				}
 			}
 		}
 	}
@@ -573,10 +583,13 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 								sem_out_t out;
 								sem_out_init_expr(&out,&ne,0);
 								alist_add(rule->out[0],out);
-								var->occ[p]--;
-								alist_get(rule->vt.vars,nv).occ[p]++;
-								alist_get(rule->vt.vars,nv).occ[SEM_RULE_LEVEL_GUARD]++;
-								alist_get(rule->vt.vars,kv).occ[p]--;
+								alist_get(rule->vt.vars,nv).occ[p]++; /* replacement variable instead of double one */
+								alist_get(rule->vt.vars,j).occ[p]--;
+								alist_get(rule->vt.vars,j).occ[SEM_RULE_LEVEL_GUARD]++;
+								alist_get(rule->vt.vars,nv).occ[SEM_RULE_LEVEL_GUARD]++; /* replacement also occurs in guard */
+								alist_get(rule->vt.vars,nv).pos=k; /* where replacement var is definied */
+								alist_get(rule->vt.vars,nv).poss=l; /* idem */
+								alist_get(rule->vt.vars,nv).type=copy_string(alist_get(rule->vt.vars,kv).type); /* new var is same type as (replaced) double var */
 							}
 							oc=1;
 						}
@@ -662,7 +675,7 @@ int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 		if (!ok) ok=sem_generate_localstm(out,&n,alist_ptr(in->body.list,i),1);
 		if (!ok) {fprintf(stderr,"In rule %s: unable to parse body part %i\n",n.name ? n.name : "<anonymous>",i+1);doret=0;}
 	}
-	sem_rule_assign(&n,1);
+	sem_rule_assign(out,&n,1);
 	if (doret && sem_rule_hnf(&n)) {
 		sem_rule_related(out,&n);
 		alist_add(out->rules,n);

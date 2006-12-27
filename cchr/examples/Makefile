@@ -1,14 +1,14 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 
-MODE := efence
+MODE := debug
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3
-  LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+  LDFLAGS := 
 else
   ifeq ($(MODE),efence)
     CFLAGS := -O0 -ggdb3 -DUSE_EFENCE
-    LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+    LDFLAGS := -lefence 
   else
     CFLAGS := -O3 -g0 -fomit-frame-pointer -march=athlon64 -frename-registers -ftracer -fweb
     LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
@@ -51,6 +51,16 @@ fib.c: fib.cchr bin/cchr Makefile
 fib.c.debug: fib.c cchr_csm.h Makefile
 	cpp -DCSM_CONF_DEBUG <fib.c | egrep -v '^#' | indent -kr -l1024 >fib.c.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.c.debug fib.c.c
+
+fib_topdown.c: fib_topdown.cchr bin/cchr Makefile
+	bin/cchr fib_topdown.cchr
+
+fib_topdown: fib_topdown.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown fib_topdown.c
+
+fib_topdown.debug: fib_topdown.c cchr_csm.h Makefile
+	cpp -P -DUSE_EFENCE -DCSM_CONF_DEBUG <fib_topdown.c | indent -kr -l1024 >fib_topdown.debug.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown.debug fib_topdown.debug.c
 
 fib_gmp.c: fib_gmp.cchr bin/cchr Makefile
 	bin/cchr fib_gmp.cchr

@@ -7,6 +7,12 @@
 #ifndef LOGICAL_H_
 #define LOGICAL_H_ 1
 
+#ifdef USE_EFENCE
+#define INLINE
+#else
+#define INLINE inline
+#endif
+
 #include "alist.h"
 
 typedef enum  {
@@ -37,15 +43,15 @@ typedef enum  {
 		} _data; \
 		int _refcount; /* reference count */ \
 	}; \
-	out static inline out##_create(); \
-	void static inline out##_setval(out var,in value); \
+	out static INLINE out##_create(); \
+	void static INLINE out##_setval(out var,in value); \
 	void static out##_seteq(out var1, out var2); \
-	void static inline out##_destruct(out var,void (*cb)(in)); \
-	int static inline out##_testeq(out var1, out var2); \
-	int static inline out##_hasval(out var); \
-	in static inline out##_getval(out var); \
-	void static inline out##_setcb(out var,void (*cb)(void*),void *data); \
-	void static inline out##_addcb(out var,void (*cb)(void*),void *data);
+	void static INLINE out##_destruct(out var,void (*cb)(in)); \
+	int static INLINE out##_testeq(out var1, out var2); \
+	int static INLINE out##_hasval(out var); \
+	in static INLINE out##_getval(out var); \
+	void static INLINE out##_setcb(out var,void (*cb)(void*),void *data); \
+	void static INLINE out##_addcb(out var,void (*cb)(void*),void *data);
 	
 #define logical_code(in,out) \
 	logical_header(in,out) \
@@ -81,7 +87,7 @@ typedef enum  {
 		} \
 		return var; \
 	} \
-	out static inline out##_create() { \
+	out static INLINE out##_create() { \
 		out ret; \
 		ret=malloc(sizeof(*ret)); \
 		ret->_type=LOGICAL_NODE_TYPE_ROOT; \
@@ -91,7 +97,7 @@ typedef enum  {
 		ret->_data.root.cb.cb=NULL; \
 		return ret; \
 	} \
-	void static inline out##_setval(out var,in value) { \
+	void static INLINE out##_setval(out var,in value) { \
 		var=out##_normalize(var); \
 		(var)->_type=LOGICAL_NODE_TYPE_VAL; \
 		(var)->_data.root.val=value; \
@@ -119,7 +125,7 @@ typedef enum  {
 			out##_docallbacks(var1); \
 		} \
 	} \
-	void static inline out##_destruct(out var,void (*cb)(in)) { \
+	void static INLINE out##_destruct(out var,void (*cb)(in)) { \
 		int remtop=1; \
 		out top=out##_normalize(var); \
 		if (top != var) { \
@@ -139,7 +145,7 @@ typedef enum  {
 			} \
 		} \
 	} \
-	int static inline out##_testeq(out var1, out var2) { \
+	int static INLINE out##_testeq(out var1, out var2) { \
 		var1=out##_normalize(var1); \
 		var2=out##_normalize(var2); \
 		return ((var1)==(var2) || \
@@ -149,20 +155,20 @@ typedef enum  {
 				(var1)->_data.root.val==(var2)->_data.root.val \
 			)); \
 	} \
-	int static inline out##_hasval(out var) { \
+	int static INLINE out##_hasval(out var) { \
 		var=out##_normalize(var); \
 		return (var->_type==LOGICAL_NODE_TYPE_VAL); \
 	} \
-	in static inline out##_getval(out var) { \
+	in static INLINE out##_getval(out var) { \
 		var=out##_normalize(var); \
 		return (var)->_data.root.val; \
 	} \
-	void static inline out##_setcb(out var,void (*cb)(void*),void *data) { \
+	void static INLINE out##_setcb(out var,void (*cb)(void*),void *data) { \
 		var=out##_normalize(var); \
 		var->_data.root.cb.cb=cb; \
 		var->_data.root.cb.data=data; \
 	} \
-	void static inline out##_addcb(out var,void (*cb)(void*),void *data) { \
+	void static INLINE out##_addcb(out var,void (*cb)(void*),void *data) { \
 		var=out##_normalize(var); \
 		out##_cb_data_t cbd; \
 		cbd.cb=cb; \

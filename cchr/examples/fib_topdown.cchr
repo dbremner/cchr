@@ -4,10 +4,12 @@
 
 #include "logical.h"
 
-logical_code(int,log_int_t);
+logical_code(int,log_int_t)
+
+void static dummy() {}
 
 cchr {
-  constraint fib(int,log_int_t) destr(log_int_t_destruct($2,NULL)) fmt("fib(%i,%p)");
+  constraint fib(int,log_int_t) destr( { log_int_t_destruct($2,NULL); $2=NULL; } ) fmt("fib(%i,%p)");
   
   extern log_int_t_hasval, log_int_t_getval, log_int_t_setval, log_int_t_seteq, log_int_t_create;
   
@@ -18,7 +20,7 @@ cchr {
   fn @ fib(N,M) ==> N>=2 | 
     log_int_t M1=log_int_t_create(), 
     log_int_t M2=log_int_t_create(), 
-    {log_int_t_setcb(M1,cchr_reactivate_all,NULL); log_int_t_setcb(M2,cchr_reactivate_all,NULL);},
+/*    {log_int_t_setcb(M1,cchr_reactivate_all,NULL); log_int_t_setcb(M2,cchr_reactivate_all,NULL);},*/
     fib(N-2,M1), fib(N-1,M2),
     {if (log_int_t_hasval(M1) && log_int_t_hasval(M2)) { log_int_t_setval(M,log_int_t_getval(M1)+log_int_t_getval(M2)); }};
 
@@ -29,7 +31,8 @@ int main(int argc, char **argv) {
   int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
   log_int_t answer=log_int_t_create();
   cchr_add_fib_2(a,answer);
-  printf("answer=%i\n",log_int_t_getval(&answer));
-  log_int_t_destroy(answer);
+  printf("answer=%i\n",log_int_t_hasval(answer) ? log_int_t_getval(answer) : -1);
+  cchr_runtime_free();
   return 0;
 }
+

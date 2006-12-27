@@ -79,16 +79,20 @@ typedef uint32_t dcls_pid_t;
   (var)._d[(pid)]._prev=DCLS_EMPTY_PID; \
 } while(0);
 
-/* bring a position into the empty set */
-/* @pre: position was allocated (in filled set or not) */
-#define dcls_empty(var,pid) do { \
+/* get a position out of the filled set (not added to free set, unless already there) */
+#define dcls_remove(var,pid) do { \
   if ((var)._d[(pid)]._prev!=DCLS_EMPTY_PID) {\
     dcls_pid_t _prev=(var)._d[(pid)]._prev; \
     dcls_pid_t _next=(var)._d[(pid)]._next; \
     (var)._d[_prev]._next=_next;\
     (var)._d[_next]._prev=_prev;\
     (var)._d[(pid)]._prev=DCLS_EMPTY_PID;\
-  }\
+  } \
+} while(0);
+
+/* bring a position into the free set (and get it out of filled set if necessary) */
+#define dcls_free(var,pid) do { \
+  dcls_remove(var,pid); \
   (var)._d[(pid)]._next=(var)._fe;\
   (var)._fe=(pid);\
 } while(0);
@@ -109,7 +113,7 @@ typedef uint32_t dcls_pid_t;
   (var)._d[(type)]._prev=(pid); \
 } while(0);
 
-#define dcls_free(var) do { \
+#define dcls_destruct(var) do { \
   free((var)._d); \
   (var)._d=NULL; \
   (var)._s=0; \

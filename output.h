@@ -16,6 +16,7 @@ typedef struct {
   FILE *out;
   int linenum;
   char *idf;
+  int nl;
   alist_declare(char*,les);
 } output_t;
 

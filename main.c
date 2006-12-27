@@ -47,7 +47,7 @@ int process_file_cchr(FILE *in, output_t *out, int *line) {
 		int oko=sem_generate_cchr(&sem_cchr,&cchr);
 		destruct_cchr_t(&cchr);
 		if (oko) {
-			//csm_generate(&sem_cchr,out);
+			csm_generate(&sem_cchr,out);
 		} else {
 			ok=0;
 		}

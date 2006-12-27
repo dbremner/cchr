@@ -85,6 +85,8 @@ typedef struct {
   char *type; /* copy of constr->types[], do not free */
   int occ[4]; /* occurrences in removed,kept,guard,body */
   int local; /* whether is variable is local in the body; 1=guard, 2=body */
+  int pos; /* (if local==0: position in removed or kept where var is defined) */
+  int poss; /* (if local==0: argument number of that constraint that defines the variable) */
   int anon;
   sem_expr_t def; /* only when local==1, this variable's definition */ 
 } sem_var_t;

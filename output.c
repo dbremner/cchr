@@ -30,12 +30,14 @@ void output_init(output_t *output, FILE *out) {
   output->out=out;
   output->linenum=1;
   output->idf=malloc(3);
+  output->nl=0;
   strcpy(output->idf,"  ");
   alist_init(output->les);
 }
 
 /* destruct an output stream structure */
 void output_destruct(output_t *output) {
+  if (output->nl) putc('\n',output->out);
   for (int j=0; j<alist_len(output->les); j++) {
     free(alist_get(output->les,j));
   }
@@ -43,21 +45,32 @@ void output_destruct(output_t *output) {
   free(output->idf);
 }
 
+void static output_indentation(output_t *output) {
+   	if (output->nl) {
+ 		int i=alist_len(output->les);
+   		while (i--) {
+   			fputs(output->idf,output->out);
+   		}
+    	output->nl=0;
+  	}
+}
+
 /* output a number of chars (at most len) pointer to be str to out */
 void output_chars(output_t *output, char *str, int len) {
   char *fs;
   while ((fs=strchr(str,'\n')) && fs<str+len) {
+  	output_indentation(output);
     fwrite(str,fs-str,1,output->out);
     len -= (fs+1-str);
     str=fs+1;
-    int i=alist_len(output->les);
     putc('\n',output->out);
     output->linenum++;
-    while (i--) {
-      fputs(output->idf,output->out);
-    }
+    output->nl=1;
   }
-  fwrite(str,len,1,output->out);
+  if (len) {
+  	output_indentation(output);
+  	fwrite(str,len,1,output->out);
+  }
 }
 
 /* output a single character to out */
@@ -104,9 +117,8 @@ void output_fmt(output_t *output, char *fmt, ...) {
  * this indented block can be ended with output_unindent, and will print a newline, a decreased indentation and "out" */
 void output_indent(output_t *output, char *in, char *out) {
   output_string(output,in);
-  char *ad=malloc(strlen(out)+2);
-  strcpy(ad,"\n");
-  strcat(ad,out);
+  char *ad=malloc(strlen(out)+1);
+  strcpy(ad,out);
   alist_add(output->les,ad);
   output_string(output,"\n");
 }
@@ -117,6 +129,7 @@ void output_unindent(output_t *output) {
   if (l) {
     char *ptr;
     alist_pop(output->les,ptr);
+    if (!output->nl) output_string(output,"\n");
     output_string(output,ptr);
     free(ptr);
   }

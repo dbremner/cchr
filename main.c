@@ -14,6 +14,7 @@
 #include "analyse.h"
 #include "codegen.h"
 #include "output.h"
+#include "timings.h"
 
 #ifdef USE_EFENCE
 #include <efence.h>
@@ -40,19 +41,35 @@ int process_file_cchr(FILE *in, output_t *out, int *line) {
 	yyset_in(in,scanner);
 	cchr_t cchr;
 	int ok=1;
+	timing_t total,sub;
+	printf("  - parsing...");
+	timing_start(&total);
 	if (!yyparse(scanner,&cchr,*line-1)) {
+	        printf(" done, %.3fs\n",timing_get(&total));
 		*line+=yyget_lloc(scanner)->last_line-1;
 		yylex_destroy(scanner);
 		sem_cchr_t sem_cchr;
+		printf("  - analysing...");
+		timing_start(&sub);
 		int oko=sem_generate_cchr(&sem_cchr,&cchr);
+		timing_stop(&sub);
 		destruct_cchr_t(&cchr);
 		if (oko) {
+		        printf(" done, %.3fs\n",timing_get(&total));
+			printf("  - code generation...");
+			timing_start(&sub);
 			csm_generate(&sem_cchr,out);
+			timing_stop(&sub);
+			printf(" done, %.3fs\n",timing_get(&sub));
 		} else {
+		        printf(" error\n");
 			ok=0;
 		}
 		sem_cchr_destruct(&sem_cchr);
+		timing_stop(&total);
+		if (ok) printf("  - total: %.3fs\n",timing_get(&total));
 	} else {
+	        printf(" error\n");
 		yylex_destroy(scanner);
 		ok=0;
 	}
@@ -70,6 +87,10 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 	int c; /* character read */
 	int ls=1; /* only spaces have occured after last newline */
 	int ok=1; /* return value */
+	int ncchr=0;
+	printf("%s:\n",inname);
+	timing_t filetime;
+	timing_start(&filetime);
 	output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 	while ((c=getc(in)) != EOF) { /* loop over all bytes in the source */
 		if (c == '\n') {(*line)++;ls=1;} /* line-number counter */
@@ -116,8 +137,9 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 		if (c == '{') { /* begin of a block */
 			if (as && ws==4 && !strncmp(wb,"cchr",4)) {
 				output_fmt(out,"#line %i \"%s\"\n",output_get_line(out)+1,outname);
+				printf("- processing cchr block #%i:\n",(++ncchr));
 				if (!process_file_cchr(in,out,line)) ok=0;
-			    output_fmt(out,"#line %i \"%s\"\n",*line,inname);
+				output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 				ws=0;
 				ss=0;
 				as=1;
@@ -134,13 +156,19 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 	}
 	output_chars(out,wb,ws);
 	output_chars(out,sb,ss);
+	timing_stop(&filetime);
+	printf("- output written to: %s\n",outname);
+	printf("- total %s: %.3fs\n",inname,timing_get(&filetime));
 	return ok;
 }
 
 
 int main(int argc, char *argv[])
 {
+	setbuf(stdout,NULL);
 	int ok=1;
+	timing_t totaltime;
+	timing_start(&totaltime);
 	for (int i=1; i<argc; i++) {
 	    char *arg=argv[i];
 	    int line=1;
@@ -159,5 +187,7 @@ int main(int argc, char *argv[])
 	    fclose(out);
 	    fclose(in);
 	}
+	timing_stop(&totaltime);
+	printf("total: %.3fs\n",timing_get(&totaltime));
 	return (!ok);
 }

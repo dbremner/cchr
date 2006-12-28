@@ -57,6 +57,7 @@ void static sem_constr_destruct(sem_constr_t *con) {
   }
   alist_free(con->fmtargs);*/
   sem_expr_destruct(&(con->fmt));
+  sem_expr_destruct(&(con->destr));
   
 }
 

@@ -20,6 +20,8 @@
 #include <efence.h>
 #endif
 
+#define TIMING_FORMAT "%.2f"
+
 /* a few definitions for interfacing with lexer/scanner */
 typedef void* yyscan_t;
 int yylex_init (yyscan_t* scanner);
@@ -45,7 +47,7 @@ int process_file_cchr(FILE *in, output_t *out, int *line) {
 	printf("  - parsing...");
 	timing_start(&total);
 	if (!yyparse(scanner,&cchr,*line-1)) {
-	        printf(" done, %.3fs\n",timing_get(&total));
+	        printf(" done, " TIMING_FORMAT "s\n",timing_get(&total));
 		*line+=yyget_lloc(scanner)->last_line-1;
 		yylex_destroy(scanner);
 		sem_cchr_t sem_cchr;
@@ -55,19 +57,19 @@ int process_file_cchr(FILE *in, output_t *out, int *line) {
 		timing_stop(&sub);
 		destruct_cchr_t(&cchr);
 		if (oko) {
-		        printf(" done, %.3fs\n",timing_get(&total));
+		        printf(" done, " TIMING_FORMAT "s\n",timing_get(&total));
 			printf("  - code generation...");
 			timing_start(&sub);
 			csm_generate(&sem_cchr,out);
 			timing_stop(&sub);
-			printf(" done, %.3fs\n",timing_get(&sub));
+			printf(" done, " TIMING_FORMAT "s\n",timing_get(&sub));
 		} else {
 		        printf(" error\n");
 			ok=0;
 		}
 		sem_cchr_destruct(&sem_cchr);
 		timing_stop(&total);
-		if (ok) printf("  - total: %.3fs\n",timing_get(&total));
+		if (ok) printf("  - total: " TIMING_FORMAT "s\n",timing_get(&total));
 	} else {
 	        printf(" error\n");
 		yylex_destroy(scanner);
@@ -158,7 +160,7 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 	output_chars(out,sb,ss);
 	timing_stop(&filetime);
 	printf("- output written to: %s\n",outname);
-	printf("- total %s: %.3fs\n",inname,timing_get(&filetime));
+	printf("- total %s: " TIMING_FORMAT "s\n",inname,timing_get(&filetime));
 	return ok;
 }
 
@@ -188,6 +190,6 @@ int main(int argc, char *argv[])
 	    fclose(in);
 	}
 	timing_stop(&totaltime);
-	printf("total: %.3fs\n",timing_get(&totaltime));
+	printf("total: " TIMING_FORMAT "s\n",timing_get(&totaltime));
 	return (!ok);
 }

@@ -1,7 +1,7 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 INTDIR := intermediate
 
-MODE := efence
+#MODE := efence
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3
@@ -78,5 +78,5 @@ $(OUTDIR)/parsestr.o: parsestr.c parsestr.h alist.h
 $(OUTDIR)/output.o: output.c output.h
 	$(CC) $(CFLAGS) output.c -c -o $(OUTDIR)/output.o
 
-$(OUTDIR)/main.o: main.c codegen.h analyse.h semtree.h parsestr.h alist.h output.h
+$(OUTDIR)/main.o: main.c codegen.h analyse.h semtree.h parsestr.h alist.h output.h timings.h
 	$(CC) $(CFLAGS) main.c -c -o $(OUTDIR)/main.o

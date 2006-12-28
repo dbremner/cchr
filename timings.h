@@ -6,10 +6,9 @@
 #ifdef TIMINGS_USE_TIMES
 #include <sys/times.h>
 #include <unistd.h>
-static const long _timings_freq = sysconf(_SC_CLK_TCK);
 #define TIMINGS_T struct tms
 #define TIMINGS_GET(val) times(&(val))
-#define TIMINGS_CALC(val1,val2) (((double)(((val2).tms_stime+(val2).tms_utime)-((val1).tms_stime+(val1).tms_utime)))/((double)(_timings_freq)))
+#define TIMINGS_CALC(val1,val2) (((double)(((val2).tms_stime+(val2).tms_utime)-((val1).tms_stime+(val1).tms_utime))))
 #else
 #include <time.h>
 #define TIMINGS_T clock_t

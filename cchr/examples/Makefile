@@ -1,6 +1,6 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 
-MODE := debug
+#MODE := efence
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3
@@ -55,11 +55,11 @@ fib.c.debug: fib.c cchr_csm.h Makefile
 fib_topdown.c: fib_topdown.cchr bin/cchr Makefile
 	bin/cchr fib_topdown.cchr
 
-fib_topdown: fib_topdown.c cchr_csm.h Makefile
+fib_topdown: fib_topdown.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown fib_topdown.c
 
-fib_topdown.debug: fib_topdown.c cchr_csm.h Makefile
-	cpp -P -DUSE_EFENCE -DCSM_CONF_DEBUG <fib_topdown.c | indent -kr -l1024 >fib_topdown.debug.c
+fib_topdown.debug: fib_topdown.c ../cchr_csm.h ../logical.h ../dcls.h ../alist.h Makefile
+	cpp -P -DUSE_EFENCE -DCSM_CONF_DEBUG -DDEBUG <fib_topdown.c | indent -kr -l1024 >fib_topdown.debug.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown.debug fib_topdown.debug.c
 
 fib_gmp.c: fib_gmp.cchr bin/cchr Makefile

@@ -257,7 +257,9 @@ void static csm_generate_body(sem_cchr_t *chr,sem_rule_t *rule,int arem,int aid,
 	if (arem) {
 		output_fmt(out,"CSM_END \\");
 	} else {
-		output_fmt(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF,CSM_END) \\");
+		char cc[256];
+		csm_constr_getname(chr,alist_get(rule->head[arem ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT],aid).constr,cc,256);
+		output_fmt(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF,CSM_FREESELF(%s) CSM_END) \\",cc);
 	}
 }
 

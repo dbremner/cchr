@@ -307,14 +307,16 @@ int static sem_generate_expr(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cch
 					ie=1;
 					break;
 				}
-				if (vt) { for (int i=0; i<alist_len(vt->vars); i++) { /* look for existing var */
-					if (!strcmp(tok->data,alist_get(vt->vars,i).name)) {
-						sem_exprpart_init_var(&se,i);
-						alist_add(expr->parts,se);
-						ie=1;
-						break;
+				if (vt) { 
+					for (int i=0; i<alist_len(vt->vars); i++) { /* look for existing var */
+						if (!strcmp(tok->data,alist_get(vt->vars,i).name)) {
+							sem_exprpart_init_var(&se,i);
+							alist_add(expr->parts,se);
+							ie=1;
+							break;
+						}
 					}
-				} }
+				}
 				if (ie) break;
 				if (stmt) {
 					sem_exprpart_init_lit(&se,copy_string(tok->data));
@@ -649,6 +651,12 @@ int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 	sem_rule_t n;
 	sem_rule_init(&n,copy_string(in->name));
 	int doret=1;
+	for (int i=0; i<alist_len(in->removed.list); i++) {
+		if (!sem_generate_conocc(&n,out,alist_ptr(in->removed.list,i),SEM_RULE_LEVEL_REM)) doret=0;
+	}
+	for (int i=0; i<alist_len(in->kept.list); i++) {
+		if (!sem_generate_conocc(&n,out,alist_ptr(in->kept.list,i),SEM_RULE_LEVEL_KEPT)) doret=0;
+	}
 	for (int i=0; i<alist_len(in->guard.list); i++) {
 		int ok=0;
 		if (!ok) ok=sem_generate_localvar(out,&n,alist_ptr(in->guard.list,i),0);
@@ -661,12 +669,6 @@ int static sem_generate_rule(sem_cchr_t *out,rule_t *in) {
 			sem_out_init_expr(&ot,&expr,0);
 			alist_add(n.out[0],ot);
 		}
-	}
-	for (int i=0; i<alist_len(in->removed.list); i++) {
-		if (!sem_generate_conocc(&n,out,alist_ptr(in->removed.list,i),SEM_RULE_LEVEL_REM)) doret=0;
-	}
-	for (int i=0; i<alist_len(in->kept.list); i++) {
-		if (!sem_generate_conocc(&n,out,alist_ptr(in->kept.list,i),SEM_RULE_LEVEL_KEPT)) doret=0;
 	}
 	for (int i=0; i<alist_len(in->body.list); i++) {
 		int ok=0;

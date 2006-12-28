@@ -13,6 +13,12 @@
 #define INLINE inline
 #endif
 
+#ifndef DEBUG
+#define LOG_DEBUG(...)
+#else
+#define LOG_DEBUG(...) __VA_ARGS__
+#endif
+
 #include "alist.h"
 
 typedef enum  {
@@ -21,8 +27,8 @@ typedef enum  {
 	LOGICAL_NODE_TYPE_VAL=2 /* a root with value */
 } logical_node_type_t;
 
-
 #define logical_header(in,out) \
+	LOG_DEBUG(static int _##out##_nextid = 1;) \
 	typedef struct _##out##_struct_ *out; \
 	typedef struct { \
 		void (*cb)(void*); \
@@ -42,7 +48,9 @@ typedef enum  {
 			} root; \
 		} _data; \
 		int _refcount; /* reference count */ \
+		LOG_DEBUG(int _id;) \
 	}; \
+	out static INLINE out##_copy(out var); \
 	out static INLINE out##_create(); \
 	void static INLINE out##_setval(out var,in value); \
 	void static out##_seteq(out var1, out var2); \
@@ -66,6 +74,13 @@ typedef enum  {
 		} \
 	} \
 	out static out##_normalize(out var) { \
+		LOG_DEBUG( \
+			if (var->_refcount<=0) { \
+				LOG_DEBUG(fprintf(stderr,"[normalizing logical (%s) #%i => REFCOUNT==%i !!!]\n",#out,var->_id,var->_refcount);) \
+				return NULL; \
+			} \
+			int oid=var->_id; \
+		) \
 		if (var->_type==LOGICAL_NODE_TYPE_NONROOT) { /* only when this is no root */ \
 			out _top=var; /* temporary top variable */ \
 			while (_top->_type==LOGICAL_NODE_TYPE_NONROOT) { /* first search the top */ \
@@ -83,9 +98,16 @@ typedef enum  {
 				} \
 				var=_next; /* move to the next node */ \
 			} \
+			LOG_DEBUG(fprintf(stderr,"[normalized logical (%s) #%i => #%i]\n",#out,oid,_top->_id);) \
 			return _top; \
 		} \
 		return var; \
+	} \
+	out static INLINE out##_copy(out var) { \
+		out ret=out##_normalize(var); \
+		ret->_refcount++; \
+		LOG_DEBUG(fprintf(stderr,"[copy logical (%s) #%i => refcount=%i]\n",#out,ret->_id,ret->_refcount);) \
+		return ret; \
 	} \
 	out static INLINE out##_create() { \
 		out ret; \
@@ -94,6 +116,8 @@ typedef enum  {
 		ret->_refcount=1; \
 		ret->_data.root.rank=0; \
 		alist_init(ret->_data.root.cbs); \
+		LOG_DEBUG(ret->_id=_##out##_nextid++;) \
+		LOG_DEBUG(fprintf(stderr,"[created logical (%s) #%i]\n",#out,ret->_id);) \
 		ret->_data.root.cb.cb=NULL; \
 		return ret; \
 	} \
@@ -101,11 +125,14 @@ typedef enum  {
 		var=out##_normalize(var); \
 		(var)->_type=LOGICAL_NODE_TYPE_VAL; \
 		(var)->_data.root.val=value; \
+		LOG_DEBUG(fprintf(stderr,"[setval logical (%s #%i]\n",#out,var->_id);) \
 		out##_docallbacks(var); \
 	} \
 	void static out##_seteq(out var1, out var2) { \
+		LOG_DEBUG(fprintf(stderr,"[seteq logical (%s) #%i <-> #%i]\n",#out,var1->_id,var2->_id);) \
 		var1=out##_normalize(var1); \
 		var2=out##_normalize(var2); \
+		LOG_DEBUG(fprintf(stderr,"[seteq roots:  (%s) #%i <-> #%i]\n",#out,var1->_id,var2->_id);) \
 		if (var1 != var2) { \
 			if ((var1)->_data.root.rank<(var2)->_data.root.rank) { /* if rank2<rank1 */ \
 				out _tmp=(var1); \
@@ -121,13 +148,16 @@ typedef enum  {
 			(var2)->_type=LOGICAL_NODE_TYPE_NONROOT; /* child becomes type NONROOT */ \
 			(var2)->_data.nonroot.par=var1; /* its parent is set */ \
 			(var1)->_refcount++; /* its parent's refcount increased */ \
+			LOG_DEBUG(fprintf(stderr,"[seteq refc: (%s) #%i=%i #%i=%i]\n",#out,var1->_id,var1->_refcount,var2->_id,var2->_refcount);) \
 			if ((var1)->_data.root.rank==(var2)->_data.root.rank) (var1)->_data.root.rank++; /* rank increase if necessary */ \
 			out##_docallbacks(var1); \
 		} \
 	} \
 	void static INLINE out##_destruct(out var,void (*cb)(in)) { \
 		int remtop=1; \
+		LOG_DEBUG(fprintf(stderr,"[destruct logical (%s) #%i]\n",#out,var->_id);) \
 		out top=out##_normalize(var); \
+		LOG_DEBUG(fprintf(stderr,"[destruct root:   (%s) #%i]\n",#out,var->_id);) \
 		if (top != var) { \
 			var->_refcount--; \
 			if (var->_refcount==0) { \
@@ -139,6 +169,7 @@ typedef enum  {
 		if (remtop) { \
 			top->_refcount--; \
 			if (top->_refcount==0) { \
+				LOG_DEBUG(fprintf(stderr,"[destruct free:    (%s) #%i]\n",#out,var->_id);) \
 				if (cb && top->_type==LOGICAL_NODE_TYPE_VAL) { cb(top->_data.root.val); } \
 				alist_free(top->_data.root.cbs); \
 				free(top); \

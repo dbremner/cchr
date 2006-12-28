@@ -167,6 +167,7 @@
       _global_runtime.debugindent++; \
     ) \
     RULELIST_##NAME(CSM_CB_FFCCO) \
+    CSM_STROUT("final store") \
     CSM_NEEDSELF \
     CSM_END \
   } \
@@ -196,7 +197,7 @@
 
 /* callback macro for inclusion of constraint-occurrence code in fire functions */
 #define CSM_CB_FFCCO_S
-#define CSM_CB_FFCCO_D(NAME) { CODELIST_##NAME }
+#define CSM_CB_FFCCO_D(NAME) { CSM_STROUT("try " #NAME); CODELIST_##NAME }
 
 /* callback macro for arguments of code of add functions */
 #define CSM_CB_FFCAA_S ,
@@ -218,7 +219,9 @@
 #define CSM_DIFF(VAR1,VAR2) (pid_##VAR1 != pid_##VAR2)
 
 /* callback macro for freeing propagation history records */ 
-#define CSM_CB_FPH_D(T,V,A) { alist_free(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V); }
+#define CSM_CB_FPH_D(T,V,A) { \
+	alist_free(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V); \
+}
 #define CSM_CB_FPH_S
 
 /* after a killself should always be a CSM_END (with a body and a CSM_FREESELF in between) */
@@ -228,6 +231,13 @@
 		dcls_remove(_global_runtime.store,pid_self_); \
 		CSM_FMTOUT("kill pid=%i (self)",(int)pid_self_); \
 	} \
+}
+
+/* after a kill should always be a CSM_FREE (before a CSM_END) */
+#define CSM_KILL(VAR,TYPE) { \
+	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
+	dcls_remove(_global_runtime.store,pid_##VAR); \
+	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
 }
 
 #define CSM_DESTRUCT_PID(TYPE,PID) DESTRUCT_##TYPE CSM_CB_DPH_F(TYPE,PID)
@@ -246,13 +256,6 @@
 		dcls_free(_global_runtime.store,pid_self_); \
 		CSM_FMTOUT("free pid=%i (self)",(int)pid_self_); \
 	} \
-}
-
-/* after a kill should always be a CSM_FREE (before a CSM_END) */
-#define CSM_KILL(VAR,TYPE) { \
-	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
-	dcls_remove(_global_runtime.store,pid_##VAR); \
-	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
 }
 
 #define CSM_FREE(VAR,TYPE) { \
@@ -291,7 +294,10 @@
 #define CSM_CB_MAKSA_S 
 #define CSM_CB_MAKSA_D(NAME,TYPE,CON) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
 
-#define CSM_CB_PHI_D(T,V,A) CSM_PROP(alist_init(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V);)
+#define CSM_CB_PHI_D(T,V,A) CSM_PROP( \
+	alist_init(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V); \
+	dcls_get(_global_runtime.store,pid_self_).data.T._phl_##V=0; \
+)
 #define CSM_CB_PHI_S
 
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid_self_) && dcls_get(_global_runtime.store,pid_self_).id == oldid)
@@ -327,6 +333,7 @@
 	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
 	for (int i_=0; i_<p_->data.PROPHIST_HOOK_##RULE._phl_##RULE; i_++) { \
 		if (1 COND) { \
+			CSM_FMTOUT("histfail %s (on %s:%i)",#RULE,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id); \
 			ok_=0; \
 			break; \
 		} \

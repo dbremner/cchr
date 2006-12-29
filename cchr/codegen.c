@@ -319,7 +319,7 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 		csm_constr_getname(cchr,co->constr,cc,256);
 		output_fmt(out,alist_len(co->args) ? "CSM_DESTRUCT(%s" : "CSM_DESTRUCTE(%s",cc);
 		for (int l=0; l<alist_len(co->args); l++) {
-		    output_fmt(out,",%s",tbl[alist_get(co->args,l)]);
+		    output_fmt(out,",%s",tbl_c[alist_get(co->args,l)]);
 		}
 		output_fmt(out,") \\\n");
 	}

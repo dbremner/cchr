@@ -581,10 +581,12 @@ static yyconst flex_int32_t yy_rule_can_match_eol[37] =
 #endif
 
 void static yyerror(char *message,yyscan_t scanner);
+int yyparse(yyscan_t,cchr_t*);
 
 void strip_sl(char *c);
 
-#define LIT_RETURN(TYPE) {yylloc->first_line=yyget_lineno(yyscanner); yylloc->last_line=yyget_lineno(yyscanner); yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
+#define SET_LLOC {yylloc->first_line=yyget_lineno(yyscanner); yylloc->last_line=yyget_lineno(yyscanner);}
+#define LIT_RETURN(TYPE) {SET_LLOC; yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
 
 #define YY_INPUT(buf,result,max_size) { \
 	int c = getc(yyin); \
@@ -594,7 +596,7 @@ void strip_sl(char *c);
 
 
 
-#line 598 "intermediate/cchr.lex.c"
+#line 600 "intermediate/cchr.lex.c"
 
 #define INITIAL 0
 #define BCOMMENT 1
@@ -830,10 +832,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 58 "cchr.lex"
+#line 60 "cchr.lex"
 
 
-#line 837 "intermediate/cchr.lex.c"
+#line 839 "intermediate/cchr.lex.c"
 
     yylval = yylval_param;
 
@@ -934,193 +936,193 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 60 "cchr.lex"
+#line 62 "cchr.lex"
 BEGIN(BCOMMENT);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 61 "cchr.lex"
+#line 63 "cchr.lex"
 BEGIN(INITIAL);
 	YY_BREAK
 case YY_STATE_EOF(BCOMMENT):
-#line 62 "cchr.lex"
+#line 64 "cchr.lex"
 yyerror("EOF in comment",yyscanner);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 63 "cchr.lex"
+#line 65 "cchr.lex"
 {}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 65 "cchr.lex"
+#line 67 "cchr.lex"
 BEGIN(LCOMMENT);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 66 "cchr.lex"
+#line 68 "cchr.lex"
 {}
 	YY_BREAK
 case 6:
 /* rule 6 can match eol */
 YY_RULE_SETUP
-#line 67 "cchr.lex"
+#line 69 "cchr.lex"
 BEGIN(INITIAL);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 69 "cchr.lex"
+#line 71 "cchr.lex"
 BEGIN(STRING); LIT_RETURN(TOK_BSTRING);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 70 "cchr.lex"
+#line 72 "cchr.lex"
 LIT_RETURN(TOK_STRING)
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 71 "cchr.lex"
+#line 73 "cchr.lex"
 LIT_RETURN(TOK_STRING)
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 72 "cchr.lex"
+#line 74 "cchr.lex"
 BEGIN(INITIAL); LIT_RETURN(TOK_ESTRING);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 73 "cchr.lex"
+#line 75 "cchr.lex"
 LIT_RETURN(TOK_STRING)
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 75 "cchr.lex"
+#line 77 "cchr.lex"
 LIT_RETURN(TOK_CONSTRAINT);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 76 "cchr.lex"
+#line 78 "cchr.lex"
 LIT_RETURN(TOK_TRUE);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 77 "cchr.lex"
+#line 79 "cchr.lex"
 LIT_RETURN(TOK_EXTERN);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 78 "cchr.lex"
+#line 80 "cchr.lex"
 LIT_RETURN(TOK_LCBRAC);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 79 "cchr.lex"
+#line 81 "cchr.lex"
 LIT_RETURN(TOK_RCBRAC);
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 80 "cchr.lex"
+#line 82 "cchr.lex"
 LIT_RETURN(TOK_SEMI);
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 81 "cchr.lex"
+#line 83 "cchr.lex"
 LIT_RETURN(TOK_COMMA);
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 82 "cchr.lex"
+#line 84 "cchr.lex"
 LIT_RETURN(TOK_AT);
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 83 "cchr.lex"
+#line 85 "cchr.lex"
 LIT_RETURN(TOK_SIMP);
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 84 "cchr.lex"
+#line 86 "cchr.lex"
 LIT_RETURN(TOK_PROP);
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 85 "cchr.lex"
+#line 87 "cchr.lex"
 LIT_RETURN(TOK_SPIPE);
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 86 "cchr.lex"
+#line 88 "cchr.lex"
 LIT_RETURN(TOK_BSLASH);
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 87 "cchr.lex"
+#line 89 "cchr.lex"
 LIT_RETURN(TOK_LRBRAC);
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 88 "cchr.lex"
+#line 90 "cchr.lex"
 LIT_RETURN(TOK_RRBRAC);
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 90 "cchr.lex"
+#line 92 "cchr.lex"
 LIT_RETURN(TOK_OP)
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 91 "cchr.lex"
+#line 93 "cchr.lex"
 LIT_RETURN(TOK_OP)
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 92 "cchr.lex"
+#line 94 "cchr.lex"
 LIT_RETURN(TOK_CONST)
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 93 "cchr.lex"
+#line 95 "cchr.lex"
 LIT_RETURN(TOK_CONST)
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 94 "cchr.lex"
+#line 96 "cchr.lex"
 LIT_RETURN(TOK_CONST)
 	YY_BREAK
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 95 "cchr.lex"
+#line 97 "cchr.lex"
 {strip_sl(yytext); LIT_RETURN(TOK_FUNC);}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 96 "cchr.lex"
+#line 98 "cchr.lex"
 LIT_RETURN(TOK_SYMB)
 	YY_BREAK
 case 33:
 /* rule 33 can match eol */
 YY_RULE_SETUP
-#line 97 "cchr.lex"
+#line 99 "cchr.lex"
 {strip_sl(yytext); LIT_RETURN(TOK_SYMBAT); }
 	YY_BREAK
 case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
-#line 99 "cchr.lex"
+#line 101 "cchr.lex"
 /* do nothing */
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 101 "cchr.lex"
-return TOK_ERROR;
+#line 103 "cchr.lex"
+SET_LLOC; return TOK_ERROR;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 103 "cchr.lex"
+#line 105 "cchr.lex"
 ECHO;
 	YY_BREAK
-#line 1124 "intermediate/cchr.lex.c"
+#line 1126 "intermediate/cchr.lex.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(LCOMMENT):
 case YY_STATE_EOF(STRING):
@@ -2218,15 +2220,9 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 103 "cchr.lex"
+#line 105 "cchr.lex"
 
 
-
-void static yyerror(char *message,yyscan_t scanner)
-{
-   fprintf(stderr,"Error: \"%s\" in line %d. Token = %s\n",
-           message,yyget_lineno(scanner),yyget_text(scanner));
-}
 
 void strip_sl(char *c) {
   int len=strlen(c)-1;
@@ -2235,4 +2231,23 @@ void strip_sl(char *c) {
   c[len]=0;
 }
 
+void static yyerror(char *message,yyscan_t scanner)
+{
+   fprintf(stderr,"Error: \"%s\" in line %d. Token = %s\n",
+           message,yyget_lineno(scanner),yyget_text(scanner));
+}
+
+int do_scan(FILE *file, int *line, cchr_t *chr) {
+    yyscan_t scanner;
+    yylex_init(&scanner);
+    YY_BUFFER_STATE state=yy_create_buffer(file,4096,scanner);
+    yy_switch_to_buffer(state,scanner);
+    yyset_in(file,scanner);
+    yyset_lineno(*line,scanner);
+    int ret=yyparse(scanner,chr);
+    *line=yyget_lineno(scanner);
+    yy_delete_buffer(state,scanner);
+    yylex_destroy(scanner);
+    return ret;
+}
 

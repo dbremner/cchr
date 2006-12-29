@@ -22,34 +22,17 @@
 
 #define TIMING_FORMAT "%.2f"
 
-/* a few definitions for interfacing with lexer/scanner */
-typedef void* yyscan_t;
-int yylex_init (yyscan_t* scanner);
-int yylex_destroy (yyscan_t yyscanner );
-int yyparse(yyscan_t scanner,cchr_t *output,int base_line);
-void yyset_in  ( FILE * in_str , yyscan_t scanner );
-typedef struct YYLTYPE {
-    int first_line;
-    int first_column;
-    int last_line;
-    int last_column;
-} YYLTYPE;
-YYLTYPE *yyget_lloc ( yyscan_t scanner );
+int do_scan(FILE *file, int *line, cchr_t *chr);
 
 /* process an input stream, considering it CCHR code */
 int process_file_cchr(FILE *in, output_t *out, int *line) {
-	yyscan_t scanner;
-	yylex_init(&scanner);
-	yyset_in(in,scanner);
 	cchr_t cchr;
 	int ok=1;
 	timing_t total,sub;
 	printf("  - parsing...");
 	timing_start(&total);
-	if (!yyparse(scanner,&cchr,*line-1)) {
+	if (!do_scan(in,line,&cchr)) {
 	        printf(" done, " TIMING_FORMAT "s\n",timing_get(&total));
-		*line+=yyget_lloc(scanner)->last_line-1;
-		yylex_destroy(scanner);
 		sem_cchr_t sem_cchr;
 		printf("  - analysing...");
 		timing_start(&sub);
@@ -72,7 +55,6 @@ int process_file_cchr(FILE *in, output_t *out, int *line) {
 		if (ok) printf("  - total: " TIMING_FORMAT "s\n",timing_get(&total));
 	} else {
 	        printf(" error\n");
-		yylex_destroy(scanner);
 		ok=0;
 	}
 	return ok;
@@ -159,7 +141,7 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 	output_chars(out,wb,ws);
 	output_chars(out,sb,ss);
 	timing_stop(&filetime);
-	printf("- output written to: %s\n",outname);
+	printf("- %i lines written to %s\n",output_get_line(out),outname);
 	printf("- total %s: " TIMING_FORMAT "s\n",inname,timing_get(&filetime));
 	return ok;
 }

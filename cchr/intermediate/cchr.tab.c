@@ -151,7 +151,7 @@
 typedef void *yyscan_t;
 
 void dumpCHR(cchr_t *chr,int level);
-int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,int line,char *msg);
+int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg);
 int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
 
 void cchr_init(cchr_t *cchr);
@@ -185,7 +185,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 47 "cchr.y"
+#line 46 "cchr.y"
 {
   char *lit;
   expr_t expr;
@@ -530,13 +530,13 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    91,    91,    92,    97,    98,   101,   102,   105,   106,
-     109,   110,   113,   119,   129,   130,   131,   132,   133,   142,
-     152,   161,   162,   163,   166,   167,   170,   171,   172,   175,
-     178,   179,   188,   189,   191,   192,   194,   195,   196,   197,
-     200,   201,   204,   205,   206,   207,   208,   209,   213,   214,
-     215,   219,   220,   223,   224,   227,   230,   231,   234,   235,
-     238,   239
+       0,    90,    90,    91,    96,    97,   100,   101,   104,   105,
+     108,   109,   112,   118,   128,   129,   130,   131,   132,   141,
+     151,   160,   161,   162,   165,   166,   169,   170,   171,   174,
+     177,   178,   187,   188,   190,   191,   193,   194,   195,   196,
+     199,   200,   203,   204,   205,   206,   207,   208,   212,   213,
+     214,   218,   219,   222,   223,   226,   229,   230,   233,   234,
+     237,   238
 };
 #endif
 
@@ -722,7 +722,7 @@ do								\
     }								\
   else								\
     {								\
-      yyerror (&yylloc, scanner, output, base_line, YY_("syntax error: cannot back up")); \
+      yyerror (&yylloc, scanner, output, YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
 while (YYID (0))
@@ -802,7 +802,7 @@ do {									  \
     {									  \
       YYFPRINTF (stderr, "%s ", Title);					  \
       yy_symbol_print (stderr,						  \
-		  Type, Value, Location, scanner, output, base_line); \
+		  Type, Value, Location, scanner, output); \
       YYFPRINTF (stderr, "\n");						  \
     }									  \
 } while (YYID (0))
@@ -816,17 +816,16 @@ do {									  \
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, const YYSTYPE * const yyvaluep, const YYLTYPE * const yylocationp, yyscan_t scanner, cchr_t *output, int base_line)
+yy_symbol_value_print (FILE *yyoutput, int yytype, const YYSTYPE * const yyvaluep, const YYLTYPE * const yylocationp, yyscan_t scanner, cchr_t *output)
 #else
 static void
-yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output, base_line)
+yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output)
     FILE *yyoutput;
     int yytype;
     const YYSTYPE * const yyvaluep;
     const YYLTYPE * const yylocationp;
     yyscan_t scanner;
     cchr_t *output;
-    int base_line;
 #endif
 {
   if (!yyvaluep)
@@ -834,7 +833,6 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output,
   YYUSE (yylocationp);
   YYUSE (scanner);
   YYUSE (output);
-  YYUSE (base_line);
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
     YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
@@ -856,17 +854,16 @@ yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output,
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, const YYSTYPE * const yyvaluep, const YYLTYPE * const yylocationp, yyscan_t scanner, cchr_t *output, int base_line)
+yy_symbol_print (FILE *yyoutput, int yytype, const YYSTYPE * const yyvaluep, const YYLTYPE * const yylocationp, yyscan_t scanner, cchr_t *output)
 #else
 static void
-yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output, base_line)
+yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output)
     FILE *yyoutput;
     int yytype;
     const YYSTYPE * const yyvaluep;
     const YYLTYPE * const yylocationp;
     yyscan_t scanner;
     cchr_t *output;
-    int base_line;
 #endif
 {
   if (yytype < YYNTOKENS)
@@ -876,7 +873,7 @@ yy_symbol_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output, base_
 
   YY_LOCATION_PRINT (yyoutput, *yylocationp);
   YYFPRINTF (yyoutput, ": ");
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output, base_line);
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, scanner, output);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -916,16 +913,15 @@ do {								\
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, yyscan_t scanner, cchr_t *output, int base_line)
+yy_reduce_print (YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, yyscan_t scanner, cchr_t *output)
 #else
 static void
-yy_reduce_print (yyvsp, yylsp, yyrule, scanner, output, base_line)
+yy_reduce_print (yyvsp, yylsp, yyrule, scanner, output)
     YYSTYPE *yyvsp;
     YYLTYPE *yylsp;
     int yyrule;
     yyscan_t scanner;
     cchr_t *output;
-    int base_line;
 #endif
 {
   int yynrhs = yyr2[yyrule];
@@ -939,7 +935,7 @@ yy_reduce_print (yyvsp, yylsp, yyrule, scanner, output, base_line)
       fprintf (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
-		       , &(yylsp[(yyi + 1) - (yynrhs)])		       , scanner, output, base_line);
+		       , &(yylsp[(yyi + 1) - (yynrhs)])		       , scanner, output);
       fprintf (stderr, "\n");
     }
 }
@@ -947,7 +943,7 @@ yy_reduce_print (yyvsp, yylsp, yyrule, scanner, output, base_line)
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (yyvsp, yylsp, Rule, scanner, output, base_line); \
+    yy_reduce_print (yyvsp, yylsp, Rule, scanner, output); \
 } while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1198,24 +1194,22 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp, yyscan_t scanner, cchr_t *output, int base_line)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp, yyscan_t scanner, cchr_t *output)
 #else
 static void
-yydestruct (yymsg, yytype, yyvaluep, yylocationp, scanner, output, base_line)
+yydestruct (yymsg, yytype, yyvaluep, yylocationp, scanner, output)
     const char *yymsg;
     int yytype;
     YYSTYPE *yyvaluep;
     YYLTYPE *yylocationp;
     yyscan_t scanner;
     cchr_t *output;
-    int base_line;
 #endif
 {
   YYUSE (yyvaluep);
   YYUSE (yylocationp);
   YYUSE (scanner);
   YYUSE (output);
-  YYUSE (base_line);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1224,209 +1218,209 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp, scanner, output, base_line)
   switch (yytype)
     {
       case 3: /* "TOK_CONSTRAINT" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1230 "intermediate/cchr.tab.c"
+#line 1224 "intermediate/cchr.tab.c"
 	break;
       case 4: /* "TOK_TRUE" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1235 "intermediate/cchr.tab.c"
+#line 1229 "intermediate/cchr.tab.c"
 	break;
       case 5: /* "TOK_LCBRAC" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1240 "intermediate/cchr.tab.c"
+#line 1234 "intermediate/cchr.tab.c"
 	break;
       case 6: /* "TOK_RCBRAC" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1245 "intermediate/cchr.tab.c"
+#line 1239 "intermediate/cchr.tab.c"
 	break;
       case 7: /* "TOK_SEMI" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1250 "intermediate/cchr.tab.c"
+#line 1244 "intermediate/cchr.tab.c"
 	break;
       case 8: /* "TOK_COMMA" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1255 "intermediate/cchr.tab.c"
+#line 1249 "intermediate/cchr.tab.c"
 	break;
       case 9: /* "TOK_AT" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1260 "intermediate/cchr.tab.c"
+#line 1254 "intermediate/cchr.tab.c"
 	break;
       case 10: /* "TOK_SIMP" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1265 "intermediate/cchr.tab.c"
+#line 1259 "intermediate/cchr.tab.c"
 	break;
       case 11: /* "TOK_PROP" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1270 "intermediate/cchr.tab.c"
+#line 1264 "intermediate/cchr.tab.c"
 	break;
       case 12: /* "TOK_SPIPE" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1275 "intermediate/cchr.tab.c"
+#line 1269 "intermediate/cchr.tab.c"
 	break;
       case 13: /* "TOK_BSLASH" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1280 "intermediate/cchr.tab.c"
+#line 1274 "intermediate/cchr.tab.c"
 	break;
       case 14: /* "TOK_LRBRAC" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1285 "intermediate/cchr.tab.c"
+#line 1279 "intermediate/cchr.tab.c"
 	break;
       case 15: /* "TOK_RRBRAC" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1290 "intermediate/cchr.tab.c"
+#line 1284 "intermediate/cchr.tab.c"
 	break;
       case 16: /* "TOK_FUNC" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1295 "intermediate/cchr.tab.c"
+#line 1289 "intermediate/cchr.tab.c"
 	break;
       case 17: /* "TOK_SYMBAT" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1300 "intermediate/cchr.tab.c"
+#line 1294 "intermediate/cchr.tab.c"
 	break;
       case 18: /* "TOK_CONST" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1305 "intermediate/cchr.tab.c"
+#line 1299 "intermediate/cchr.tab.c"
 	break;
       case 19: /* "TOK_SYMB" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1310 "intermediate/cchr.tab.c"
+#line 1304 "intermediate/cchr.tab.c"
 	break;
       case 20: /* "TOK_OP" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1315 "intermediate/cchr.tab.c"
+#line 1309 "intermediate/cchr.tab.c"
 	break;
       case 21: /* "TOK_EXTERN" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1320 "intermediate/cchr.tab.c"
+#line 1314 "intermediate/cchr.tab.c"
 	break;
       case 22: /* "TOK_BSTRING" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1325 "intermediate/cchr.tab.c"
+#line 1319 "intermediate/cchr.tab.c"
 	break;
       case 23: /* "TOK_STRING" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1330 "intermediate/cchr.tab.c"
+#line 1324 "intermediate/cchr.tab.c"
 	break;
       case 24: /* "TOK_ESTRING" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1335 "intermediate/cchr.tab.c"
+#line 1329 "intermediate/cchr.tab.c"
 	break;
       case 31: /* "input" */
-#line 75 "cchr.y"
+#line 74 "cchr.y"
 	{ destruct_cchr_t(&(yyvaluep->cchr)); };
-#line 1340 "intermediate/cchr.tab.c"
+#line 1334 "intermediate/cchr.tab.c"
 	break;
       case 32: /* "tokenlist" */
-#line 69 "cchr.y"
+#line 68 "cchr.y"
 	{ destruct_expr_t(&(yyvaluep->expr)); };
-#line 1345 "intermediate/cchr.tab.c"
+#line 1339 "intermediate/cchr.tab.c"
 	break;
       case 33: /* "etokenlist" */
-#line 69 "cchr.y"
+#line 68 "cchr.y"
 	{ destruct_expr_t(&(yyvaluep->expr)); };
-#line 1350 "intermediate/cchr.tab.c"
+#line 1344 "intermediate/cchr.tab.c"
 	break;
       case 35: /* "functio" */
-#line 69 "cchr.y"
+#line 68 "cchr.y"
 	{ destruct_expr_t(&(yyvaluep->expr)); };
-#line 1355 "intermediate/cchr.tab.c"
+#line 1349 "intermediate/cchr.tab.c"
 	break;
       case 36: /* "token" */
-#line 69 "cchr.y"
+#line 68 "cchr.y"
 	{ destruct_expr_t(&(yyvaluep->expr)); };
-#line 1360 "intermediate/cchr.tab.c"
+#line 1354 "intermediate/cchr.tab.c"
 	break;
       case 37: /* "etoken" */
-#line 69 "cchr.y"
+#line 68 "cchr.y"
 	{ destruct_expr_t(&(yyvaluep->expr)); };
-#line 1365 "intermediate/cchr.tab.c"
+#line 1359 "intermediate/cchr.tab.c"
 	break;
       case 39: /* "exprlist" */
-#line 78 "cchr.y"
+#line 77 "cchr.y"
 	{ destruct_exprlist_t(&(yyvaluep->elist)); };
-#line 1370 "intermediate/cchr.tab.c"
+#line 1364 "intermediate/cchr.tab.c"
 	break;
       case 42: /* "arglist" */
-#line 72 "cchr.y"
+#line 71 "cchr.y"
 	{ destruct_token_t(&(yyvaluep->token)); };
-#line 1375 "intermediate/cchr.tab.c"
+#line 1369 "intermediate/cchr.tab.c"
 	break;
       case 43: /* "extlist" */
-#line 75 "cchr.y"
+#line 74 "cchr.y"
 	{ destruct_cchr_t(&(yyvaluep->cchr)); };
-#line 1380 "intermediate/cchr.tab.c"
+#line 1374 "intermediate/cchr.tab.c"
 	break;
       case 44: /* "literal" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1385 "intermediate/cchr.tab.c"
+#line 1379 "intermediate/cchr.tab.c"
 	break;
       case 45: /* "rname" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1390 "intermediate/cchr.tab.c"
+#line 1384 "intermediate/cchr.tab.c"
 	break;
       case 46: /* "rule" */
-#line 75 "cchr.y"
+#line 74 "cchr.y"
 	{ destruct_cchr_t(&(yyvaluep->cchr)); };
-#line 1395 "intermediate/cchr.tab.c"
+#line 1389 "intermediate/cchr.tab.c"
 	break;
       case 47: /* "stmt" */
-#line 75 "cchr.y"
+#line 74 "cchr.y"
 	{ destruct_cchr_t(&(yyvaluep->cchr)); };
-#line 1400 "intermediate/cchr.tab.c"
+#line 1394 "intermediate/cchr.tab.c"
 	break;
       case 48: /* "constrlist" */
-#line 75 "cchr.y"
+#line 74 "cchr.y"
 	{ destruct_cchr_t(&(yyvaluep->cchr)); };
-#line 1405 "intermediate/cchr.tab.c"
+#line 1399 "intermediate/cchr.tab.c"
 	break;
       case 49: /* "carglist" */
-#line 66 "cchr.y"
+#line 65 "cchr.y"
 	{ destruct_constr_t(&(yyvaluep->constr)); };
-#line 1410 "intermediate/cchr.tab.c"
+#line 1404 "intermediate/cchr.tab.c"
 	break;
       case 50: /* "constr" */
-#line 66 "cchr.y"
+#line 65 "cchr.y"
 	{ destruct_constr_t(&(yyvaluep->constr)); };
-#line 1415 "intermediate/cchr.tab.c"
+#line 1409 "intermediate/cchr.tab.c"
 	break;
       case 51: /* "typelist" */
-#line 66 "cchr.y"
+#line 65 "cchr.y"
 	{ destruct_constr_t(&(yyvaluep->constr)); };
-#line 1420 "intermediate/cchr.tab.c"
+#line 1414 "intermediate/cchr.tab.c"
 	break;
       case 52: /* "typelistc" */
-#line 66 "cchr.y"
+#line 65 "cchr.y"
 	{ destruct_constr_t(&(yyvaluep->constr)); };
-#line 1425 "intermediate/cchr.tab.c"
+#line 1419 "intermediate/cchr.tab.c"
 	break;
       case 53: /* "type" */
-#line 63 "cchr.y"
+#line 62 "cchr.y"
 	{ free((yyvaluep->lit)); };
-#line 1430 "intermediate/cchr.tab.c"
+#line 1424 "intermediate/cchr.tab.c"
 	break;
 
       default:
@@ -1445,7 +1439,7 @@ int yyparse ();
 #endif
 #else /* ! YYPARSE_PARAM */
 #if defined __STDC__ || defined __cplusplus
-int yyparse (yyscan_t scanner, cchr_t *output, int base_line);
+int yyparse (yyscan_t scanner, cchr_t *output);
 #else
 int yyparse ();
 #endif
@@ -1474,13 +1468,12 @@ yyparse (YYPARSE_PARAM)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 int
-yyparse (yyscan_t scanner, cchr_t *output, int base_line)
+yyparse (yyscan_t scanner, cchr_t *output)
 #else
 int
-yyparse (scanner, output, base_line)
+yyparse (scanner, output)
     yyscan_t scanner;
     cchr_t *output;
-    int base_line;
 #endif
 #endif
 {
@@ -1751,59 +1744,59 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 91 "cchr.y"
+#line 90 "cchr.y"
     { *output=(yyvsp[(1) - (1)].cchr); ;}
     break;
 
   case 3:
-#line 92 "cchr.y"
+#line 91 "cchr.y"
     { *output=(yyvsp[(1) - (2)].cchr); 
 	   free((yyvsp[(2) - (2)].lit)); /* dumpCHR(output, 1); */ 
 	   YYACCEPT; ;}
     break;
 
   case 4:
-#line 97 "cchr.y"
+#line 96 "cchr.y"
     { cchr_init(&(yyval.cchr)); ;}
     break;
 
   case 5:
-#line 98 "cchr.y"
+#line 97 "cchr.y"
     { (yyval.cchr)=(yyvsp[(1) - (2)].cchr); cchr_merge(&(yyval.cchr),&(yyvsp[(2) - (2)].cchr)); ;}
     break;
 
   case 6:
-#line 101 "cchr.y"
+#line 100 "cchr.y"
     { (yyval.expr).list=(yyvsp[(1) - (2)].expr).list; alist_addall((yyval.expr).list,(yyvsp[(2) - (2)].expr).list); alist_free((yyvsp[(2) - (2)].expr).list); ;}
     break;
 
   case 7:
-#line 102 "cchr.y"
+#line 101 "cchr.y"
     { alist_init((yyval.expr).list); ;}
     break;
 
   case 8:
-#line 105 "cchr.y"
+#line 104 "cchr.y"
     { (yyval.expr).list=(yyvsp[(1) - (2)].expr).list; alist_addall((yyval.expr).list,(yyvsp[(2) - (2)].expr).list); alist_free((yyvsp[(2) - (2)].expr).list); ;}
     break;
 
   case 9:
-#line 106 "cchr.y"
+#line 105 "cchr.y"
     { alist_init((yyval.expr).list); ;}
     break;
 
   case 10:
-#line 109 "cchr.y"
+#line 108 "cchr.y"
     { (yyval.expr).list=(yyvsp[(1) - (2)].expr).list; alist_addall((yyval.expr).list,(yyvsp[(2) - (2)].expr).list); alist_free((yyvsp[(2) - (2)].expr).list); ;}
     break;
 
   case 11:
-#line 110 "cchr.y"
+#line 109 "cchr.y"
     { alist_init((yyval.expr).list); ;}
     break;
 
   case 12:
-#line 113 "cchr.y"
+#line 112 "cchr.y"
     { 
     		alist_init((yyval.expr).list);
 		    (yyvsp[(2) - (3)].token).data=(yyvsp[(1) - (3)].lit);
@@ -1813,7 +1806,7 @@ yyreduce:
     break;
 
   case 13:
-#line 119 "cchr.y"
+#line 118 "cchr.y"
     { 
    		    alist_init((yyval.expr).list);
 		    token_t *tok;
@@ -1826,22 +1819,22 @@ yyreduce:
     break;
 
   case 14:
-#line 129 "cchr.y"
+#line 128 "cchr.y"
     { alist_init((yyval.expr).list); token_t *tok; alist_new((yyval.expr).list,tok); tok->data=(yyvsp[(1) - (1)].lit); tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); ;}
     break;
 
   case 16:
-#line 131 "cchr.y"
+#line 130 "cchr.y"
     { alist_init((yyval.expr).list); token_t *tok; alist_new((yyval.expr).list,tok); tok->data=(yyvsp[(1) - (1)].lit); tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); ;}
     break;
 
   case 17:
-#line 132 "cchr.y"
+#line 131 "cchr.y"
     { alist_init((yyval.expr).list); token_t *tok; alist_new((yyval.expr).list,tok); tok->data=(yyvsp[(1) - (3)].lit); tok->type=TOKEN_TYPE_LIT; alist_addall((yyval.expr).list,(yyvsp[(2) - (3)].expr).list); alist_new((yyval.expr).list,tok); tok->data=(yyvsp[(3) - (3)].lit); tok->type=TOKEN_TYPE_LIT; alist_free((yyvsp[(2) - (3)].expr).list); ;}
     break;
 
   case 18:
-#line 133 "cchr.y"
+#line 132 "cchr.y"
     { 
    		    alist_init((yyval.expr).list);
 		    token_t *tok;
@@ -1854,7 +1847,7 @@ yyreduce:
     break;
 
   case 19:
-#line 142 "cchr.y"
+#line 141 "cchr.y"
     {
    		    alist_init((yyval.expr).list);
 		    token_t *tok;
@@ -1868,7 +1861,7 @@ yyreduce:
     break;
 
   case 20:
-#line 152 "cchr.y"
+#line 151 "cchr.y"
     { 
     		alist_init((yyval.expr).list);
 		    (yyvsp[(2) - (3)].token).data=NULL;
@@ -1879,47 +1872,47 @@ yyreduce:
     break;
 
   case 22:
-#line 162 "cchr.y"
+#line 161 "cchr.y"
     { alist_init((yyval.expr).list); token_t *tok; alist_new((yyval.expr).list,tok); tok->data=(yyvsp[(1) - (1)].lit); tok->type=TOKEN_TYPE_LIT; ;}
     break;
 
   case 23:
-#line 163 "cchr.y"
+#line 162 "cchr.y"
     { alist_init((yyval.expr).list); token_t *tok; alist_new((yyval.expr).list,tok); tok->data=(yyvsp[(1) - (1)].lit); tok->type=TOKEN_TYPE_SYMB; alist_new((yyval.expr).list,tok); tok->data=malloc(2); strcpy(tok->data,"@"); tok->type=TOKEN_TYPE_LIT;;}
     break;
 
   case 25:
-#line 167 "cchr.y"
+#line 166 "cchr.y"
     { alist_init((yyval.expr).list); token_t *tok; alist_new((yyval.expr).list,tok); tok->data=(yyvsp[(1) - (1)].lit); tok->type=TOKEN_TYPE_LIT; ;}
     break;
 
   case 26:
-#line 170 "cchr.y"
+#line 169 "cchr.y"
     { free((yyvsp[(1) - (1)].lit)); alist_init((yyval.elist).list); ;}
     break;
 
   case 27:
-#line 171 "cchr.y"
+#line 170 "cchr.y"
     { alist_init((yyval.elist).list); alist_add((yyval.elist).list,(yyvsp[(1) - (1)].expr)); ;}
     break;
 
   case 28:
-#line 172 "cchr.y"
+#line 171 "cchr.y"
     { (yyval.elist)=(yyvsp[(1) - (3)].elist); alist_add((yyval.elist).list,(yyvsp[(3) - (3)].expr)); free((yyvsp[(2) - (3)].lit)); ;}
     break;
 
   case 29:
-#line 175 "cchr.y"
+#line 174 "cchr.y"
     { (yyval.lit)=malloc(strlen((yyvsp[(1) - (3)].lit))+strlen((yyvsp[(2) - (3)].lit))+strlen((yyvsp[(3) - (3)].lit))+1); strcpy((yyval.lit),(yyvsp[(1) - (3)].lit)); strcat((yyval.lit),(yyvsp[(2) - (3)].lit)); strcat((yyval.lit),(yyvsp[(3) - (3)].lit)); free((yyvsp[(1) - (3)].lit)); free((yyvsp[(2) - (3)].lit)); free((yyvsp[(3) - (3)].lit)); ;}
     break;
 
   case 30:
-#line 178 "cchr.y"
+#line 177 "cchr.y"
     { (yyval.lit)=malloc(1); (yyval.lit)[0]=0; ;}
     break;
 
   case 31:
-#line 179 "cchr.y"
+#line 178 "cchr.y"
     { 
 				(yyval.lit)=malloc(strlen((yyvsp[(1) - (2)].lit))+strlen((yyvsp[(2) - (2)].lit))+1);
 				strcpy((yyval.lit),(yyvsp[(1) - (2)].lit));
@@ -1930,133 +1923,133 @@ yyreduce:
     break;
 
   case 32:
-#line 188 "cchr.y"
+#line 187 "cchr.y"
     { (yyval.token).type = TOKEN_TYPE_FUNC; alist_init((yyval.token).args); (yyval.token).data=NULL; alist_add((yyval.token).args,(yyvsp[(1) - (1)].expr)); ;}
     break;
 
   case 33:
-#line 189 "cchr.y"
+#line 188 "cchr.y"
     { (yyval.token)=(yyvsp[(1) - (3)].token); alist_add((yyval.token).args,(yyvsp[(3) - (3)].expr)); free((yyvsp[(2) - (3)].lit)); ;}
     break;
 
   case 34:
-#line 191 "cchr.y"
+#line 190 "cchr.y"
     { cchr_init(&(yyval.cchr)); alist_add((yyval.cchr).exts,(yyvsp[(1) - (1)].lit)); ;}
     break;
 
   case 35:
-#line 192 "cchr.y"
+#line 191 "cchr.y"
     { (yyval.cchr)=(yyvsp[(1) - (3)].cchr); alist_add((yyval.cchr).exts,(yyvsp[(3) - (3)].lit)); free((yyvsp[(2) - (3)].lit)); ;}
     break;
 
   case 40:
-#line 200 "cchr.y"
+#line 199 "cchr.y"
     { (yyval.lit)=(yyvsp[(1) - (1)].lit); ;}
     break;
 
   case 41:
-#line 201 "cchr.y"
+#line 200 "cchr.y"
     { (yyval.lit)=NULL; ;}
     break;
 
   case 42:
-#line 204 "cchr.y"
+#line 203 "cchr.y"
     { cchr_genrule(&(yyval.cchr),(yyvsp[(1) - (9)].lit),&(yyvsp[(2) - (9)].elist),&(yyvsp[(4) - (9)].elist),&(yyvsp[(6) - (9)].elist),&(yyvsp[(8) - (9)].elist)); free((yyvsp[(3) - (9)].lit)); free((yyvsp[(5) - (9)].lit)); free((yyvsp[(7) - (9)].lit)); free((yyvsp[(9) - (9)].lit)); ;}
     break;
 
   case 43:
-#line 205 "cchr.y"
+#line 204 "cchr.y"
     { cchr_genrule(&(yyval.cchr),(yyvsp[(1) - (7)].lit),NULL,&(yyvsp[(2) - (7)].elist),&(yyvsp[(4) - (7)].elist),&(yyvsp[(6) - (7)].elist)); free((yyvsp[(3) - (7)].lit)); free((yyvsp[(5) - (7)].lit)); free((yyvsp[(7) - (7)].lit)); ;}
     break;
 
   case 44:
-#line 206 "cchr.y"
+#line 205 "cchr.y"
     { cchr_genrule(&(yyval.cchr),(yyvsp[(1) - (7)].lit),&(yyvsp[(2) - (7)].elist),NULL,&(yyvsp[(4) - (7)].elist),&(yyvsp[(6) - (7)].elist)); free((yyvsp[(3) - (7)].lit)); free((yyvsp[(5) - (7)].lit)); free((yyvsp[(7) - (7)].lit)); ;}
     break;
 
   case 45:
-#line 207 "cchr.y"
+#line 206 "cchr.y"
     { cchr_genrule(&(yyval.cchr),(yyvsp[(1) - (7)].lit),&(yyvsp[(2) - (7)].elist),&(yyvsp[(4) - (7)].elist),NULL,&(yyvsp[(6) - (7)].elist)); free((yyvsp[(3) - (7)].lit)); free((yyvsp[(5) - (7)].lit)); free((yyvsp[(7) - (7)].lit)); ;}
     break;
 
   case 46:
-#line 208 "cchr.y"
+#line 207 "cchr.y"
     { cchr_genrule(&(yyval.cchr),(yyvsp[(1) - (5)].lit),NULL,&(yyvsp[(2) - (5)].elist),NULL,&(yyvsp[(4) - (5)].elist)); free((yyvsp[(3) - (5)].lit)); free((yyvsp[(5) - (5)].lit)); ;}
     break;
 
   case 47:
-#line 209 "cchr.y"
+#line 208 "cchr.y"
     { cchr_genrule(&(yyval.cchr),(yyvsp[(1) - (5)].lit),&(yyvsp[(2) - (5)].elist),NULL,NULL,&(yyvsp[(4) - (5)].elist)); free((yyvsp[(3) - (5)].lit)); free((yyvsp[(5) - (5)].lit)); ;}
     break;
 
   case 48:
-#line 213 "cchr.y"
+#line 212 "cchr.y"
     { (yyval.cchr)=(yyvsp[(2) - (3)].cchr); free((yyvsp[(1) - (3)].lit)); free((yyvsp[(3) - (3)].lit)); ;}
     break;
 
   case 49:
-#line 214 "cchr.y"
+#line 213 "cchr.y"
     { (yyval.cchr)=(yyvsp[(2) - (3)].cchr); free((yyvsp[(1) - (3)].lit)); free((yyvsp[(3) - (3)].lit)); ;}
     break;
 
   case 51:
-#line 219 "cchr.y"
+#line 218 "cchr.y"
     { cchr_init(&(yyval.cchr)); alist_add((yyval.cchr).constrs,(yyvsp[(1) - (1)].constr)); ;}
     break;
 
   case 52:
-#line 220 "cchr.y"
+#line 219 "cchr.y"
     { (yyval.cchr)=(yyvsp[(1) - (3)].cchr); alist_add((yyval.cchr).constrs,(yyvsp[(3) - (3)].constr)); free((yyvsp[(2) - (3)].lit)); ;}
     break;
 
   case 53:
-#line 223 "cchr.y"
+#line 222 "cchr.y"
     { alist_init((yyval.constr).args); alist_init((yyval.constr).list); (yyval.constr).name=NULL; ;}
     break;
 
   case 54:
-#line 224 "cchr.y"
+#line 223 "cchr.y"
     { alist_add((yyvsp[(1) - (2)].constr).args,(yyvsp[(2) - (2)].expr)); (yyval.constr)=(yyvsp[(1) - (2)].constr); ;}
     break;
 
   case 55:
-#line 227 "cchr.y"
+#line 226 "cchr.y"
     { (yyval.constr)=(yyvsp[(2) - (4)].constr); (yyval.constr).name=(yyvsp[(1) - (4)].lit); free((yyvsp[(3) - (4)].lit)); (yyval.constr).args=(yyvsp[(4) - (4)].constr).args; ;}
     break;
 
   case 56:
-#line 230 "cchr.y"
+#line 229 "cchr.y"
     { (yyval.constr).name=NULL; alist_init((yyval.constr).list); ;}
     break;
 
   case 57:
-#line 231 "cchr.y"
+#line 230 "cchr.y"
     { (yyval.constr) = (yyvsp[(1) - (1)].constr); ;}
     break;
 
   case 58:
-#line 234 "cchr.y"
+#line 233 "cchr.y"
     { (yyval.constr).name=NULL; alist_init((yyval.constr).list); alist_add((yyval.constr).list,(yyvsp[(1) - (1)].lit)); ;}
     break;
 
   case 59:
-#line 235 "cchr.y"
+#line 234 "cchr.y"
     { (yyval.constr)=(yyvsp[(1) - (3)].constr); alist_add((yyval.constr).list,(yyvsp[(3) - (3)].lit)); free((yyvsp[(2) - (3)].lit)); ;}
     break;
 
   case 60:
-#line 238 "cchr.y"
+#line 237 "cchr.y"
     { (yyval.lit) = (yyvsp[(1) - (1)].lit); ;}
     break;
 
   case 61:
-#line 239 "cchr.y"
+#line 238 "cchr.y"
     { (yyval.lit) = realloc((yyvsp[(1) - (2)].lit),strlen((yyvsp[(1) - (2)].lit))+strlen((yyvsp[(2) - (2)].lit))+2); strcat((yyval.lit)," "); strcat((yyval.lit),(yyvsp[(2) - (2)].lit)); free((yyvsp[(2) - (2)].lit)); ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 2060 "intermediate/cchr.tab.c"
+#line 2053 "intermediate/cchr.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2092,7 +2085,7 @@ yyerrlab:
     {
       ++yynerrs;
 #if ! YYERROR_VERBOSE
-      yyerror (&yylloc, scanner, output, base_line, YY_("syntax error"));
+      yyerror (&yylloc, scanner, output, YY_("syntax error"));
 #else
       {
 	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
@@ -2116,11 +2109,11 @@ yyerrlab:
 	if (0 < yysize && yysize <= yymsg_alloc)
 	  {
 	    (void) yysyntax_error (yymsg, yystate, yychar);
-	    yyerror (&yylloc, scanner, output, base_line, yymsg);
+	    yyerror (&yylloc, scanner, output, yymsg);
 	  }
 	else
 	  {
-	    yyerror (&yylloc, scanner, output, base_line, YY_("syntax error"));
+	    yyerror (&yylloc, scanner, output, YY_("syntax error"));
 	    if (yysize != 0)
 	      goto yyexhaustedlab;
 	  }
@@ -2144,7 +2137,7 @@ yyerrlab:
       else
 	{
 	  yydestruct ("Error: discarding",
-		      yytoken, &yylval, &yylloc, scanner, output, base_line);
+		      yytoken, &yylval, &yylloc, scanner, output);
 	  yychar = YYEMPTY;
 	}
     }
@@ -2201,7 +2194,7 @@ yyerrlab1:
 
       yyerror_range[0] = *yylsp;
       yydestruct ("Error: popping",
-		  yystos[yystate], yyvsp, yylsp, scanner, output, base_line);
+		  yystos[yystate], yyvsp, yylsp, scanner, output);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2244,7 +2237,7 @@ yyabortlab:
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
-  yyerror (&yylloc, scanner, output, base_line, YY_("memory exhausted"));
+  yyerror (&yylloc, scanner, output, YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
@@ -2252,7 +2245,7 @@ yyexhaustedlab:
 yyreturn:
   if (yychar != YYEOF && yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
-		 yytoken, &yylval, &yylloc, scanner, output, base_line);
+		 yytoken, &yylval, &yylloc, scanner, output);
   /* Do not reclaim the symbols of the rule which action triggered
      this YYABORT or YYACCEPT.  */
   YYPOPSTACK (yylen);
@@ -2260,7 +2253,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-		  yystos[*yyssp], yyvsp, yylsp, scanner, output, base_line);
+		  yystos[*yyssp], yyvsp, yylsp, scanner, output);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -2275,7 +2268,7 @@ yyreturn:
 }
 
 
-#line 242 "cchr.y"
+#line 241 "cchr.y"
 
 
 void printIndent(int level) {
@@ -2414,8 +2407,8 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
   }
 }
 
-int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,int base_line,char *msg) {
-  fprintf(stderr,"Parse error on line %i: %s\n",loc->last_line+base_line,msg);
+int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg) {
+  fprintf(stderr,"Parse error on line %i: %s\n",loc->last_line,msg);
   return 1;
 }
 

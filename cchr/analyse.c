@@ -512,15 +512,15 @@ int static sem_generate_conocc(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 		sem_constr_t *cons=alist_ptr(cchr->cons,j);
 		if ((alist_len(tok->args) == alist_len(cons->types)) && !strcmp(tok->data,cons->name)) {
 			sem_conocc_t n1;
+			sem_conocc_init(&n1,j); /* no warning about uninitialized variable */
 			sem_conoccout_t n2;
+			sem_conoccout_init(&n2,j); /* same here */
 			sem_ruleocc_t r;
 			r.rule=alist_len(cchr->rules);
 			r.type=type;
 			if (type==SEM_RULE_LEVEL_BODY) {
-				sem_conoccout_init(&n2,j);
 				r.pos=alist_len(rule->out[1]);
 			} else {
-				sem_conocc_init(&n1,j);
 				r.pos=alist_len(rule->head[type]);
 			}
 			alist_add(cons->occ,r);

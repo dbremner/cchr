@@ -1,6 +1,6 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 
-MODE := efence
+#MODE := efence
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3

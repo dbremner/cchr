@@ -186,7 +186,8 @@
   } \
   void cchr_free_all_##NAME() { \
   	CSM_LOOP(NAME,C, \
-  	  CSM_FREE(C,NAME); \
+	  CSM_DESTRUCT_PID(NAME,C); \
+  	  CSM_KILL(C,NAME); \
   	) \
   }
   
@@ -230,7 +231,7 @@
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
 		CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,self_);) \
-		dcls_remove(_global_runtime.store,pid_self_); \
+		dcls_free(_global_runtime.store,pid_self_); \
 		CSM_FMTOUT("kill pid=%i (self)",(int)pid_self_); \
 	} \
 }
@@ -238,7 +239,7 @@
 /* after a kill should always be a CSM_FREE (before a CSM_END) */
 #define CSM_KILL(VAR,TYPE) { \
 	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
-	dcls_remove(_global_runtime.store,pid_##VAR); \
+	dcls_free(_global_runtime.store,pid_##VAR); \
 	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
 }
 
@@ -252,20 +253,8 @@
 #define CSM_CB_DSH_S ,
 #define CSM_CB_DSH_D(ARG,TYPE,CON) CSM_ARG(CON,ARG)
 
-#define CSM_FREESELF(TYPE) { \
-	CSM_DESTRUCT_SELF(TYPE); \
-	if (pid_self_!=DCLS_EMPTY_PID) { \
-		dcls_free(_global_runtime.store,pid_self_); \
-		CSM_FMTOUT("free pid=%i (self)",(int)pid_self_); \
-	} \
-}
-
-#define CSM_FREE(VAR,TYPE) { \
-	CSM_DESTRUCT_PID(TYPE,VAR); \
-	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
-	dcls_free(_global_runtime.store,pid_##VAR); \
-	CSM_FMTOUT("free pid=%i",(int)pid_##VAR); \
-}
+#define CSM_DESTRUCT(TYPE,...) DESTRUCT_##TYPE(__VA_ARGS__)
+#define CSM_DESTRUCTE(TYPE) DESTRUCT_##TYPE()
 
 #define CSM_LOOP(TYPE,VAR,CODE) { \
 	dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{ \

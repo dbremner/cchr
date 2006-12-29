@@ -22,7 +22,7 @@
 typedef void *yyscan_t;
 
 void dumpCHR(cchr_t *chr,int level);
-int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,int line,char *msg);
+int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg);
 int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
 
 void cchr_init(cchr_t *cchr);
@@ -42,7 +42,6 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 
 %parse-param { yyscan_t scanner }
 %parse-param { cchr_t *output }
-%parse-param { int base_line }
 
 %union {
   char *lit;
@@ -377,8 +376,8 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,e
   }
 }
 
-int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,int base_line,char *msg) {
-  fprintf(stderr,"Parse error on line %i: %s\n",loc->last_line+base_line,msg);
+int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg) {
+  fprintf(stderr,"Parse error on line %i: %s\n",loc->last_line,msg);
   return 1;
 }
 

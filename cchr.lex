@@ -17,10 +17,12 @@
 #endif
 
 void static yyerror(char *message,yyscan_t scanner);
+int yyparse(yyscan_t,cchr_t*);
 
 void strip_sl(char *c);
 
-#define LIT_RETURN(TYPE) {yylloc->first_line=yyget_lineno(yyscanner); yylloc->last_line=yyget_lineno(yyscanner); yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
+#define SET_LLOC {yylloc->first_line=yyget_lineno(yyscanner); yylloc->last_line=yyget_lineno(yyscanner);}
+#define LIT_RETURN(TYPE) {SET_LLOC; yylval->lit=malloc(yyleng+1); memcpy(yylval->lit,yytext,yyleng); yylval->lit[yyleng]=0; return TYPE;}
 
 #define YY_INPUT(buf,result,max_size) { \
 	int c = getc(yyin); \
@@ -98,15 +100,9 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 
 {white_space}     /* do nothing */
 
-.                 return TOK_ERROR;
+.                 SET_LLOC; return TOK_ERROR;
 
 %%
-
-void static yyerror(char *message,yyscan_t scanner)
-{
-   fprintf(stderr,"Error: \"%s\" in line %d. Token = %s\n",
-           message,yyget_lineno(scanner),yyget_text(scanner));
-}
 
 void strip_sl(char *c) {
   int len=strlen(c)-1;
@@ -115,3 +111,22 @@ void strip_sl(char *c) {
   c[len]=0;
 }
 
+void static yyerror(char *message,yyscan_t scanner)
+{
+   fprintf(stderr,"Error: \"%s\" in line %d. Token = %s\n",
+           message,yyget_lineno(scanner),yyget_text(scanner));
+}
+
+int do_scan(FILE *file, int *line, cchr_t *chr) {
+    yyscan_t scanner;
+    yylex_init(&scanner);
+    YY_BUFFER_STATE state=yy_create_buffer(file,4096,scanner);
+    yy_switch_to_buffer(state,scanner);
+    yyset_in(file,scanner);
+    yyset_lineno(*line,scanner);
+    int ret=yyparse(scanner,chr);
+    *line=yyget_lineno(scanner);
+    yy_delete_buffer(state,scanner);
+    yylex_destroy(scanner);
+    return ret;
+}

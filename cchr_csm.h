@@ -172,10 +172,12 @@
     CSM_END \
   } \
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA,)) { \
-  	cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_CB_FFCFC,)); \
+    cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_CB_FFCFC,)); \
   } \
   void cchr_reactivate_##NAME(dcls_pid_t pid_self_) { \
-  	cchr_fire_##NAME(pid_self_ ARGLIST_##NAME(CSM_CB_FFCRA,NAME)); \
+    CSM_FMTOUT("reactiv: pid=%i",pid_self_); \
+    dcls_get(_global_runtime.store,pid_self_).gen_num++; \
+    cchr_fire_##NAME(pid_self_ ARGLIST_##NAME(CSM_CB_FFCRA,NAME)); \
   } \
   void cchr_reactivate_all_##NAME() { \
   	CSM_LOOP(NAME,C, \
@@ -283,11 +285,11 @@
 	if (doadd && pid_self_==DCLS_EMPTY_PID) { \
 		pid_self_=cchr_make_entry(CCHR_CONS_TYPE_##TYPE); \
 		ARGLIST_##TYPE(CSM_CB_MAKSA,TYPE); \
+		RULEHOOKS_##TYPE(CSM_CB_PHI,); \
 		CSM_PRINTF("make ",TYPE); \
 	} \
 	oldid=dcls_get(_global_runtime.store,pid_self_).id; \
 	oldgen=dcls_get(_global_runtime.store,pid_self_).gen_num; \
-	RULEHOOKS_##TYPE(CSM_CB_PHI,); \
 }
 
 /* callback macro for constraint suspension argument setting */ 
@@ -349,11 +351,12 @@
 #define CSM_HISTADD(RULE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HA,__VA_ARGS__,RULE))
 #define CSM_CB_HA_I(HOOK,RULE,COND) { \
 	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
+	CSM_FMTOUT("histadd pre: [pid=%i cnt=%i id=%i]",pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._phl_##RULE,p_->id); \
 	int i_= ++(p_->data.PROPHIST_HOOK_##RULE._phl_##RULE); \
 	alist_ensure(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,(i_*((RULE_KEPT_##RULE)-1))); \
 	CSM_FMTOUTX("histadd %s (",0,#RULE); \
 	COND \
-	CSM_FMTOUTX(") to %s:%i",2,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id); \
+	CSM_FMTOUTX(") to %s:%i [pid=%i cnt=%i]",2,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id,pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._phl_##RULE); \
 }
 #define CSM_CB_HA_D(PID,HOOK,POS,RULE) alist_add(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,dcls_get(_global_runtime.store,pid_##PID).id); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
 #define CSM_CB_HA_S(RULE)

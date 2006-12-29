@@ -16,11 +16,11 @@ cchr {
   dup @ fib(N,M1) \ fib(N,M2) <=> { log_int_t_seteq(M1,M2); };
     
   f01 @ fib(N,M) ==> (N==0 || N==1) | { log_int_t_setval(M,1); };
-
+  
   fn @ fib(N,M) ==> N>=2 | 
     log_int_t M1=log_int_t_create(), 
     log_int_t M2=log_int_t_create(), 
-/*    {log_int_t_setcb(M1,cchr_reactivate_all,NULL); log_int_t_setcb(M2,cchr_reactivate_all,NULL);},*/
+    {log_int_t_setcb(M1,cchr_reactivate_all,NULL); log_int_t_setcb(M2,cchr_reactivate_all,NULL);},
     fib(N-2,log_int_t_copy(M1)), fib(N-1,log_int_t_copy(M2)),
     { if (log_int_t_hasval(M1) && log_int_t_hasval(M2)) { log_int_t_setval(M,log_int_t_getval(M1)+log_int_t_getval(M2));}},
     { log_int_t_destruct(M1,NULL); log_int_t_destruct(M2,NULL); };

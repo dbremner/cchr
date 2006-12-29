@@ -100,7 +100,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 47 "cchr.y"
+#line 46 "cchr.y"
 {
   char *lit;
   expr_t expr;

@@ -86,7 +86,7 @@ char static **csm_generate_vartable_rule(sem_cchr_t *chr,sem_rule_t *rule,int ar
 	for (int i=0; i<alist_len(rule->vt.vars); i++) {
 		sem_var_t *var=alist_ptr(rule->vt.vars,i);
 		if (var->local) { /* local variables are accessed as LOCAL's in CSM */
-			tbl[i]=make_message("CSM_LOCAL(L_%s)",var->name);
+			tbl[i]=make_message("CSM_LOCAL(%s)",var->name);
 		} else { /* variable defined by head of rule */
 			sem_rule_level_t isrem=var->occ[SEM_RULE_LEVEL_REM] ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT;
 			int j=var->pos; /* what constraint occurrence in the rule defines it */
@@ -108,11 +108,7 @@ char static **csm_generate_vartable_rule_cached(sem_cchr_t *chr,sem_rule_t *rule
 	char **tbl=malloc(sizeof(char*)*alist_len(rule->vt.vars));
 	for (int i=0; i<alist_len(rule->vt.vars); i++) {
 		sem_var_t *var=alist_ptr(rule->vt.vars,i);
-		if (var->local) { /* local variables are accessed as LOCAL's in CSM */
-			tbl[i]=make_message("CSM_LOCAL(L_%s)",var->name);
-		} else { /* variable defined by head of rule */
-			tbl[i]=make_message("CSM_LOCAL(H_%s)",var->name);
-		}
+		tbl[i]=make_message("CSM_LOCAL(%s)",var->name);
 	}
 	return tbl;
 }
@@ -156,13 +152,13 @@ void static csm_generate_expr(sem_expr_t *expr,char **tbl,output_t *out) {
 void static csm_generate_varcache(sem_cchr_t *chr,sem_rule_t *rule, output_t *out,char **table, int body) {
 	for (int l=0; l<alist_len(rule->vt.vars); l++) {
 		sem_var_t *var=alist_ptr(rule->vt.vars,l);
-		if (!var->local && (var->occ[SEM_RULE_LEVEL_GUARD] || var->occ[SEM_RULE_LEVEL_BODY]) && (var->occ[SEM_RULE_LEVEL_GUARD]==0)==body) {
-			output_fmt(out,"CSM_IMMLOCAL(%s,H_%s,%s) \\\n",var->type,var->name,table[l]);
+		if (!var->local && (var->occ[SEM_RULE_LEVEL_GUARD] || var->occ[SEM_RULE_LEVEL_BODY] || (body && var->occ[SEM_RULE_LEVEL_REM])) && (var->occ[SEM_RULE_LEVEL_GUARD]==0)==body) {
+			output_fmt(out,"CSM_IMMLOCAL(%s,%s,%s) \\\n",var->type,var->name,table[l]);
 		}
 	}
 }
 
-void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,output_t *out,int body,int arem) {
+void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,output_t *out,int body) {
 	int ncon=0;
 	int l=0;
 	while (l<alist_len(rule->out[body])) {
@@ -170,9 +166,6 @@ void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,output_
 		switch (so->type) {
 			case SEM_OUT_TYPE_CON: {
 				char coo[256];
-				if (!ncon && !arem) {
-					output_fmt(out,"CSM_NEEDSELF \\\n");
-				}
 				csm_constr_getname(chr,so->data.con.constr,coo,256);
 				if (alist_len(so->data.con.args)==0) {
 					output_fmt(out,"CSM_ADDE(%s) \\\n",coo);
@@ -212,54 +205,16 @@ void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,output_
 			case SEM_OUT_TYPE_VAR: {
 				sem_var_t *var=alist_ptr(rule->vt.vars,so->data.var);
 				if (alist_len(var->def.parts)>0) {
-					output_fmt(out,"CSM_DEFLOCAL(%s,L_%s,",var->type,var->name);
+					output_fmt(out,"CSM_DEFLOCAL(%s,%s,",var->type,var->name);
 					csm_generate_expr(&(var->def),tbl,out);
 					output_fmt(out,") \\\n");
 				} else {
-					output_fmt(out,"CSM_DECLOCAL(%s,L_%s) \\\n",var->type,var->name);
+					output_fmt(out,"CSM_DECLOCAL(%s,%s) \\\n",var->type,var->name);
 				}
 				break;
 			}
 		}
 		l++;
-	}
-}
-
-/* generate code for a guard (as a C expression) */
-void static csm_generate_guard(sem_cchr_t *chr,sem_rule_t *rule,char **tbl,output_t *out,int arem) {
-	csm_generate_out(chr,rule,tbl,out,0,arem);
-}
-
-
-/* generate code for a body (as a list of C (CSM) statements) */
-void static csm_generate_body(sem_cchr_t *chr,sem_rule_t *rule,int arem,int aid,char **tbl,output_t *out) {
-	for (int k=0; k<alist_len(rule->head[SEM_RULE_LEVEL_REM]); k++) {
-		sem_conocc_t *co=alist_ptr(rule->head[SEM_RULE_LEVEL_REM],k);
-		char cc[256];
-		csm_constr_getname(chr,co->constr,cc,256);
-		if (!arem || aid!=k) {
-			output_fmt(out,"CSM_KILL(R%i,%s) \\\n",k+1,cc);
-		} else {
-			output_fmt(out,"CSM_KILLSELF(%s) \\\n",cc);
-		}
-	}
-	csm_generate_out(chr,rule,tbl,out,1,arem);
-	for (int k=0; k<alist_len(rule->head[SEM_RULE_LEVEL_REM]); k++) {
-		sem_conocc_t *co=alist_ptr(rule->head[SEM_RULE_LEVEL_REM],k);
-		char cc[256];
-		csm_constr_getname(chr,co->constr,cc,256);
-		if (!arem || aid!=k) {
-			output_fmt(out,"CSM_FREE(R%i,%s) \\\n",k+1,cc);
-		} else {
-			output_fmt(out,"CSM_FREESELF(%s) \\\n",cc);
-		}
-	}
-	if (arem) {
-		output_fmt(out,"CSM_END \\");
-	} else {
-		char cc[256];
-		csm_constr_getname(chr,alist_get(rule->head[arem ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT],aid).constr,cc,256);
-		output_fmt(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF,CSM_FREESELF(%s) CSM_END) \\",cc);
 	}
 }
 
@@ -339,12 +294,42 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 		output_indent(out,", \\",end);
 	}
 	csm_generate_varcache(cchr,ru,out,tbl,0);
-	csm_generate_guard(cchr,ru,tbl_c,out,rem);
-	if (ru->hook>=0) {
-		output_fmt(out,"CSM_HISTADD(%s%s\n",buf3,end);
-	}
+	csm_generate_out(cchr,ru,tbl_c,out,0);
 	csm_generate_varcache(cchr,ru,out,tbl,1);
-	csm_generate_body(cchr,ru,rem,ro->pos,tbl_c,out);
+        for (int k=0; k<alist_len(ru->head[SEM_RULE_LEVEL_REM]); k++) {
+                sem_conocc_t *co=alist_ptr(ru->head[SEM_RULE_LEVEL_REM],k);
+                char cc[256];
+                csm_constr_getname(cchr,co->constr,cc,256);
+                if (!rem || ro->pos!=k) {
+                        output_fmt(out,"CSM_KILL(R%i,%s) \\\n",k+1,cc);
+                } else {
+                        output_fmt(out,"CSM_KILLSELF(%s) \\\n",cc);
+                }
+        }
+        if (!rem) {
+            output_fmt(out,"CSM_NEEDSELF \\\n");
+        }
+        if (ru->hook>=0) {
+            output_fmt(out,"CSM_HISTADD(%s%s\n",buf3,end);
+        }
+	csm_generate_out(cchr,ru,tbl_c,out,1);
+	for (int k=0; k<alist_len(ru->head[SEM_RULE_LEVEL_REM]); k++) {
+		sem_conocc_t *co=alist_ptr(ru->head[SEM_RULE_LEVEL_REM],k);
+		char cc[256];
+		csm_constr_getname(cchr,co->constr,cc,256);
+		output_fmt(out,alist_len(co->args) ? "CSM_DESTRUCT(%s" : "CSM_DESTRUCTE(%s",cc);
+		for (int l=0; l<alist_len(co->args); l++) {
+		    output_fmt(out,",%s",tbl[alist_get(co->args,l)]);
+		}
+		output_fmt(out,") \\\n");
+	}
+	if (rem) {
+		output_fmt(out,"CSM_END \\\n");
+	} else {
+		char cc[256];
+		csm_constr_getname(cchr,alist_get(ru->head[rem ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT],ro->pos).constr,cc,256);
+		output_fmt(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, CSM_STROUT(\"abort\") CSM_END) \\\n");
+	}
 	csm_destruct_vartable_rule(ru,tbl);
 	csm_destruct_vartable_rule(ru,tbl_c);
 	output_unindent_till(out,0);

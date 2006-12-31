@@ -34,18 +34,26 @@ typedef struct _sem_expr_t_struct sem_expr_t;
 /* the types of expression parts */
 typedef enum enum_sem_exprpart_type {
   SEM_EXPRPART_TYPE_VAR=1, /* a variable reference */
-  SEM_EXPRPART_TYPE_LIT=2 /* a literal piece of code */
+  SEM_EXPRPART_TYPE_LIT=2, /* a literal piece of code */
+  SEM_EXPRPART_TYPE_FUN=3, /* a functional form (resolved after analysis) */
 } sem_exprpart_type;
 
 #define SEM_EXPRPART_TYPE_VAR 1
 #define SEM_EXPRPART_TYPE_LIT 2
+#define SEM_EXPRPART_TYPE_FUN 3
 
+typedef struct {
+    char *name;
+    alist_declare(sem_expr_t,args);
+} sem_fun_t;
+	
 /* a part of an expression, being either a var ref or a lit piece of code */
 typedef struct {
   sem_exprpart_type type;
   union {
     int var; /* when type==SEM_EXPRPART_TYPE_VAR */
     char *lit; /* when type==SEM_EXPRPART_TYPE_LIT */
+    sem_fun_t fun;
   } data;
 } sem_exprpart_t;
 
@@ -82,7 +90,7 @@ typedef struct {
 /* a variable, with a name, a type (unused ftm), and occurence counts in both head constraints of rules */
 typedef struct {
   char *name;
-  char *type; /* copy of constr->types[], do not free */
+  char *type;
   int occ[4]; /* occurrences in removed,kept,guard,body */
   int local; /* whether is variable is local in the body; 1=guard, 2=body */
   int pos; /* (if local==0: position in removed or kept where var is defined) */
@@ -126,11 +134,18 @@ typedef struct {
                rule is hooked to */
 } sem_rule_t;
 
+typedef struct {
+  char *name;
+  alist_declare(char *,types);
+  sem_expr_t def;
+} sem_macro_t;
+
 /* a semantic tree, which is hardly a tree anymore */
 typedef struct {
   alist_declare(sem_rule_t,rules);
   alist_declare(char*,exts);
   alist_declare(sem_constr_t,cons);
+  alist_declare(sem_macro_t,macros);
 } sem_cchr_t;
 
 #endif

@@ -27,6 +27,8 @@ typedef enum  {
 	LOGICAL_NODE_TYPE_VAL=2 /* a root with value */
 } logical_node_type_t;
 
+#define logical_nodestr(val)
+
 #define logical_header(in,out) \
 	LOG_DEBUG(static int _##out##_nextid = 1;) \
 	typedef struct _##out##_struct_ *out; \
@@ -54,14 +56,14 @@ typedef enum  {
 	out static INLINE out##_create(); \
 	void static INLINE out##_setval(out var,in value); \
 	void static out##_seteq(out var1, out var2); \
-	void static INLINE out##_destruct(out var,void (*cb)(in)); \
+	void static INLINE out##_destruct(out var); \
 	int static INLINE out##_testeq(out var1, out var2); \
 	int static INLINE out##_hasval(out var); \
 	in static INLINE out##_getval(out var); \
 	void static INLINE out##_setcb(out var,void (*cb)(void*),void *data); \
 	void static INLINE out##_addcb(out var,void (*cb)(void*),void *data);
 	
-#define logical_code(in,out) \
+#define logical_code(in,out,destr) \
 	logical_header(in,out) \
 	/* requires normalized argument */ \
 	void static out##_docallbacks(out var) { \
@@ -153,7 +155,7 @@ typedef enum  {
 			out##_docallbacks(var1); \
 		} \
 	} \
-	void static INLINE out##_destruct(out var,void (*cb)(in)) { \
+	void static INLINE out##_destruct(out var) { \
 		int remtop=1; \
 		LOG_DEBUG(fprintf(stderr,"[destruct logical (%s) #%i]\n",#out,var->_id);) \
 		out top=out##_normalize(var); \
@@ -170,7 +172,7 @@ typedef enum  {
 			top->_refcount--; \
 			if (top->_refcount==0) { \
 				LOG_DEBUG(fprintf(stderr,"[destruct free:    (%s) #%i]\n",#out,var->_id);) \
-				if (cb && top->_type==LOGICAL_NODE_TYPE_VAL) { cb(top->_data.root.val); } \
+				{ destr((top->_data.root.val)); } \
 				alist_free(top->_data.root.cbs); \
 				free(top); \
 			} \

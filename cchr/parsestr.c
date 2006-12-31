@@ -44,11 +44,18 @@ void destruct_rule_t (rule_t *rule) {
   destruct_exprlist_t(&(rule->guard));
 }
 
+void destruct_macro_t (macro_t *macro) {
+  destruct_constr_t(&(macro->name));
+  destruct_expr_t(&(macro->def));
+}
+
 void destruct_cchr_t (cchr_t *cchr) {
   for (int i=0; i<alist_len(cchr->constrs); i++) destruct_constr_t(alist_ptr(cchr->constrs,i));
   alist_free(cchr->constrs);
   for (int i=0; i<alist_len(cchr->rules); i++) destruct_rule_t(alist_ptr(cchr->rules,i));
   alist_free(cchr->rules);
+  for (int i=0; i<alist_len(cchr->macros); i++) destruct_macro_t(alist_ptr(cchr->macros,i));
+  alist_free(cchr->macros);
   for (int i=0; i<alist_len(cchr->exts); i++) free(alist_get(cchr->exts,i));
   alist_free(cchr->exts);
 }

@@ -1,7 +1,7 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 INTDIR := intermediate
 
-#MODE := debug
+#MODE := efence
 
 ifeq ($(MODE),debug)
   CFLAGS := -O3 -ggdb3 -fomit-frame-pointer

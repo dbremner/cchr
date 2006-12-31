@@ -126,12 +126,23 @@ print4(A,B,C,D), cell(A,C,B,D,Val) <=> write(Val).
 print4(_,_,_,_) <=> write('.').
 
 
-init_data :- cell(a,a,1,1,1),  cell(a,a,1,2,2),  cell(a,a,1,3,3),
-             cell(a,a,2,1,4),  cell(a,a,2,2,5),  cell(a,a,2,3,6),
-             cell(a,a,3,1,7),  cell(a,a,3,2,8),  cell(a,a,3,3,9),
-             cell(b,b,1,1,1),  cell(b,b,1,2,2),  cell(b,b,1,3,3),
-             cell(b,b,2,1,4),  cell(b,b,2,2,5),  cell(b,b,2,3,6),
-             cell(b,b,3,1,7),  cell(b,b,3,2,8),  cell(b,b,3,3,9),
-             cell(c,c,1,1,1),  cell(c,c,1,2,2),  cell(c,c,1,3,3),
-             cell(c,c,2,1,4),  cell(c,c,2,2,5),  cell(c,c,2,3,6),
-             cell(c,c,3,1,7),  cell(c,c,3,2,8),  cell(c,c,3,3,9).
+%init_data :- cell(a,a,1,1,1),  cell(a,a,1,2,2),  cell(a,a,1,3,3),
+%             cell(a,a,2,1,4),  cell(a,a,2,2,5),  cell(a,a,2,3,6),
+%             cell(a,a,3,1,7),  cell(a,a,3,2,8),  cell(a,a,3,3,9),
+%             cell(b,b,1,1,1),  cell(b,b,1,2,2),  cell(b,b,1,3,3),
+%             cell(b,b,2,1,4),  cell(b,b,2,2,5),  cell(b,b,2,3,6),
+%             cell(b,b,3,1,7),  cell(b,b,3,2,8),  cell(b,b,3,3,9),
+%             cell(c,c,1,1,1),  cell(c,c,1,2,2),  cell(c,c,1,3,3),
+%             cell(c,c,2,1,4),  cell(c,c,2,2,5),  cell(c,c,2,3,6),
+%             cell(c,c,3,1,7),  cell(c,c,3,2,8),  cell(c,c,3,3,9).
+
+init_data :-  cell(a,a,1,2,2), cell(a,a,2,1,3), cell(a,a,2,3,8),
+              cell(a,b,1,1,8), cell(a,b,2,3,1), cell(a,b,3,2,6),
+              cell(a,c,1,1,5), cell(a,c,2,2,4), cell(a,c,3,3,1),
+              cell(b,a,1,1,8), cell(b,a,2,3,3),
+              cell(b,b,1,2,9), cell(b,b,2,2,7), cell(b,b,3,2,1),
+              cell(b,c,2,1,2), cell(b,c,3,3,7),
+              cell(c,a,1,1,4), cell(c,a,2,2,6), cell(c,a,3,3,1),
+              cell(c,b,1,2,5), cell(c,b,2,1,1), cell(c,b,3,3,2),
+              cell(c,c,2,1,4), cell(c,c,2,3,2), cell(c,c,3,2,9).
+

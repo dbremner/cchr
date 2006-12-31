@@ -21,7 +21,6 @@
 
 typedef void *yyscan_t;
 
-void dumpCHR(cchr_t *chr,int level);
 int static yyerror(YYLTYPE *loc,yyscan_t scanner,cchr_t *output,char *msg);
 int yylex ( YYSTYPE * lvalp, YYLTYPE * llocp, yyscan_t scanner );
 
@@ -52,7 +51,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
   exprlist_t elist;
 }
 
-%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING
+%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING TOK_MACRO
 
 %token TOK_ERROR
 
@@ -211,19 +210,20 @@ rule : rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist T
 
 stmt : TOK_CONSTRAINT constrlist TOK_SEMI { $$=$2; free($1); free($3); }
      | TOK_EXTERN extlist TOK_SEMI { $$=$2; free($1); free($3); }
+     | TOK_MACRO constr etokenlist TOK_SEMI { cchr_init(&$$); macro_t *nw; alist_new($$.macros,nw); nw->name=$2; nw->def=$3; free($1); free($4); }
      | rule
      ;
 
 
-constrlist : constr { cchr_init(&$$); alist_add($$.constrs,$1); }
-		   | constrlist TOK_COMMA constr { $$=$1; alist_add($$.constrs,$3); free($2); }
+constrlist : constr carglist { cchr_init(&$$); $1.args=$2.args; alist_add($$.constrs,$1); }
+		   | constrlist TOK_COMMA constr carglist { $$=$1; $3.args=$4.args; alist_add($$.constrs,$3); free($2); }
 		   ;
 
 carglist : { alist_init($$.args); alist_init($$.list); $$.name=NULL; }
 		 | carglist functio { alist_add($1.args,$2); $$=$1; }
 		 ;
 
-constr : TOK_FUNC typelist TOK_RRBRAC carglist { $$=$2; $$.name=$1; free($3); $$.args=$4.args; }
+constr : TOK_FUNC typelist TOK_RRBRAC { $$=$2; $$.name=$1; free($3); alist_init($$.args); }
 
 
 typelist :	{ $$.name=NULL; alist_init($$.list); }
@@ -240,114 +240,22 @@ type : TOK_SYMB { $$ = $1; }
 
 %%
 
-void printIndent(int level) {
-  fprintf(stderr,"%.*s",level*2,"                                                                                                  ");
-}
-
-void dumpConstr(constr_t *constr,int level) {
-  printIndent(level); fprintf(stderr,"constr '%s' {\n",constr->name);
-  level++;
-  printIndent(level); fprintf(stderr,"nArgs=%i;\n",alist_len(constr->list));
-  int j=0;
-  while (j<alist_len(constr->list)) {
-    printIndent(level); fprintf(stderr,"arg[%i]='%s'\n",j,alist_get(constr->list,j));
-    j++;
-  }
-  level--;
-  printIndent(level); fprintf(stderr,"}\n");
-}
-
-void dumpExpr(expr_t *expr);
-void dumpExpr(expr_t *expr) {
-  int j=0;
-  while (j<alist_len(expr->list)) {
-    if (j>0) fprintf(stderr," ");
-    token_t *tok=alist_ptr(expr->list,j);
-    if (tok->type == TOKEN_TYPE_LIT) fprintf(stderr,"%s",tok->data);
-    if (tok->type == TOKEN_TYPE_SYMB) fprintf(stderr,"sym_%s",tok->data);
-    if (tok->type == TOKEN_TYPE_FUNC) {
-      fprintf(stderr,"func_%s[",tok->data);
-      int l=0;
-      while (l<alist_len(tok->args)) {
-        if (l>0) fprintf(stderr,"|");
-        dumpExpr(alist_ptr(tok->args,l));
-        l++;
-      }
-      fprintf(stderr,"]");
-    }
-    j++;
-  }
-}
-
-void dumpRule(rule_t *rule,int level) {
-  printIndent(level); fprintf(stderr,"rule '%s' {\n",rule->name ? rule->name : "<anon>");
-  level++;
-  printIndent(level); fprintf(stderr,"nKept=%i;\n",alist_len(rule->kept.list));
-  int j1=0;
-  while (j1<alist_len(rule->kept.list)) {
-    printIndent(level); fprintf(stderr,"kept[%i]='",j1); dumpExpr(alist_ptr(rule->kept.list,j1)); fprintf(stderr,"';\n");
-    j1++;
-  }
-  printIndent(level); fprintf(stderr,"nRemoved=%i;\n",alist_len(rule->removed.list));
-  int j2=0;
-  while (j2<alist_len(rule->removed.list)) {
-    printIndent(level); fprintf(stderr,"removed[%i]='",j2); dumpExpr(alist_ptr(rule->removed.list,j2)); fprintf(stderr,"';\n");
-    j2++;
-  }
-  printIndent(level); fprintf(stderr,"nBody=%i;\n",alist_len(rule->body.list));
-  int j3=0;
-  while (j3<alist_len(rule->body.list)) {
-    printIndent(level); fprintf(stderr,"body[%i]='",j3); dumpExpr(alist_ptr(rule->body.list,j3)); fprintf(stderr,"';\n");
-    j3++;
-  }
-  printIndent(level); fprintf(stderr,"nGuard=%i;\n",alist_len(rule->guard.list));
-  int j4=0;
-  while (j4<alist_len(rule->guard.list)) {
-    printIndent(level); fprintf(stderr,"guard[%i]='",j4); dumpExpr(alist_ptr(rule->guard.list,j4)); fprintf(stderr,"';\n");
-    j4++;
-  }
-  level--;
-  printIndent(level); fprintf(stderr,"}\n");
-}
-
-void dumpCHR(cchr_t *cchr,int level) {
-  printIndent(level); fprintf(stderr,"cchr {\n");
-  level++;
-  printIndent(level); fprintf(stderr,"nConstraints=%i;\n",alist_len(cchr->constrs));
-  int j=0;
-  while (j<alist_len(cchr->constrs)) {
-    dumpConstr(alist_ptr(cchr->constrs,j),level);
-    j++;
-  }
-  printIndent(level); fprintf(stderr,"nRules=%i;\n",alist_len(cchr->rules));
-  int k=0;
-  while (k<alist_len(cchr->rules)) {
-    dumpRule(alist_ptr(cchr->rules,k),level);
-    k++;
-  }
-  printIndent(level); fprintf(stderr,"nExts=%i;\n",alist_len(cchr->exts));
-  int l=0;
-  while (l<alist_len(cchr->exts)) {
-    printIndent(level); fprintf(stderr,"ext[%i]='%s'\n",l,alist_get(cchr->exts,l));
-    l++;
-  }
-  level--;
-  printIndent(level); fprintf(stderr,"}\n");
-}
-
 void cchr_init(cchr_t *cchr) {
   alist_init(cchr->constrs);
   alist_init(cchr->rules);
   alist_init(cchr->exts);
+  alist_init(cchr->macros);
 }
 
 void cchr_merge(cchr_t *out,cchr_t *in) {
   alist_addall(out->constrs,in->constrs);
   alist_addall(out->rules,in->rules);
   alist_addall(out->exts,in->exts);
+  alist_addall(out->macros,in->macros);
   alist_free(in->constrs);
   alist_free(in->rules);
   alist_free(in->exts);
+  alist_free(in->macros);
 }
 
 void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,exprlist_t *guard,exprlist_t *body) {

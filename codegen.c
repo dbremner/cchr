@@ -133,6 +133,7 @@ void static csm_generate_expr(sem_expr_t *expr,char **tbl,output_t *out) {
 		dos=1;
 		sem_exprpart_t *ep=alist_ptr(expr->parts,t);
 		switch (ep->type) {
+			case SEM_EXPRPART_TYPE_FUN:
 			case SEM_EXPRPART_TYPE_LIT: {
 				if (!strcmp(ep->data.lit,"}")) {output_unindent(out);dos=0;}
 				output_fmt(out,"%s",ep->data.lit);
@@ -145,6 +146,9 @@ void static csm_generate_expr(sem_expr_t *expr,char **tbl,output_t *out) {
 				output_fmt(out,"%s",tbl[ep->data.var]);
 				break;
 			}
+		}
+		if (ep->type==SEM_EXPRPART_TYPE_FUN) {
+			output_string(out,"([something])");
 		}
 	}
 }

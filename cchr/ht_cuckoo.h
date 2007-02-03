@@ -13,19 +13,28 @@
     int size; \
     int used; \
     hash_t ## _entry_t *data; \
+    int ninsert; \
+    int niter; \
   } hash_t;\
   void static inline hash_t ## _init(hash_t *ht) { \
-    ht->size=3; \
+    ht->size=2; \
     ht->used=0; \
+    ht->ninsert=0; \
+    ht->niter=0; \
     ht->data=malloc(sizeof(hash_t ## _entry_t)*(1<<(ht->size+1))); \
     for (int j=0; j<(1<<(ht->size+1)); j++) { ht->data[j].used=0; } \
+  } \
+  void static inline hash_t ## _free(hash_t *ht) { \
+    ht->size=0; \
+    free(ht->data); \
+    ht->data=NULL; \
   } \
   hash_t ## _entry_t static inline *hash_t ## _find(hash_t *ht, key_t key) { \
     uint32_t h1=gethash1((key)),h2=gethash2((key)); \
     h1 = (h1 >> (32-ht->size)); \
     h2 = (h2 >> (32-ht->size)) | (1 << ht->size); \
-    if (eq((key),ht->data[h1].key)) return (&(ht->data[h1])); \
-    if (eq((key),ht->data[h2].key)) return (&(ht->data[h2])); \
+    if (ht->data[h1].used && eq((key),ht->data[h1].key)) return (&(ht->data[h1])); \
+    if (ht->data[h2].used && eq((key),ht->data[h2].key)) return (&(ht->data[h2])); \
     return NULL; \
   } \
   int static inline hash_t ## _have(hash_t *ht, key_t key) { \
@@ -35,45 +44,6 @@
     hash_t ## _entry_t *r=hash_t ## _find(ht,key); \
     if (r==NULL) return NULL; \
     return (&(r->val)); \
-  } \
-  void static inline hash_t ## _set(hash_t *ht, key_t key, val_t val) { \
-    hash_t ## _entry_t *r=hash_t ## _find(ht,key); \
-    if (r) { \
-      r->val=val; \
-      return; \
-    } \
-    ht->used++; \
-    while (1) { \
-      uint32_t h1=gethash1((key)); \
-      h1 = (h1 >> (32-ht->size)); \
-      key_t key2=(ht->data[h1].key); \
-      val_t val2=(ht->data[h1].val); \
-      ht->data[h1].key = key; \
-      ht->data[h1].val = val; \
-      if (!ht->data[h1].used) { \
-        ht->data[h1].used=1; \
-	return; \
-      } \
-      uint32_t h2=gethash2((key2)); \
-      h2 = (h2 >> (32-ht->size)) | (1 << ht->size); \
-      key_t key3=(ht->data[h2].key); \
-      val_t val3=(ht->data[h2].val); \
-      ht->data[h2].key = key2; \
-      ht->data[h2].val = val2; \
-      if (!ht->data[h2].used) { \
-        ht->data[h2].used=1; \
-	return; \
-      } \
-      key=key3; \
-      val=val3; \
-    } \
-  } \
-  void static inline hash_t ## _unset(hash_t *ht, key_t key) { \
-    hash_t ## _entry_t *r=hash_t ## _find(ht,key); \
-    if (r) { \
-      ht->used--; \
-      r->used=0; \
-    } \
   } \
   void static inline hash_t ## _double(hash_t *ht) { \
     hash_t ## _entry_t *nw=malloc(sizeof(hash_t ## _entry_t)*(4 << (ht->size))); \
@@ -85,12 +55,64 @@
         nw[i<<1 | (h^1)].used=0; \
       } else { \
         nw[i<<1].used=0; \
-	nw[i<<1 | 1].used=0; \
+	    nw[i<<1 | 1].used=0; \
       } \
     } \
     ht->size++; \
     free(ht->data); \
     ht->data=nw; \
+  } \
+  void static inline hash_t ## _set(hash_t *ht, key_t key, val_t val) { \
+    hash_t ## _entry_t *r=hash_t ## _find(ht,key); \
+    if (r) { \
+      r->val=val; \
+      return; \
+    } \
+    ht->used++; \
+    if (ht->used>(5*(1<< (ht->size)))/6) { \
+      hash_t ## _double(ht); \
+    } \
+    ht->ninsert++; \
+    int iter=0; \
+    while (1) { \
+      int maxiter=(23*ht->size+11)/2; \
+      while (maxiter--) { \
+        uint32_t h1=gethash1((key)); \
+        h1 = (h1 >> (32-ht->size)); \
+        key_t key2=(ht->data[h1].key); \
+        val_t val2=(ht->data[h1].val); \
+        ht->data[h1].key = key; \
+        ht->data[h1].val = val; \
+        if (!ht->data[h1].used) { \
+          ht->data[h1].used=1; \
+          ht->niter+=iter; \
+	      return; \
+        } \
+      	iter++; \
+        uint32_t h2=gethash2((key2)); \
+        h2 = (h2 >> (32-ht->size)) | (1 << ht->size); \
+        key_t key3=(ht->data[h2].key); \
+        val_t val3=(ht->data[h2].val); \
+        ht->data[h2].key = key2; \
+        ht->data[h2].val = val2; \
+        if (!ht->data[h2].used) { \
+          ht->data[h2].used=1; \
+          ht->niter+=iter; \
+	      return; \
+        } \
+      	iter++; \
+        key=key3; \
+        val=val3; \
+      } \
+      hash_t ## _double(ht); \
+    } \
+  } \
+  void static inline hash_t ## _unset(hash_t *ht, key_t key) { \
+    hash_t ## _entry_t *r=hash_t ## _find(ht,key); \
+    if (r) { \
+      ht->used--; \
+      r->used=0; \
+    } \
   }
 
 #endif

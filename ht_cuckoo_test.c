@@ -5,22 +5,30 @@
 
 #include "ht_cuckoo.h"
 
+typedef struct {
+  uint32_t key;
+  uint32_t val;
+  int set;
+} het_t;
+
+#define het_eq(het1,het2) ((het1)->key == (het2)->key)
+#define het_defined(het1) ((het1)->set)
+#define het_unset(het) {(het)->set=0;}
+
 uint32_t hashword(const uint32_t *k,size_t length,uint32_t initval);
 
 
-uint32_t hash1(uint32_t val) {
-  return (uint32_t)hashword(&val,1,0x2B7E15162UL);
+uint32_t hash1(het_t *val) {
+  return (uint32_t)hashword(&(val->key),1,0x2B7E15162UL);
 }
 
-uint32_t hash2(uint32_t val) {
-  return (uint32_t)hashword(&val,1,0x3243F6A88UL);
+uint32_t hash2(het_t *val) {
+  return (uint32_t)hashword(&(val->key),1,0x3243F6A88UL);
 }
 
-#define uint32_eq(v1,v2) ((v1)==(v2))
+ht_cuckoo_code(hash_t,het_t,hash1,hash2,het_eq,het_defined,het_unset)
 
-ht_cuckoo_code(hash_t,uint32_t,uint32_t,hash1,hash2,uint32_eq)
-
-#define SIZE (1<<17)
+#define SIZE (1<<12)
 
 int main(void) {
   hash_t ht;
@@ -34,25 +42,30 @@ int main(void) {
   	del[l]=0;
   }
   for (int j=0; j<SIZE; j++) {
-    hash_t_set(&ht,key[j],val[j]);
+    het_t het={.key=key[j],.val=val[j],.set=1};
+    hash_t_set(&ht,&het);
     int dl=rand()%SIZE;
     if (dl<=j) {
-    	hash_t_unset(&ht,key[dl]);
+        het.key=key[dl];
+    	hash_t_unset(&ht,&het);
     	del[dl]=1;
     }
     int ow=rand()%SIZE;
     if (ow<=j) {
     	val[ow]=rand();
     	del[ow]=0;
-    	hash_t_set(&ht,key[ow],val[ow]);
+	het.key=key[ow];
+	het.val=val[ow];
+	het.set=1;
+    	hash_t_set(&ht,&het);
     }
-    /*for (int k=0; k<SIZE; k++) {
+/*    for (int k=0; k<SIZE; k++) {
       int mh=(k<=j) && !del[k];
-      assert(hash_t_have(&ht,key[k])==mh);
-      if (mh) assert(*hash_t_get(&ht,key[k])==val[k]);
+      het.key=key[k];
+      assert(hash_t_have(&ht,&het)==mh);
+      if (mh) assert(hash_t_find(&ht,&het)->val==val[k]);
     }*/
   }
-  printf("size=%i used=%i inserts=%i iters=%f\n",ht.size,ht.used,ht.ninsert,(double)ht.niter/ht.ninsert);
   hash_t_free(&ht);
   free(key);
   free(val);

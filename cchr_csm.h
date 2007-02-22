@@ -8,11 +8,14 @@
 #define _cchr_csm_h_
 
 #include <stdlib.h>
+#include <stdint.h>
 
 /* we need dcls */
 #include "dcls.h"
 /* and alist.h */
 #include "alist.h"
+#include "lookup3.h"
+#include "ht_cuckoo.h"
 
 /* some debug output macro's */
 #define CSM_STRINGIFY_(X) #X
@@ -73,17 +76,38 @@
 #define CSM_CB_ENU_S ,
 #define CSM_CB_ENU_D(NAME) CCHR_CONS_TYPE_ ## NAME
 
+#define CSM_CB_DTDC_S
+#define CSM_CB_DTDC_D(T,V,...) \
+  typedef struct { \
+    CSM_PROP(uint32_t hist[RULE_KEPT_##V];) \
+  } cchr_propent_ ##V## _t; \
+  CSM_PROP( \
+    uint32_t static inline cchr_propent_##V##_hash1(cchr_propent_##V##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x2B7E1516UL); } \
+    uint32_t static inline cchr_propent_##V##_hash2(cchr_propent_##V##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x3243F6A8UL); } \
+    int static inline cchr_propent_##V##_eq(cchr_propent_##V##_t *v1,cchr_propent_##V##_t *v2) { \
+      for (int i=0; i<RULE_KEPT_##V-1; i++) { \
+        if (v1->hist[i] != v2->hist[i]) return 0; \
+      } \
+      return 1; \
+    } \
+    ht_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF) \
+  )
+
 /* callback macro for history-related data in constraint-specific suspensions */
 #define CSM_CB_DTDH_S
-#define CSM_CB_DTDH_D(T,V,...) int _phl_##V; alist_declare(int,_ph_##V);
+#define CSM_CB_DTDH_D(T,V,...) cchr_propstr_##V##_t _ph_##V;
 
 /* callback macro for the arguments of a constraint */
 #define CSM_CB_DTDAL_S
 #define CSM_CB_DTDAL_D(NAME,TYPE,...) TYPE NAME;
 
+#define CSM_HTCB_DEFINED(VAL) ((VAL)->hist[0])
+#define CSM_HTCB_UNDEF(VAL) {(VAL)->hist[0]=0;}
+
 /* callback macro for constraint-specific data in suspensions */ 
 #define CSM_CB_DTD_S
 #define CSM_CB_DTD_D(NAME) \
+  CSM_PROP(RULEHOOKS_##NAME(CSM_CB_DTDC,)) \
   typedef struct { \
     ARGLIST_##NAME(CSM_CB_DTDAL,) \
     CSM_PROP(RULEHOOKS_##NAME(CSM_CB_DTDH,)) \
@@ -223,7 +247,7 @@
 
 /* callback macro for freeing propagation history records */ 
 #define CSM_CB_FPH_D(T,V,A) { \
-	alist_free(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V); \
+	cchr_propstr_##V##_t_free(&(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V)); \
 }
 #define CSM_CB_FPH_S
 
@@ -286,8 +310,7 @@
 #define CSM_CB_MAKSA_D(NAME,TYPE,CON) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
 
 #define CSM_CB_PHI_D(T,V,A) CSM_PROP( \
-	alist_init(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V); \
-	dcls_get(_global_runtime.store,pid_self_).data.T._phl_##V=0; \
+	cchr_propstr_##V##_t_init(&(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V)); \
 )
 #define CSM_CB_PHI_S
 
@@ -322,32 +345,30 @@
 #define CSM_CB_HC_I(HOOK,RULE,CODE,COND) { \
 	int ok_=1; \
 	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
-	for (int i_=0; i_<p_->data.PROPHIST_HOOK_##RULE._phl_##RULE; i_++) { \
-		if (1 COND) { \
-			CSM_FMTOUT("histfail %s (on %s:%i)",#RULE,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id); \
-			ok_=0; \
-			break; \
-		} \
-	} \
+	cchr_propent_##RULE##_t ent_={.hist={1}}; \
+	COND; \
+	if (cchr_propstr_##RULE##_t_have(&(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE),&ent_)) { \
+		CSM_FMTOUT("histfail %s (on %s:%i)",#RULE,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id); \
+		ok_=0; \
+	} else {\
 	/*CSM_FMTOUT("histchk %s on id=%i%s",#RULE,dcls_get(_global_runtime.store,pid_##HOOK).id,ok_ ? ": ok" : "");*/ \
-	if (ok_) { \
 		CODE \
 	} \
 }
-#define CSM_CB_HC_D(PID,HOOK,POS,RULE,CODE) && (alist_get(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,(i_*((RULE_KEPT_##RULE)-1))+POS)==dcls_get(_global_runtime.store,pid_##PID).id)
+#define CSM_CB_HC_D(PID,HOOK,POS,RULE,CODE) ent_.hist[POS]=dcls_get(_global_runtime.store,pid_##PID).id;
 #define CSM_CB_HC_S(RULE,CODE)
 
 #define CSM_HISTADD(RULE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HA,__VA_ARGS__,RULE))
 #define CSM_CB_HA_I(HOOK,RULE,COND) { \
 	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
-	CSM_FMTOUT("histadd pre: [pid=%i cnt=%i id=%i]",pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._phl_##RULE,p_->id); \
-	int i_= ++(p_->data.PROPHIST_HOOK_##RULE._phl_##RULE); \
-	alist_ensure(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,(i_*((RULE_KEPT_##RULE)-1))); \
+	CSM_FMTOUT("histadd pre: [pid=%i cnt=%i id=%i]",pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._ph_##RULE.used,p_->id); \
+	cchr_propent_##RULE##_t ent_={.hist={1}}; \
 	CSM_FMTOUTX("histadd %s (",0,#RULE); \
-	COND \
-	CSM_FMTOUTX(") to %s:%i [pid=%i cnt=%i]",2,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id,pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._phl_##RULE); \
+	COND; \
+	CSM_FMTOUTX(") to %s:%i [pid=%i cnt=%i]",2,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id,pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._ph_##RULE.used); \
+	cchr_propstr_##RULE##_t_set(&(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE),&ent_); \
 }
-#define CSM_CB_HA_D(PID,HOOK,POS,RULE) alist_add(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE,dcls_get(_global_runtime.store,pid_##PID).id); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
+#define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[POS]=dcls_get(_global_runtime.store,pid_##PID).id; CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
 #define CSM_CB_HA_S(RULE)
 
 #endif

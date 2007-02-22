@@ -67,7 +67,6 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 	int ws=0; /* size of word buffer */
 	char sb[256];
 	int ss=0; /* size of space buffer */
-	int as=1; /* accepting state (only after ; or } ) */
 	int c; /* character read */
 	int ls=1; /* only spaces have occured after last newline */
 	int ok=1; /* return value */
@@ -82,7 +81,6 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 			ls=0;
 			if (ss>0) { /* if word+space buffer are filled */
 				output_chars(out,wb,ws); /* write them out */
-				if (ws) as=0;
 				ws=0;
 				output_chars(out,sb,ss);
 				ss=0;
@@ -119,14 +117,13 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 			ls=0;
 		}
 		if (c == '{') { /* begin of a block */
-			if (as && ws==4 && !strncmp(wb,"cchr",4)) {
+			if (ws==4 && !strncmp(wb,"cchr",4)) {
 				output_fmt(out,"#line %i \"%s\"\n",output_get_line(out)+1,outname);
 				printf("- processing cchr block #%i:\n",(++ncchr));
 				if (!process_file_cchr(in,out,line)) ok=0;
 				output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 				ws=0;
 				ss=0;
-				as=1;
 				continue;
 			}
 		}
@@ -134,7 +131,6 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 		ws=0;
 		output_chars(out,sb,ss);
 		ss=0;
-		if (!isspace(c)) as=(c == '}' || c == ';'); /* after these a "cchr {" may follow */
 		output_char(out,c);
 		
 	}

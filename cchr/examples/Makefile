@@ -3,14 +3,14 @@ CC := gcc -Wall -pipe -std=c99 -pedantic
 #MODE := efence
 
 ifeq ($(MODE),debug)
-  CFLAGS := -O0 -ggdb3
+  CFLAGS := -O0 -ggdb3 lookup3.c
   LDFLAGS := 
 else
   ifeq ($(MODE),efence)
-    CFLAGS := -O0 -ggdb3 -DUSE_EFENCE
+    CFLAGS := -O0 -ggdb3 -DUSE_EFENCE lookup3.c
     LDFLAGS := -lefence 
   else
-    CFLAGS := -O3 -g0 -fomit-frame-pointer -march=athlon64 -frename-registers -ftracer -fweb
+    CFLAGS := -O3 -g0 -fomit-frame-pointer -march=athlon64 -frename-registers -ftracer -fweb lookup3.c
     LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
   endif
 endif

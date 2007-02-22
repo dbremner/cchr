@@ -47,9 +47,9 @@ int main(int argc, char **argv) {
   cchr_runtime_init();
   int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
   cchr_add_init_1(a);
-/*  dcls_iter(_global_runtime.store,j,CCHR_CONS_TYPE_fib_2,{
+  dcls_iter(_global_runtime.store,j,CCHR_CONS_TYPE_fib_2,{
     cchr_entry_t *ent=dcls_ptr(_global_runtime.store,j);
     gmp_printf("fib(%i,%Zd)\n",(int)(ent->data.fib_2.arg1),(ent->data.fib_2.arg2).v);
-  })*/
+  })
   return 0;
 }

@@ -6,7 +6,7 @@ cchr {
   constraint gcd(uint64_t) fmt("gcd(%llu)");
 
   triv @ gcd(0ULL) <=> true;
-  dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
+  dec @ gcd(N) \ gcd(M) <=> M>=N | uint64_t V=M-N, gcd(V);
 }
 
 int main(int argc, char **argv) {

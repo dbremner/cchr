@@ -7,7 +7,7 @@ typedef struct {
 } bigint_t;
 
 cchr {
-  constraint fib(int,bigint_t) destr(mpz_clear($2.v));
+  constraint fib(int,bigint_t) destr({mpz_clear($2.v);});
   constraint init(int);
   
   begin @ 
@@ -37,8 +37,8 @@ cchr {
   	  fib(N+1, Sum);
 
   fini @ 
-/*  	  fib(Max,_) \ init(Max)  */
-          init(_)
+  	  fib(Max,_) \ init(Max) 
+/*          init(_) */
   	<=>
   	  true;
 }

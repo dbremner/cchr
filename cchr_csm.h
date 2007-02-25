@@ -371,6 +371,9 @@
 #define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[POS]=dcls_get(_global_runtime.store,pid_##PID).id; CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
 #define CSM_CB_HA_S(RULE)
 
+#define cchr_consloop(var,type,code) dcls_iter(_global_runtime.store,var,CCHR_CONS_TYPE_##type,{cchr_cons_##type##_t * _##var##_data=&(dcls_ptr(_global_runtime.store,j)->data.type); {code}})
+#define cchr_consarg(var,type,num) (_##var##_data->arg##num)
+
 #endif
 
 CSM_START

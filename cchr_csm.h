@@ -8,6 +8,7 @@
 #define _cchr_csm_h_
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 
 /* we need dcls */
@@ -76,6 +77,15 @@
 #define CSM_CB_ENU_S ,
 #define CSM_CB_ENU_D(NAME) CCHR_CONS_TYPE_ ## NAME
 
+#define CSM_CB_CHTCA_D(A,T,X) T A;
+  
+#define CSM_CB_CHTC_D(H,C) \
+  typedef struct { \
+    dcls_pid_t _pid; \
+    HASHDEF_##C##_##H(CSM_CB_CHTCA,) \
+  } cchr_contbl_##C##_##H##_t; \
+  uint32_t static inline cchr_contbl_##C##_##H##_hash1(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x2B7E1516UL); }
+
 #define CSM_CB_DTDC_S
 #define CSM_CB_DTDC_D(T,V,...) \
   typedef struct { \
@@ -91,7 +101,7 @@
       return 1; \
     } \
     ht_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF) \
-  )
+  ) \
 
 /* callback macro for history-related data in constraint-specific suspensions */
 #define CSM_CB_DTDH_S
@@ -103,6 +113,9 @@
 
 #define CSM_HTCB_DEFINED(VAL) ((VAL)->hist[0])
 #define CSM_HTCB_UNDEF(VAL) {(VAL)->hist[0]=0;}
+
+#define CSM_CTCB_DEFINED(VAL) ((VAL)->_pid != DCLS_EMPTY_PID)
+#define CSM_CTCB_UNDEF(VAL) {(VAL)->_pid = DCLS_EMPTY_PID);}
 
 /* callback macro for constraint-specific data in suspensions */ 
 #define CSM_CB_DTD_S
@@ -251,7 +264,7 @@
 }
 #define CSM_CB_FPH_S
 
-/* after a killself should always be a CSM_END (with a body and a CSM_FREESELF in between) */
+/* after a killself should always be a CSM_END */
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
 		CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,self_);) \
@@ -260,7 +273,6 @@
 	} \
 }
 
-/* after a kill should always be a CSM_FREE (before a CSM_END) */
 #define CSM_KILL(VAR,TYPE) { \
 	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
 	dcls_free(_global_runtime.store,pid_##VAR); \
@@ -371,9 +383,14 @@
 #define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[POS]=dcls_get(_global_runtime.store,pid_##PID).id; CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
 #define CSM_CB_HA_S(RULE)
 
+CSM_START
+
+/***** additional helper macro's *****/
+
 #define cchr_consloop(var,type,code) dcls_iter(_global_runtime.store,var,CCHR_CONS_TYPE_##type,{cchr_cons_##type##_t * _##var##_data=&(dcls_ptr(_global_runtime.store,j)->data.type); {code}})
 #define cchr_consarg(var,type,num) (_##var##_data->arg##num)
 
+#define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
+
 #endif
 
-CSM_START

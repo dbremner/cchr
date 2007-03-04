@@ -11,12 +11,14 @@
 #include <string.h>
 #include <stdint.h>
 
+
 /* we need dcls */
 #include "dcls.h"
 /* and alist.h */
 #include "alist.h"
 #include "lookup3.h"
 #include "ht_cuckoo.h"
+
 
 /* some debug output macro's */
 #define CSM_STRINGIFY_(X) #X
@@ -81,17 +83,23 @@
   
 #define CSM_CB_CHTC_D(H,C) \
   typedef struct { \
-    dcls_pid_t _pid; \
-    HASHDEF_##C##_##H(CSM_CB_CHTCA,) \
+    struct { \
+      HASHDEF_##C##_##H(CSM_CB_CHTCA,) \
+    } key; \
+    cchr_htdc_t val; \
   } cchr_contbl_##C##_##H##_t; \
-  uint32_t static inline cchr_contbl_##C##_##H##_hash1(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x2B7E1516UL); }
+  uint32_t static inline cchr_contbl_##C##_##H##_hash1(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x23C6EF37UL); } \
+  uint32_t static inline cchr_contbl_##C##_##H##_hash2(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x2A54FF53UL); } \
+  int static inline cchr_contbl_##C##_##H##_eq(cchr_contbl_##C##_##H##_t *v1,cchr_contbl_##C##_##H##_t *v2) { return eq(*(v1),*(v2)); } \
+  ht_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
+#define CSM_CB_CHTC_S
 
 #define CSM_CB_DTDC_S
 #define CSM_CB_DTDC_D(T,V,...) \
-  typedef struct { \
-    CSM_PROP(uint32_t hist[RULE_KEPT_##V];) \
-  } cchr_propent_ ##V## _t; \
   CSM_PROP( \
+    typedef struct { \
+      uint32_t hist[RULE_KEPT_##V]; \
+    } cchr_propent_ ##V## _t; \
     uint32_t static inline cchr_propent_##V##_hash1(cchr_propent_##V##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x2B7E1516UL); } \
     uint32_t static inline cchr_propent_##V##_hash2(cchr_propent_##V##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x3243F6A8UL); } \
     int static inline cchr_propent_##V##_eq(cchr_propent_##V##_t *v1,cchr_propent_##V##_t *v2) { \
@@ -100,8 +108,11 @@
       } \
       return 1; \
     } \
-    ht_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF) \
-  ) \
+    ht_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF,CSM_HTCB_UNDEF) \
+  )
+
+#define CSM_CB_HTCL_S
+#define CSM_CB_HTCL_D(V) HASHLIST_##V(CSM_CB_CHTC,V)
 
 /* callback macro for history-related data in constraint-specific suspensions */
 #define CSM_CB_DTDH_S
@@ -114,13 +125,14 @@
 #define CSM_HTCB_DEFINED(VAL) ((VAL)->hist[0])
 #define CSM_HTCB_UNDEF(VAL) {(VAL)->hist[0]=0;}
 
-#define CSM_CTCB_DEFINED(VAL) ((VAL)->_pid != DCLS_EMPTY_PID)
-#define CSM_CTCB_UNDEF(VAL) {(VAL)->_pid = DCLS_EMPTY_PID);}
+#define CSM_CTCB_DEFINED(VAL) ((VAL)->val.data != NULL)
+#define CSM_CTCB_UNDEF(VAL) {cchr_htdc_t_free(&((VAL)->val));}
+#define CSM_CTCB_INIT(VAL) {cchr_htdc_t_init(&((VAL)->val));}
 
 /* callback macro for constraint-specific data in suspensions */ 
 #define CSM_CB_DTD_S
 #define CSM_CB_DTD_D(NAME) \
-  CSM_PROP(RULEHOOKS_##NAME(CSM_CB_DTDC,)) \
+  RULEHOOKS_##NAME(CSM_CB_DTDC,) \
   typedef struct { \
     ARGLIST_##NAME(CSM_CB_DTDAL,) \
     CSM_PROP(RULEHOOKS_##NAME(CSM_CB_DTDH,)) \
@@ -129,8 +141,15 @@
 #define CSM_CB_DUD_S
 #define CSM_CB_DUD_D(NAME) cchr_cons_ ## NAME ## _t NAME;
 
+#define CSM_HTDC_DEFINED(VAL) (*(VAL) != DCLS_EMPTY_PID)
+#define CSM_HTDC_UNDEF(VAL) {*(VAL) = DCLS_EMPTY_PID;}
+#define CSM_HTDC_HASH1(VAL) hashbytes((VAL),sizeof(dcls_pid_t),0x16A09E66UL)
+#define CSM_HTDC_HASH2(VAL) hashbytes((VAL),sizeof(dcls_pid_t),0x1BB67AE8UL)
+#define CSM_HTDC_EQ(V1,V2) ((V1)==(V2))
+
 /* main macro */
 #define CSM_START \
+  ht_cuckoo_code(cchr_htdc_t,dcls_pid_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF) \
   enum cchr_cons_type { CONSLIST(CSM_CB_ENU) , CCHR_CONS_COUNT }; \
   CONSLIST(CSM_CB_DTD) \
   typedef struct { \
@@ -164,6 +183,7 @@
   void static inline cchr_store(dcls_pid_t pid_self_) { \
     dcls_add_begin(_global_runtime.store,pid_self_,dcls_get(_global_runtime.store,pid_self_).type); \
   } \
+  CONSLIST(CSM_CB_HTCL) \
   CONSLIST(CSM_CB_FFD) \
   CONSLIST(CSM_CB_FFC) \
   void static cchr_reactivate_all(void *dummy) { \
@@ -383,14 +403,16 @@
 #define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[POS]=dcls_get(_global_runtime.store,pid_##PID).id; CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,dcls_get(_global_runtime.store,pid_##PID).id); );
 #define CSM_CB_HA_S(RULE)
 
-CSM_START
-
 /***** additional helper macro's *****/
 
 #define cchr_consloop(var,type,code) dcls_iter(_global_runtime.store,var,CCHR_CONS_TYPE_##type,{cchr_cons_##type##_t * _##var##_data=&(dcls_ptr(_global_runtime.store,j)->data.type); {code}})
 #define cchr_consarg(var,type,num) (_##var##_data->arg##num)
 
 #define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
+
+/***** actual CSM code ****/
+
+CSM_START
 
 #endif
 

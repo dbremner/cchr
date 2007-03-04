@@ -55,7 +55,6 @@
     if (ht->used>(5*(1<< (ht->size)))/6) { \
       hash_t ## _double(ht); \
     } \
-    int iter=0; \
     while (1) { \
       int maxiter=(23*ht->size+11)/2; \
       while (maxiter--) { \
@@ -68,7 +67,6 @@
           bak=ht->data[h1]; \
 	  ht->data[h1]=(*entry); \
 	} \
-      	iter++; \
         uint32_t h2=gethash2(&bak); \
         h2 = (h2 >> (32-ht->size)) | (1 << ht->size); \
         if (!(defined((ht->data)+h2))) { \
@@ -78,7 +76,6 @@
           (*entry)=ht->data[h2]; \
 	  ht->data[h2]=bak; \
 	} \
-      	iter++; \
       } \
       hash_t ## _double(ht); \
     } \
@@ -91,14 +88,16 @@
     } \
   } \
   void static inline hash_t ## _free(hash_t *ht) { \
-    ht->size=0; \
-    for (int j=0; j<(2<<ht->size); j++) { \
-      if (defined(ht->data+j)) { \
-        unset((ht->data+j)); \
+    if (ht->data) { \
+      ht->size=0; \
+      for (int j=0; j<(2<<ht->size); j++) { \
+        if (defined(ht->data+j)) { \
+          unset((ht->data+j)); \
+        } \
       } \
+      free(ht->data); \
+      ht->data=NULL; \
     } \
-    free(ht->data); \
-    ht->data=NULL; \
   } \
 
 #endif

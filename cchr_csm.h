@@ -12,12 +12,10 @@
 #include <stdint.h>
 
 
-/* we need dcls */
-#include "dcls.h"
-/* and alist.h */
-#include "alist.h"
-#include "lookup3.h"
-#include "ht_cuckoo.h"
+#include "dcls.h" /* for doubly-linked lists (constraint store) */
+#include "alist.h" /* for arraylists */
+#include "lookup3.h" /* for hashing algorithm */
+#include "ht_cuckoo.h" /* for hashtable */
 
 
 /* some debug output macro's */
@@ -81,6 +79,7 @@
 
 #define CSM_CB_CHTCA_D(A,T,X) T A;
   
+#define CSM_CB_CHTC_S
 #define CSM_CB_CHTC_D(H,C) \
   typedef struct { \
     struct { \
@@ -92,7 +91,6 @@
   uint32_t static inline cchr_contbl_##C##_##H##_hash2(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x2A54FF53UL); } \
   int static inline cchr_contbl_##C##_##H##_eq(cchr_contbl_##C##_##H##_t *v1,cchr_contbl_##C##_##H##_t *v2) { return eq(*(v1),*(v2)); } \
   ht_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
-#define CSM_CB_CHTC_S
 
 #define CSM_CB_DTDC_S
 #define CSM_CB_DTDC_D(T,V,...) \
@@ -113,6 +111,14 @@
 
 #define CSM_CB_HTCL_S
 #define CSM_CB_HTCL_D(V) HASHLIST_##V(CSM_CB_CHTC,V)
+
+#define CSM_CB_HTDD_S
+#define CSM_CB_HTDD_D(V) struct { \
+  HASHLIST_##V(CSM_CB_HTDL,V) \
+} index_##V;
+
+#define CSM_CB_HTDL_S
+#define CSM_CB_HTDL_D(H,C) cchr_conht_##C##_##H##_t H;
 
 /* callback macro for history-related data in constraint-specific suspensions */
 #define CSM_CB_DTDH_S
@@ -152,6 +158,7 @@
   ht_cuckoo_code(cchr_htdc_t,dcls_pid_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF) \
   enum cchr_cons_type { CONSLIST(CSM_CB_ENU) , CCHR_CONS_COUNT }; \
   CONSLIST(CSM_CB_DTD) \
+  CONSLIST(CSM_CB_HTCL) \
   typedef struct { \
     enum cchr_cons_type type; \
     int id; \
@@ -162,6 +169,7 @@
   } cchr_entry_t; \
   typedef struct { \
     dcls_declare(cchr_entry_t,store); \
+    CONSLIST(CSM_CB_HTDD) \
     int nextid; \
     CSM_DEBUG( int debugindent; ) \
   } cchr_runtime_t; \
@@ -183,7 +191,6 @@
   void static inline cchr_store(dcls_pid_t pid_self_) { \
     dcls_add_begin(_global_runtime.store,pid_self_,dcls_get(_global_runtime.store,pid_self_).type); \
   } \
-  CONSLIST(CSM_CB_HTCL) \
   CONSLIST(CSM_CB_FFD) \
   CONSLIST(CSM_CB_FFC) \
   void static cchr_reactivate_all(void *dummy) { \
@@ -205,7 +212,9 @@
 #define CSM_CB_FFD_D(NAME) \
   void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_CB_FFDAR,)); \
   void static inline cchr_add_##NAME(ARGLIST_##NAME(CSM_CB_FFDAR,)); \
-  void static inline cchr_reactivate_##NAME(dcls_pid_t);
+  void static inline cchr_reactivate_##NAME(dcls_pid_t); \
+  void static inline cchr_index_##NAME(dcls_pid_t); \
+  void static inline cchr_unindex_##NAME(dcls_pid_t);
 
 
 /* callback macro for arguments of declaration of fire functions */
@@ -246,7 +255,16 @@
 	  CSM_DESTRUCT_PID(NAME,C); \
   	  CSM_KILL(C,NAME); \
   	) \
+  } \
+  void cchr_index_##NAME(dcls_pid_t pid) { \
+    HASHLIST_##NAME(CSM_CB_IDX,NAME) \
+  } \
+  void cchr_unindex_##NAME(dcls_pid_t pid) { \
   }
+  
+
+#define CSM_CB_IDX_S
+#define CSM_CB_IDX_D(H,C) { }
   
 #define CSM_CB_FFCRA_S
 #define CSM_CB_FFCRA_D(NAME,TYPE,CON) ,CSM_LARG(CON,self_,NAME)

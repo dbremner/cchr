@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define ht_cuckoo_code(hash_t,entry_t,gethash1,gethash2,eq,defined,unset) \
+#define ht_cuckoo_code(hash_t,entry_t,gethash1,gethash2,eq,defined,init,unset) \
   typedef struct { \
     int size; \
     int used; \
@@ -12,11 +12,6 @@
   void static inline hash_t ## _init(hash_t *ht) { \
     ht->size=0; \
     ht->used=0; \
-    ht->data=NULL; \
-  } \
-  void static inline hash_t ## _free(hash_t *ht) { \
-    ht->size=0; \
-    free(ht->data); \
     ht->data=NULL; \
   } \
   entry_t static inline *hash_t ## _find(hash_t *ht, entry_t *entry) { \
@@ -94,6 +89,16 @@
       ht->used--; \
       unset(r); \
     } \
-  }
+  } \
+  void static inline hash_t ## _free(hash_t *ht) { \
+    ht->size=0; \
+    for (int j=0; j<(2<<ht->size); j++) { \
+      if (defined(ht->data+j)) { \
+        unset((ht->data+j)); \
+      } \
+    } \
+    free(ht->data); \
+    ht->data=NULL; \
+  } \
 
 #endif

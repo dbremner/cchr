@@ -74,16 +74,18 @@
 	} \
 )
 
-#define CSM_CB_ENU_S ,
-#define CSM_CB_ENU_D(NAME) CCHR_CONS_TYPE_ ## NAME
+/****** MACRO CALLBACKS ********/
 
-#define CSM_CB_CHTCA_D(A,T,X) T A;
+#define CSM_CB_TypeEnum_S ,
+#define CSM_CB_TypeEnum_D(NAME) CCHR_CONS_TYPE_ ## NAME
+
+#define CSM_CB_IdxDefDefList_D(A,T,X) T A;
   
-#define CSM_CB_CHTC_S
-#define CSM_CB_CHTC_D(H,C) \
+#define CSM_CB_IdxDefDef_S
+#define CSM_CB_IdxDefDef_D(H,C) \
   typedef struct { \
     struct { \
-      HASHDEF_##C##_##H(CSM_CB_CHTCA,) \
+      HASHDEF_##C##_##H(CSM_CB_IdxDefDefList,) \
     } key; \
     cchr_htdc_t val; \
   } cchr_contbl_##C##_##H##_t; \
@@ -92,8 +94,8 @@
   int static inline cchr_contbl_##C##_##H##_eq(cchr_contbl_##C##_##H##_t *v1,cchr_contbl_##C##_##H##_t *v2) { return eq(*(v1),*(v2)); } \
   ht_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
 
-#define CSM_CB_DTDC_S
-#define CSM_CB_DTDC_D(T,V,...) \
+#define CSM_CB_HistTypeDef_S
+#define CSM_CB_HistTypeDef_D(T,V,...) \
   CSM_PROP( \
     typedef struct { \
       uint32_t hist[RULE_KEPT_##V]; \
@@ -109,8 +111,14 @@
     ht_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF,CSM_HTCB_UNDEF) \
   )
 
-#define CSM_CB_HTCL_S
-#define CSM_CB_HTCL_D(V) HASHLIST_##V(CSM_CB_CHTC,V)
+#define CSM_CB_IdxDef_S
+#define CSM_CB_IdxDef_D(V) HASHLIST_##V(CSM_CB_IdxDefDef,V)
+
+#define CSM_CB_IdxInit_S
+#define CSM_CB_IdxInit_D(V) HASHLIST_##V(CSM_CB_IdxInitList,V)
+
+#define CSM_CB_IdxInitList_S
+#define CSM_CB_IdxInitList_D(H,C) cchr_contbl_##C##_##H##_t_init(&(_global_runtime.hash_##C.V));
 
 #define CSM_CB_HTDD_S
 #define CSM_CB_HTDD_D(V) struct { \
@@ -138,7 +146,7 @@
 /* callback macro for constraint-specific data in suspensions */ 
 #define CSM_CB_DTD_S
 #define CSM_CB_DTD_D(NAME) \
-  RULEHOOKS_##NAME(CSM_CB_DTDC,) \
+  RULEHOOKS_##NAME(CSM_CB_HistTypeDef,) \
   typedef struct { \
     ARGLIST_##NAME(CSM_CB_DTDAL,) \
     CSM_PROP(RULEHOOKS_##NAME(CSM_CB_DTDH,)) \
@@ -156,9 +164,9 @@
 /* main macro */
 #define CSM_START \
   ht_cuckoo_code(cchr_htdc_t,dcls_pid_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF) \
-  enum cchr_cons_type { CONSLIST(CSM_CB_ENU) , CCHR_CONS_COUNT }; \
+  enum cchr_cons_type { CONSLIST(CSM_CB_TypeEnum) , CCHR_CONS_COUNT }; \
   CONSLIST(CSM_CB_DTD) \
-  CONSLIST(CSM_CB_HTCL) \
+  CONSLIST(CSM_CB_IdxDef) \
   typedef struct { \
     enum cchr_cons_type type; \
     int id; \
@@ -176,6 +184,7 @@
   cchr_runtime_t static _global_runtime; \
   void static cchr_runtime_init() { \
     dcls_init(_global_runtime.store,CCHR_CONS_COUNT); \
+    CONSLIST(CSM_CB_IdxInit) \
     _global_runtime.nextid=1; \
     CSM_DEBUG( _global_runtime.debugindent=0; ) \
   } \

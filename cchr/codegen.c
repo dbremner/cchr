@@ -349,7 +349,7 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
                 }
         }
         if (!rem) {
-            output_fmt(out,"CSM_NEEDSELF \\\n");
+            output_fmt(out,"CSM_NEEDSELF(%s) \\\n",buf2);
         }
         if (ru->hook>=0) {
             output_fmt(out,"CSM_HISTADD(%s%s\n",buf3,end);
@@ -481,6 +481,9 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 				csm_generate_code(in,i,j,out);
 			}
 		}
+		output_string(out,"\n");
+		output_fmt(out,"#undef HASHLIST_%s\n",conn);
+		output_fmt(out,"#define HASHLIST_%s(CB,...)\n",conn);
 		csm_destruct_vartable_constr(con,vt);
 		output_fmt(out,"\n");
 	}

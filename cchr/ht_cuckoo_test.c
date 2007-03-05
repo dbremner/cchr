@@ -19,14 +19,14 @@ uint32_t hashword(const uint32_t *k,size_t length,uint32_t initval);
 
 
 uint32_t hash1(het_t *val) {
-  return (uint32_t)hashword(&(val->key),1,0x2B7E15162UL);
+  return (uint32_t)hashword(&(val->key),1,0x2B7E1516UL);
 }
 
 uint32_t hash2(het_t *val) {
-  return (uint32_t)hashword(&(val->key),1,0x3243F6A88UL);
+  return (uint32_t)hashword(&(val->key),1,0x3243F6A9UL);
 }
 
-ht_cuckoo_code(hash_t,het_t,hash1,hash2,het_eq,het_defined,het_unset)
+ht_cuckoo_code(hash_t,het_t,hash1,hash2,het_eq,het_defined,het_unset,het_unset)
 
 #define SIZE (1<<12)
 

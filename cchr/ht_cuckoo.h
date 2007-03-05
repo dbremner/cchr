@@ -14,6 +14,9 @@
     ht->used=0; \
     ht->data=NULL; \
   } \
+  int static inline hash_t ## _count(hash_t *ht) { \
+    return (ht->used); \
+  } \
   entry_t static inline *hash_t ## _find(hash_t *ht, entry_t *entry) { \
     if (ht->size) { \
       uint32_t h1=gethash1((entry)),h2=gethash2((entry)); \
@@ -51,6 +54,7 @@
       (*r)=(*entry); \
       return; \
     } \
+    /*fprintf(stderr,"[adding element to %i-element hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
     ht->used++; \
     if (ht->used>(5*(1<< (ht->size)))/6) { \
       hash_t ## _double(ht); \
@@ -83,12 +87,14 @@
   void static inline hash_t ## _unset(hash_t *ht, entry_t *entry) { \
     entry_t *r=hash_t ## _find(ht,entry); \
     if (r) { \
+      /*fprintf(stderr,"[unsetting element in %i-element hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
       ht->used--; \
       unset(r); \
     } \
   } \
   void static inline hash_t ## _free(hash_t *ht) { \
     if (ht->data) { \
+      /*fprintf(stderr,"[removing %i-element hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
       ht->size=0; \
       for (int j=0; j<(2<<ht->size); j++) { \
         if (defined(ht->data+j)) { \

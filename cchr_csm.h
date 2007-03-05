@@ -288,11 +288,12 @@
   cchr_contbl_##C##_##H##_t _idx,*_idxp; \
   HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
+  int pidx=pid_self_; \
   if (_idxp) { \
-    cchr_htdc_t_set(&(_idxp->val),&pid_self_); \
+    cchr_htdc_t_set(&(_idxp->val),&pidx); \
   } else { \
     cchr_htdc_t_init(&(_idx.val)); \
-    cchr_htdc_t_set(&(_idx.val),&pid_self_); \
+    cchr_htdc_t_set(&(_idx.val),&pidx); \
     cchr_conht_##C##_##H##_t_set(&(_global_runtime.index_##C.H),&_idx); \
   } \
 }

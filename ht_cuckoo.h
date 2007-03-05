@@ -44,6 +44,7 @@
       } \
     } \
     ht->size++; \
+    if (ht->data==NULL) fprintf(stderr,"[alloc hashtable %p]\n",ht); \
     free(ht->data); \
     ht->data=nw; \
   } \
@@ -94,7 +95,7 @@
   } \
   void static inline hash_t ## _free(hash_t *ht) { \
     if (ht->data) { \
-      /*fprintf(stderr,"[removing %i-element hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
+      fprintf(stderr,"[removing %i-element hash %p (size %i)]\n",ht->used,ht,ht->size); \
       ht->size=0; \
       for (int j=0; j<(2<<ht->size); j++) { \
         if (defined(ht->data+j)) { \

@@ -117,8 +117,14 @@
 #define CSM_CB_IdxInit_S
 #define CSM_CB_IdxInit_D(V) HASHLIST_##V(CSM_CB_IdxInitList,V)
 
+#define CSM_CB_IdxFree_S
+#define CSM_CB_IdxFree_D(V) HASHLIST_##V(CSM_CB_IdxFreeList,V)
+
 #define CSM_CB_IdxInitList_S
-#define CSM_CB_IdxInitList_D(H,C) cchr_contbl_##C##_##H##_t_init(&(_global_runtime.hash_##C.V));
+#define CSM_CB_IdxInitList_D(H,C) cchr_conht_##C##_##H##_t_init(&(_global_runtime.index_##C.H));
+
+#define CSM_CB_IdxFreeList_S
+#define CSM_CB_IdxFreeList_D(H,C) cchr_conht_##C##_##H##_t_free(&(_global_runtime.index_##C.H));
 
 #define CSM_CB_HTDD_S
 #define CSM_CB_HTDD_D(V) struct { \
@@ -207,6 +213,7 @@
   } \
   void static cchr_runtime_free() { \
   	CONSLIST(CSM_CB_FAC) \
+	CONSLIST(CSM_CB_IdxFree) \
   	dcls_destruct(_global_runtime.store); \
   }
 
@@ -243,7 +250,7 @@
     ) \
     RULELIST_##NAME(CSM_CB_FFCCO) \
     CSM_STROUT("final store") \
-    CSM_NEEDSELF \
+    CSM_NEEDSELF(NAME) \
     CSM_END \
   } \
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA,)) { \
@@ -265,16 +272,44 @@
   	  CSM_KILL(C,NAME); \
   	) \
   } \
-  void cchr_index_##NAME(dcls_pid_t pid) { \
-    HASHLIST_##NAME(CSM_CB_IDX,NAME) \
+  void cchr_index_##NAME(dcls_pid_t pid_self_) { \
+    HASHLIST_##NAME(CSM_CB_IdxSet,NAME) \
   } \
-  void cchr_unindex_##NAME(dcls_pid_t pid) { \
+  void cchr_unindex_##NAME(dcls_pid_t pid_self_) { \
+    HASHLIST_##NAME(CSM_CB_IdxUnset,NAME) \
   }
   
 
-#define CSM_CB_IDX_S
-#define CSM_CB_IDX_D(H,C) { }
+#define CSM_CB_IdxArgs_S
+#define CSM_CB_IdxArgs_D(A,T,C) {_idx.key.A = CSM_LARG(C,self_,A);}
+
+#define CSM_CB_IdxSet_S
+#define CSM_CB_IdxSet_D(H,C) { \
+  cchr_contbl_##C##_##H##_t _idx,*_idxp; \
+  HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
+  _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
+  if (_idxp) { \
+    cchr_htdc_t_set(&(_idxp->val),&pid_self_); \
+  } else { \
+    cchr_htdc_t_init(&(_idx.val)); \
+    cchr_htdc_t_set(&(_idx.val),&pid_self_); \
+    cchr_conht_##C##_##H##_t_set(&(_global_runtime.index_##C.H),&_idx); \
+  } \
+}
   
+#define CSM_CB_IdxUnset_S
+#define CSM_CB_IdxUnset_D(H,C) { \
+  cchr_contbl_##C##_##H##_t _idx,*_idxp; \
+  HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
+  _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
+  if (_idxp) { \
+    cchr_htdc_t_unset(&(_idxp->val),&pid_self_); \
+    if (cchr_htdc_t_count(&(_idxp->val))==0) { \
+      cchr_conht_##C##_##H##_t_unset(&(_global_runtime.index_##C.H),&_idx); \
+    } \
+  } \
+}
+
 #define CSM_CB_FFCRA_S
 #define CSM_CB_FFCRA_D(NAME,TYPE,CON) ,CSM_LARG(CON,self_,NAME)
 
@@ -315,6 +350,7 @@
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
 		CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,self_);) \
+		cchr_unindex_##TYPE(pid_self_); \
 		dcls_free(_global_runtime.store,pid_self_); \
 		CSM_FMTOUT("kill pid=%i (self)",(int)pid_self_); \
 	} \
@@ -322,6 +358,7 @@
 
 #define CSM_KILL(VAR,TYPE) { \
 	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
+	cchr_unindex_##TYPE(pid_##VAR); \
 	dcls_free(_global_runtime.store,pid_##VAR); \
 	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
 }
@@ -381,9 +418,10 @@
 #define CSM_ADDE(CON) { \
 	cchr_fire_##CON(); \
 }
-#define CSM_NEEDSELF { \
+#define CSM_NEEDSELF(CON) { \
 	if (doadd) { \
 		cchr_store(pid_self_); \
+		cchr_index_##CON(pid_self_); \
 		doadd=0; \
 		CSM_FMTOUT("store pid=%i",(int)pid_self_); \
 	} \

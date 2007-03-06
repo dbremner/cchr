@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 2.2.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
 /* Skeleton interface for Bison's Yacc-like parsers in C
 
@@ -111,7 +111,7 @@ typedef union YYSTYPE
   cchr_t cchr;
   exprlist_t elist;
 }
-/* Line 1528 of yacc.c.  */
+/* Line 1489 of yacc.c.  */
 #line 116 "intermediate/cchr.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

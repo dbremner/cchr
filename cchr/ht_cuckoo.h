@@ -45,7 +45,7 @@
     } \
     ht->size++; \
     if (ht->data==NULL) { \
-      fprintf(stderr,"[alloc " #hash_t " hashtable %p]\n",ht); \
+      /*fprintf(stderr,"[alloc " #hash_t " hashtable %p]\n",ht);*/ \
     } else { \
       free(ht->data); \
     } \
@@ -58,7 +58,7 @@
       (*r)=(*entry); \
       return; \
     } \
-    fprintf(stderr,"[adding element to %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
+    /*fprintf(stderr,"[adding element to %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
     ht->used++; \
     if (ht->used>(5*(1<< (ht->size)))/6) { \
       hash_t ## _double(ht); \
@@ -91,16 +91,16 @@
   void static inline hash_t ## _unset(hash_t *ht, entry_t *entry) { \
     entry_t *r=hash_t ## _find(ht,entry); \
     if (r) { \
-      fprintf(stderr,"[unsetting element in %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
+      /*fprintf(stderr,"[unsetting element in %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
       ht->used--; \
       unset(r); \
     } else {\
-      fprintf(stderr,"[not unsetting element in %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
+      /*fprintf(stderr,"[not unsetting element in %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
     } \
   } \
   void static inline hash_t ## _free(hash_t *ht) { \
     if (ht->data) { \
-      fprintf(stderr,"[removing %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
+      /*fprintf(stderr,"[removing %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
       for (int j=0; j<(2<<ht->size); j++) { \
         if (defined(ht->data+j)) { \
           unset((ht->data+j)); \

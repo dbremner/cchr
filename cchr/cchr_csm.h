@@ -91,7 +91,7 @@
   } cchr_contbl_##C##_##H##_t; \
   uint32_t static inline cchr_contbl_##C##_##H##_hash1(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x23C6EF37UL); } \
   uint32_t static inline cchr_contbl_##C##_##H##_hash2(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x2A54FF53UL); } \
-  int static inline cchr_contbl_##C##_##H##_eq(cchr_contbl_##C##_##H##_t *v1,cchr_contbl_##C##_##H##_t *v2) { return eq(*(v1),*(v2)); } \
+  int static inline cchr_contbl_##C##_##H##_eq(cchr_contbl_##C##_##H##_t *v1,cchr_contbl_##C##_##H##_t *v2) { return eq((v1)->key,(v2)->key); } \
   ht_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
 
 #define CSM_CB_HistTypeDef_S
@@ -165,7 +165,7 @@
 #define CSM_HTDC_UNDEF(VAL) {*(VAL) = DCLS_EMPTY_PID;}
 #define CSM_HTDC_HASH1(VAL) hashbytes((VAL),sizeof(dcls_pid_t),0x16A09E66UL)
 #define CSM_HTDC_HASH2(VAL) hashbytes((VAL),sizeof(dcls_pid_t),0x1BB67AE8UL)
-#define CSM_HTDC_EQ(V1,V2) ((V1)==(V2))
+#define CSM_HTDC_EQ(V1,V2) (*(V1)==*(V2))
 
 /* main macro */
 #define CSM_START \
@@ -288,7 +288,8 @@
   cchr_contbl_##C##_##H##_t _idx,*_idxp; \
   HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
-  int pidx=pid_self_; \
+  CSM_FMTOUT("idxset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
+  dcls_pid_t pidx=pid_self_; \
   if (_idxp) { \
     cchr_htdc_t_set(&(_idxp->val),&pidx); \
   } else { \
@@ -303,9 +304,11 @@
   cchr_contbl_##C##_##H##_t _idx,*_idxp; \
   HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
+  CSM_FMTOUT("idxunset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
   if (_idxp) { \
     cchr_htdc_t_unset(&(_idxp->val),&pid_self_); \
     if (cchr_htdc_t_count(&(_idxp->val))==0) { \
+      CSM_STROUT("idxunset: completely removing element"); \
       cchr_conht_##C##_##H##_t_unset(&(_global_runtime.index_##C.H),&_idx); \
     } \
   } \
@@ -350,18 +353,20 @@
 /* after a killself should always be a CSM_END */
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
+		CSM_FMTOUT("kill pid=%i (self) - start",(int)pid_self_); \
 		CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,self_);) \
 		cchr_unindex_##TYPE(pid_self_); \
 		dcls_free(_global_runtime.store,pid_self_); \
-		CSM_FMTOUT("kill pid=%i (self)",(int)pid_self_); \
+		CSM_FMTOUT("kill pid=%i (self) - end",(int)pid_self_); \
 	} \
 }
 
 #define CSM_KILL(VAR,TYPE) { \
+	CSM_FMTOUT("kill pid=%i - start",(int)pid_##VAR); \
 	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
 	cchr_unindex_##TYPE(pid_##VAR); \
 	dcls_free(_global_runtime.store,pid_##VAR); \
-	CSM_FMTOUT("kill pid=%i",(int)pid_##VAR); \
+	CSM_FMTOUT("kill pid=%i - end",(int)pid_##VAR); \
 }
 
 #define CSM_DESTRUCT_PID(TYPE,PID) DESTRUCT_##TYPE CSM_CB_DPH_F(TYPE,PID)
@@ -421,10 +426,11 @@
 }
 #define CSM_NEEDSELF(CON) { \
 	if (doadd) { \
+		CSM_FMTOUT("store pid=%i - begin",(int)pid_self_); \
 		cchr_store(pid_self_); \
 		cchr_index_##CON(pid_self_); \
 		doadd=0; \
-		CSM_FMTOUT("store pid=%i",(int)pid_self_); \
+		CSM_FMTOUT("store pid=%i - end",(int)pid_self_); \
 	} \
 }
 #define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR = EXPR;

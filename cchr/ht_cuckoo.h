@@ -37,15 +37,18 @@
         uint32_t h=(i < (1 << ht->size)) ? gethash1((ht->data)+i) : gethash2((ht->data)+i); \
         h = (h >> (31-ht->size)) & 1; \
         nw[i<<1 | h]=ht->data[i]; \
-        unset(nw+(i<<1 | (h^1))); \
+        init(nw+(i<<1 | (h^1))); \
       } else { \
-        unset(nw+(i<<1)); \
-	unset(nw+(i<<1 | 1)); \
+        init(nw+(i<<1)); \
+	init(nw+(i<<1 | 1)); \
       } \
     } \
     ht->size++; \
-    if (ht->data==NULL) fprintf(stderr,"[alloc hashtable %p]\n",ht); \
-    free(ht->data); \
+    if (ht->data==NULL) { \
+      fprintf(stderr,"[alloc " #hash_t " hashtable %p]\n",ht); \
+    } else { \
+      free(ht->data); \
+    } \
     ht->data=nw; \
   } \
   void static inline hash_t ## _set(hash_t *ht, entry_t *entry) { \
@@ -55,7 +58,7 @@
       (*r)=(*entry); \
       return; \
     } \
-    /*fprintf(stderr,"[adding element to %i-element hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
+    fprintf(stderr,"[adding element to %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
     ht->used++; \
     if (ht->used>(5*(1<< (ht->size)))/6) { \
       hash_t ## _double(ht); \
@@ -88,20 +91,22 @@
   void static inline hash_t ## _unset(hash_t *ht, entry_t *entry) { \
     entry_t *r=hash_t ## _find(ht,entry); \
     if (r) { \
-      /*fprintf(stderr,"[unsetting element in %i-element hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
+      fprintf(stderr,"[unsetting element in %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
       ht->used--; \
       unset(r); \
+    } else {\
+      fprintf(stderr,"[not unsetting element in %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
     } \
   } \
   void static inline hash_t ## _free(hash_t *ht) { \
     if (ht->data) { \
-      fprintf(stderr,"[removing %i-element hash %p (size %i)]\n",ht->used,ht,ht->size); \
-      ht->size=0; \
+      fprintf(stderr,"[removing %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size); \
       for (int j=0; j<(2<<ht->size); j++) { \
         if (defined(ht->data+j)) { \
           unset((ht->data+j)); \
         } \
       } \
+      ht->size=0; \
       free(ht->data); \
       ht->data=NULL; \
     } \

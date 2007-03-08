@@ -393,6 +393,18 @@
 	}) \
 }
 
+#define CSM_DEFIDXVAR(CON,HASH,VAR) cchr_conht_##CON##_##HASH##_t _idxvar_##VAR;
+#define CSM_SETIDXVAR(CON,HASH,VAR,NAM,ARG) { _idxvar_##VAR.NAM = (ARG); }
+
+#define CSM_IDXLOOP(CON,HASH,VAR,CODE) { \
+	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
+	if (_idx_##VAR) { \
+	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlist_##VAR != NULL; _idxlist_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),NULL,_idxlist_##VAR) ) { \
+	    CODE \
+	  } \
+	} \
+}
+
 #define CSM_END { \
 	CSM_DEBUG( \
 		_global_runtime.debugindent--; \
@@ -422,7 +434,9 @@
 #define CSM_CB_PHI_S
 
 #define CSM_IDOFPID(PID) (dcls_get(_global_runtime.store,pid_##PID).id)
-#define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid_self_) && dcls_get(_global_runtime.store,pid_self_).id == oldid)
+#define CSM_ALIVEPID(PID) (dcls_used(_global_runtime.store,pid_##PID))
+
+#define CSM_ALIVESELF (CSM_ALIVEPID(self_) && CSM_IDOFPID(self_) == oldid)
 #define CSM_REGENSELF (dcls_get(_global_runtime.store,pid_self_).gen_num != oldgen)
 #define CSM_ADD(CON,...) { \
 	cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); \
@@ -443,6 +457,7 @@
 #define CSM_DECLOCAL(TYPE,VAR) TYPE local_##VAR;
 #define CSM_IMMLOCAL(TYPE,VAR,EXPR) const CSM_DEFLOCAL(TYPE,VAR,EXPR)
 #define CSM_LOCAL(VAR) (local_##VAR)
+
 
 #define CSM_MESSAGE(...) { \
 	fprintf(stderr,__VA_ARGS__); \

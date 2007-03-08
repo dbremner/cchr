@@ -405,6 +405,18 @@
 	} \
 }
 
+#define CSM_IDXSAFELOOP(CON,HASH,VAR,CODE) { \
+	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
+	if (_idx_##VAR) { \
+	  cchr_idxlist_t *_idxdata_##VAR = cchr_htdc_t_datacopy(&(_idx_##VAR->val)); \
+	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlist_##VAR != NULL; _idxlist_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxdata_##VAR,_idxlist_##VAR) ) { \
+	    CODE \
+	  } \
+	} \
+}
+
+#define CSM_IDXSAFEEND(CON,HASH,VAR,CODE) {cchr_htdc_t_freedata(&(_idx_##VAR->val),_idxdata_##VAR);}
+	
 #define CSM_END { \
 	CSM_DEBUG( \
 		_global_runtime.debugindent--; \

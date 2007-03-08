@@ -111,5 +111,25 @@
       ht->data=NULL; \
     } \
   } \
+  entry_t static inline * hash_t ## _first(hash_t *ht) { \
+    if (ht->data) { \
+      for (int j=0; j<(2<<(ht->size)); j++) { \
+        if (defined(&(ht->data[j]))) { \
+	  return (&(ht->data[j])); \
+	} \
+      } \
+    } \
+    return NULL; \
+  } \
+  entry_t static inline * hash_t ## _next(hash_t *ht, entry_t *entry) { \
+    if (ht->data && entry) { \
+      for (int j=entry-(ht->data)+1; j<(2<<(ht->size)); j++) { \
+        if (defined(&(ht->data[j]))) { \
+	  return (&(ht->data[j])); \
+	} \
+      } \
+    } \
+    return NULL; \
+  } \
 
 #endif

@@ -111,21 +111,34 @@
       ht->data=NULL; \
     } \
   } \
-  entry_t static inline * hash_t ## _first(hash_t *ht) { \
+  entry_t static inline * hash_t ## _datacopy(hash_t *ht) { \
     if (ht->data) { \
+      entry_t *ret=malloc(sizeof(entry_t)*(2<<(ht->size))); \
+      memcpy(ret,ht->data,sizeof(entry_t)*(2<<(ht->size))); \
+      return ret; \
+    } \
+    return NULL; \
+  } \
+  void static inline hash_t ## _datafree(hash_t *ht, entry_t *data) { \
+    free(data); \
+  } \
+  entry_t static inline * hash_t ## _first(hash_t *ht, entry_t *data) { \
+    if (data==NULL) data=ht->data; \
+    if (data) { \
       for (int j=0; j<(2<<(ht->size)); j++) { \
-        if (defined(&(ht->data[j]))) { \
-	  return (&(ht->data[j])); \
+        if (defined(&(data[j]))) { \
+	  return (&(data[j])); \
 	} \
       } \
     } \
     return NULL; \
   } \
-  entry_t static inline * hash_t ## _next(hash_t *ht, entry_t *entry) { \
-    if (ht->data && entry) { \
-      for (int j=entry-(ht->data)+1; j<(2<<(ht->size)); j++) { \
-        if (defined(&(ht->data[j]))) { \
-	  return (&(ht->data[j])); \
+  entry_t static inline * hash_t ## _next(hash_t *ht, entry_t *data, entry_t *entry) { \
+    if (data==NULL) data=ht->data; \
+    if (data && entry) { \
+      for (int j=entry-data+1; j<(2<<(ht->size)); j++) { \
+        if (defined(&(data[j]))) { \
+	  return (&(data[j])); \
 	} \
       } \
     } \

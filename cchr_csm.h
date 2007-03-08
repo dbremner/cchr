@@ -161,15 +161,19 @@
 #define CSM_CB_DUD_S
 #define CSM_CB_DUD_D(NAME) cchr_cons_ ## NAME ## _t NAME;
 
-#define CSM_HTDC_DEFINED(VAL) (*(VAL) != DCLS_EMPTY_PID)
-#define CSM_HTDC_UNDEF(VAL) {*(VAL) = DCLS_EMPTY_PID;}
-#define CSM_HTDC_HASH1(VAL) hashbytes((VAL),sizeof(dcls_pid_t),0x16A09E66UL)
-#define CSM_HTDC_HASH2(VAL) hashbytes((VAL),sizeof(dcls_pid_t),0x1BB67AE8UL)
-#define CSM_HTDC_EQ(V1,V2) (*(V1)==*(V2))
+#define CSM_HTDC_DEFINED(VAL) ((VAL)->id != 0)
+#define CSM_HTDC_UNDEF(VAL) {(VAL)->id = 0;}
+#define CSM_HTDC_HASH1(VAL) hashbytes(&((VAL)->id),sizeof(int),0x16A09E66UL)
+#define CSM_HTDC_HASH2(VAL) hashbytes(&((VAL)->id),sizeof(int),0x1BB67AE8UL)
+#define CSM_HTDC_EQ(V1,V2) ((V1)->id==(V2)->id)
 
 /* main macro */
 #define CSM_START \
-  ht_cuckoo_code(cchr_htdc_t,dcls_pid_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF) \
+  typedef struct { \
+    int id; \
+    dcls_pid_t pid; \
+  } cchr_idxlist_t; \
+  ht_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF) \
   enum cchr_cons_type { CONSLIST(CSM_CB_TypeEnum) , CCHR_CONS_COUNT }; \
   CONSLIST(CSM_CB_DTD) \
   CONSLIST(CSM_CB_IdxDef) \
@@ -289,7 +293,7 @@
   HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
   CSM_FMTOUT("idxset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
-  dcls_pid_t pidx=pid_self_; \
+  cchr_idxlist_t pidx={pid:pid_self_,id:CSM_IDOFPID(self_)}; \
   if (_idxp) { \
     cchr_htdc_t_set(&(_idxp->val),&pidx); \
   } else { \
@@ -306,7 +310,8 @@
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
   CSM_FMTOUT("idxunset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
   if (_idxp) { \
-    cchr_htdc_t_unset(&(_idxp->val),&pid_self_); \
+    cchr_idxlist_t pidx={pid:pid_self_,id:CSM_IDOFPID(self_)}; \
+    cchr_htdc_t_unset(&(_idxp->val),&pidx); \
     if (cchr_htdc_t_count(&(_idxp->val))==0) { \
       CSM_STROUT("idxunset: completely removing element"); \
       cchr_conht_##C##_##H##_t_unset(&(_global_runtime.index_##C.H),&_idx); \
@@ -416,6 +421,7 @@
 )
 #define CSM_CB_PHI_S
 
+#define CSM_IDOFPID(PID) (dcls_get(_global_runtime.store,pid_##PID).id)
 #define CSM_ALIVESELF (dcls_used(_global_runtime.store,pid_self_) && dcls_get(_global_runtime.store,pid_self_).id == oldid)
 #define CSM_REGENSELF (dcls_get(_global_runtime.store,pid_self_).gen_num != oldgen)
 #define CSM_ADD(CON,...) { \
@@ -477,7 +483,7 @@
 
 /***** additional helper macro's *****/
 
-#define cchr_consloop(var,type,code) dcls_iter(_global_runtime.store,var,CCHR_CONS_TYPE_##type,{cchr_cons_##type##_t * _##var##_data=&(dcls_ptr(_global_runtime.store,j)->data.type); {code}})
+#define cchr_consloop(var,type,code) dcls_iter(_global_runtime.store,var,CCHR_CONS_TYPE_##type,{cchr_cons_##type##_t * _##var##_data= (&(dcls_ptr(_global_runtime.store,j)->data.type)); {code}})
 #define cchr_consarg(var,type,num) (_##var##_data->arg##num)
 
 #define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))

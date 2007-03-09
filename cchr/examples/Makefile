@@ -1,6 +1,6 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 
-#MODE := efence
+MODE := debug
 
 ifeq ($(MODE),debug)
   CFLAGS := -O0 -ggdb3 lookup3.c
@@ -67,6 +67,10 @@ fib_gmp.c: fib_gmp.cchr bin/cchr Makefile
 
 fib: fib.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib fib.c
+
+fib_h: fib_h.c cchr_csm.h Makefile
+	cpp -P fib_h.c | indent -kr -l 384 >fib_h.prep.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_h fib_h.prep.c
 
 fib_gmp: fib_gmp.c cchr_csm.h Makefile
 	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp fib_gmp.c

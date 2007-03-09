@@ -81,20 +81,22 @@
 #define CODELIST_fib_2_calc_K3  \
   CSM_MAKE(fib_2) \
   CSM_LOOP(init_1,K1, \
-    CSM_LOOP(fib_2,K2, \
+    CSM_DEFIDXVAR(fib_2,hash1,K2) \
+    CSM_SETIDXVAR(fib_2,hash1,K2,arg1,CSM_ARG(fib_2,arg1)-1) \
+    CSM_IDXSAFELOOP(fib_2,hash1,K2, \
       CSM_IF(CSM_DIFFSELF(K2), \
         CSM_HISTCHECK(calc, \
           CSM_IMMLOCAL(int,Max,CSM_LARG(init_1,K1,arg1)) \
           CSM_IMMLOCAL(int,N,CSM_LARG(fib_2,K2,arg1)) \
           CSM_IMMLOCAL(int,_0,CSM_ARG(fib_2,arg1)) \
-          CSM_IF((CSM_LOCAL(_0) == ( CSM_LOCAL(N) + 1 )) && (CSM_LOCAL(N) + 1 < CSM_LOCAL(Max)), \
+          CSM_IF((CSM_LOCAL(_0)-1 == ( CSM_LOCAL(N) )) && (CSM_LOCAL(N) + 1 < CSM_LOCAL(Max)), \
             CSM_IMMLOCAL(uint64_t,M1,CSM_LARG(fib_2,K2,arg2)) \
             CSM_IMMLOCAL(uint64_t,M2,CSM_ARG(fib_2,arg2)) \
             CSM_NEEDSELF(fib_2) \
             CSM_HISTADD(calc,K1,K2,self_) \
             CSM_DEFLOCAL(uint64_t,M3,CSM_LOCAL(M1) + CSM_LOCAL(M2)) \
             CSM_ADD(fib_2,CSM_LOCAL(N) + 2,CSM_LOCAL(M3)) \
-            CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, CSM_STROUT("abort") CSM_END) \
+            CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, CSM_STROUT("abort") CSM_IDXSAFEEND(fib_2,hash1,K2) CSM_END) \
           ) \
         ,K1,K2,self_) \
       ) \
@@ -177,7 +179,11 @@ int main(int argc, char **argv) {
   cchr_runtime_init();
   int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
   cchr_add_init_1(a);
-  cchr_consloop(j,fib_2,{printf("fib(%i,%lu)\n",cchr_consarg(j,fib_2,1),(unsigned long)cchr_consarg(j,fib_2,2));});
+  cchr_consloop(j,fib_2,{
+    printf("fib(%i,%lu)\n",cchr_consarg(j,fib_2,1),(unsigned long)cchr_consarg(j,fib_2,2));
+    break;
+  });
+  cchr_runtime_free();
   return 0;
 }
 

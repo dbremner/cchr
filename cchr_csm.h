@@ -393,14 +393,17 @@
 	}) \
 }
 
-#define CSM_DEFIDXVAR(CON,HASH,VAR) cchr_conht_##CON##_##HASH##_t _idxvar_##VAR;
-#define CSM_SETIDXVAR(CON,HASH,VAR,NAM,ARG) { _idxvar_##VAR.NAM = (ARG); }
+#define CSM_DEFIDXVAR(CON,HASH,VAR) cchr_contbl_##CON##_##HASH##_t _idxvar_##VAR;
+#define CSM_SETIDXVAR(CON,HASH,VAR,NAM,ARG) { _idxvar_##VAR.key.NAM = (ARG); }
 
 #define CSM_IDXLOOP(CON,HASH,VAR,CODE) { \
 	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
 	if (_idx_##VAR) { \
-	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlist_##VAR != NULL; _idxlist_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),NULL,_idxlist_##VAR) ) { \
-	    CODE \
+	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),NULL,_idxlst_##VAR) ) { \
+            dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+            { \
+	      CODE \
+            } \
 	  } \
 	} \
 }
@@ -409,13 +412,17 @@
 	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
 	if (_idx_##VAR) { \
 	  cchr_idxlist_t *_idxdata_##VAR = cchr_htdc_t_datacopy(&(_idx_##VAR->val)); \
-	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlist_##VAR != NULL; _idxlist_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxdata_##VAR,_idxlist_##VAR) ) { \
-	    CODE \
+	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxdata_##VAR,_idxlst_##VAR) ) { \
+            dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+            { \
+	      CODE \
+            } \
 	  } \
+          CSM_IDXSAFEEND(CON,HASH,VAR) \
 	} \
 }
 
-#define CSM_IDXSAFEEND(CON,HASH,VAR,CODE) {cchr_htdc_t_freedata(&(_idx_##VAR->val),_idxdata_##VAR);}
+#define CSM_IDXSAFEEND(CON,HASH,VAR) {cchr_htdc_t_datafree(&(_idx_##VAR->val),_idxdata_##VAR); _idxdata_##VAR=NULL;}
 	
 #define CSM_END { \
 	CSM_DEBUG( \

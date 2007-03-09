@@ -107,38 +107,45 @@
         } \
       } \
       ht->size=0; \
+      ht->used=0; \
       free(ht->data); \
       ht->data=NULL; \
     } \
   } \
-  entry_t static inline * hash_t ## _datacopy(hash_t *ht) { \
+  void static inline hash_t ## _freecopy(hash_t *ht) { \
     if (ht->data) { \
-      entry_t *ret=malloc(sizeof(entry_t)*(2<<(ht->size))); \
-      memcpy(ret,ht->data,sizeof(entry_t)*(2<<(ht->size))); \
-      return ret; \
+      /*fprintf(stderr,"[removing %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
+      ht->size=0; \
+      ht->used=0; \
+      free(ht->data); \
+      ht->data=NULL; \
     } \
-    return NULL; \
   } \
-  void static inline hash_t ## _datafree(hash_t *ht, entry_t *data) { \
-    free(data); \
+  void static inline hash_t ## _copy(hash_t *from, hash_t *to) { \
+    to->size=from->size; \
+    to->used=from->used; \
+    if (from->data) { \
+      to->data=malloc(sizeof(entry_t)*(2<<(from->size))); \
+      memcpy(to->data,from->data,sizeof(entry_t)*(2<<(from->size))); \
+    } else { \
+      to->data=NULL; \
+    } \
   } \
-  entry_t static inline * hash_t ## _first(hash_t *ht, entry_t *data) { \
-    if (data==NULL) data=ht->data; \
-    if (data) { \
+  entry_t static inline * hash_t ## _first(hash_t *ht) { \
+    if (ht->data) { \
       for (int j=0; j<(2<<(ht->size)); j++) { \
-        if (defined(&(data[j]))) { \
-	  return (&(data[j])); \
+        if (defined(&(ht->data[j]))) { \
+	  return (&(ht->data[j])); \
 	} \
       } \
     } \
     return NULL; \
   } \
-  entry_t static inline * hash_t ## _next(hash_t *ht, entry_t *data, entry_t *entry) { \
-    if (data==NULL) data=ht->data; \
-    if (data && entry) { \
-      for (int j=entry-data+1; j<(2<<(ht->size)); j++) { \
-        if (defined(&(data[j]))) { \
-	  return (&(data[j])); \
+  entry_t static inline * hash_t ## _next(hash_t *ht, entry_t *entry) { \
+    if (ht->data) { \
+      for (int j=entry-ht->data+1; j<(2<<(ht->size)); j++) { \
+        if (defined(&(ht->data[j]))) { \
+	  return (&(ht->data[j])); \
 	} \
       } \
     } \

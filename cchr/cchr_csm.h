@@ -293,7 +293,7 @@
   HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
   CSM_FMTOUT("idxset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
-  cchr_idxlist_t pidx={pid:pid_self_,id:CSM_IDOFPID(self_)}; \
+  cchr_idxlist_t pidx={.pid=pid_self_,.id=CSM_IDOFPID(self_)}; \
   if (_idxp) { \
     cchr_htdc_t_set(&(_idxp->val),&pidx); \
   } else { \
@@ -310,7 +310,7 @@
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
   CSM_FMTOUT("idxunset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
   if (_idxp) { \
-    cchr_idxlist_t pidx={pid:pid_self_,id:CSM_IDOFPID(self_)}; \
+    cchr_idxlist_t pidx={.pid=pid_self_,.id=CSM_IDOFPID(self_)}; \
     cchr_htdc_t_unset(&(_idxp->val),&pidx); \
     if (cchr_htdc_t_count(&(_idxp->val))==0) { \
       CSM_STROUT("idxunset: completely removing element"); \
@@ -399,7 +399,8 @@
 #define CSM_IDXLOOP(CON,HASH,VAR,CODE) { \
 	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
 	if (_idx_##VAR) { \
-	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),NULL,_idxlst_##VAR) ) { \
+	  CSM_FMTOUT("in idxloop (%s.%s var=%s)",#CON,#HASH,#VAR); \
+	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val)); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxlst_##VAR) ) { \
             dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
             { \
 	      CODE \
@@ -411,8 +412,10 @@
 #define CSM_IDXSAFELOOP(CON,HASH,VAR,CODE) { \
 	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
 	if (_idx_##VAR) { \
-	  cchr_idxlist_t *_idxdata_##VAR = cchr_htdc_t_datacopy(&(_idx_##VAR->val)); \
-	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val),NULL); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxdata_##VAR,_idxlst_##VAR) ) { \
+	  CSM_FMTOUT("in idxsafeloop (%s.%s var=%s)",#CON,#HASH,#VAR); \
+	  cchr_htdc_t _idxcopy_##VAR; \
+	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
+	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
             dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
             { \
 	      CODE \
@@ -422,7 +425,7 @@
 	} \
 }
 
-#define CSM_IDXSAFEEND(CON,HASH,VAR) {cchr_htdc_t_datafree(&(_idx_##VAR->val),_idxdata_##VAR); _idxdata_##VAR=NULL;}
+#define CSM_IDXSAFEEND(CON,HASH,VAR) {cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
 	
 #define CSM_END { \
 	CSM_DEBUG( \

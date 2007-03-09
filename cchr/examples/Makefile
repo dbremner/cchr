@@ -69,7 +69,7 @@ fib: fib.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib fib.c
 
 fib_h: fib_h.c cchr_csm.h Makefile
-	cpp -P fib_h.c | indent -kr -l 384 >fib_h.prep.c
+	cpp -DCSM_CONF_DEBUG -P fib_h.c | indent -kr -l 384 >fib_h.prep.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_h fib_h.prep.c
 
 fib_gmp: fib_gmp.c cchr_csm.h Makefile

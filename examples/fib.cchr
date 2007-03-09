@@ -9,9 +9,9 @@ cchr {
   constraint fib(int,uint64_t) fmt("fib(%i,%llu)"),init(int) fmt("init(%i)");
   
   begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
-  calc @  init(Max), fib(N-1,M1), fib(N,M2) ==> N<Max | uint64_t M3=M1+M2, fib(N+1, M3);
-//  fini @ init(_) <=> true; /* this removes init_1 before any fib_2 is generated */
-  fini @ fib(Max,_) \ init(Max) <=> true;
+  calc @  init(Max), fib(N,M1), fib(N+1,M2) ==> N+1<Max | uint64_t M3=M1+M2, fib(N+2, M3);
+  fini @ init(_) <=> true;
+  /* fini @ fib(Max,_) \ init(Max) <=> true; */
 }
 
 int main(int argc, char **argv) {

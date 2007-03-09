@@ -19,7 +19,7 @@
 #undef HASHLIST_gcd_1
 #define HASHLIST_gcd_1(CB,...) CB##_D(hash1,__VA_ARGS__)
 
-#undef HASHDEF_gcd_1
+#undef HASHDEF_gcd_1_hash1
 #define HASHDEF_gcd_1_hash1(CB,...) CB##_D(arg1,uint64_t,__VA_ARGS__)
 
 #undef DESTRUCT_gcd_1

@@ -523,7 +523,11 @@
 #define cchr_consloop(var,type,code) dcls_iter(_global_runtime.store,var,CCHR_CONS_TYPE_##type,{cchr_cons_##type##_t * _##var##_data= (&(dcls_ptr(_global_runtime.store,j)->data.type)); {code}})
 #define cchr_consarg(var,type,num) (_##var##_data->arg##num)
 
-#define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
+
+#define eq(expr,...) (expr)
+#define eqbin(v1,v2) eq(((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1)))),v1,v2)
+#define eqbinx(v1,v2,...) eq(((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(__VA_ARGS__),sizeof((v1)))),v1,v2,__VA_ARGS__)
+#define eqval(v1,v2) eq(((v1)==(v2)),v1,v2)
 
 /***** actual CSM code ****/
 

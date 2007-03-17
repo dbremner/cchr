@@ -53,7 +53,7 @@ typedef struct {
   union {
     int var; /* when type==SEM_EXPRPART_TYPE_VAR */
     char *lit; /* when type==SEM_EXPRPART_TYPE_LIT */
-    sem_fun_t fun;
+    sem_fun_t fun; /* when type==SEM_EXPRPART_TYPE_FUN */
   } data;
 } sem_exprpart_t;
 

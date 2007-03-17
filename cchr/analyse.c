@@ -738,9 +738,9 @@ void static sem_expr_expand(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *in,se
 		sem_exprpart_t *se=alist_ptr(in->parts,i);
 		switch (se->type) {
 			case SEM_EXPRPART_TYPE_FUN: {
-	    		assert(fun==NULL); /* allowing functions inside macro definitions is hard, so make sure they are expanded themselves */
+	    		//assert(fun==NULL); /* allowing functions inside macro definitions is hard, so make sure they are expanded themselves */
 	    		int tr=0;
-	    		for (int k=0; k<alist_len(chr->macros); k++) {
+	    		if (chr) { for (int k=0; k<alist_len(chr->macros); k++) {
 	    			sem_macro_t *mac=alist_ptr(chr->macros,k);
 	    			if (alist_len(se->data.fun.args) != alist_len(mac->types)) continue;
 	    			if (strcmp(mac->name,se->data.fun.name)) continue;
@@ -754,25 +754,36 @@ void static sem_expr_expand(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *in,se
 	    				l++;
 	    			}
 	    			if (l==alist_len(mac->types)) { /* found match! do replacement! */
-	    				sem_expr_expand(chr,vt,&(mac->def),out,&(se->data.fun));
+					if (fun) {
+						sem_fun_t prep;
+						alist_init(prep.args);
+						prep.name=se->data.fun.name;
+						for (int i=0; i<alist_len(se->data.fun.args); i++) {
+							sem_expr_t bla;
+							sem_expr_init(&bla);
+							sem_expr_expand(NULL,vt,alist_ptr(se->data.fun.args,i),&bla,fun);
+							alist_add(prep.args,bla);
+						}
+						sem_expr_expand(chr,vt,&(mac->def),out,&prep);
+						for (int i=0; i<alist_len(prep.args); i++) {
+							sem_expr_destruct(alist_ptr(prep.args,i));
+						}
+					} else {
+						sem_expr_expand(chr,vt,&(mac->def),out,&(se->data.fun));
+					}
 	    				tr=1;
 	    				break;
 	    			}
-	    		}
+	    		} }
 	    		if (!tr) { /* no matches found */
 	    			sem_exprpart_t ne;
-	    			sem_exprpart_init_lit(&ne,copy_string(se->data.fun.name));
-	    			alist_add(out->parts,ne);
-	    			sem_exprpart_init_lit(&ne,copy_string("("));
-	    			alist_add(out->parts,ne);
+	    			sem_exprpart_init_fun(&ne,copy_string(se->data.fun.name));
 	    			for (int k=0; k<alist_len(se->data.fun.args); k++) {
-	    				if (k) {
-	    					sem_exprpart_init_lit(&ne,copy_string(","));
-	    					alist_add(out->parts,ne);
-	    				}
-	    				sem_expr_expand(chr,vt,alist_ptr(se->data.fun.args,k),out,NULL);
+					sem_expr_t kwak;
+					sem_expr_init(&kwak);
+	    				sem_expr_expand(chr,vt,alist_ptr(se->data.fun.args,k),&kwak,fun);
+					alist_add(ne.data.fun.args,kwak);
 	    			}
-	    			sem_exprpart_init_lit(&ne,copy_string(")"));
 	    			alist_add(out->parts,ne);
 	    		}
 	    		break;
@@ -888,7 +899,7 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   		if (!ok && !strcmp(t->data,"fmt")) {
   			sem_expr_init(&(n->fmt));
   			sem_expr_generate(&(n->fmt),NULL,out,alist_ptr(t->args,0),n->name,0,1);
-  			sem_expr_expand(out,NULL,&(n->fmt),NULL,NULL);
+  			//sem_expr_expand(out,NULL,&(n->fmt),NULL,NULL);
   			/*for (int j=1; j<alist_len(t->args); j++) {
   				sem_expr_t ar;
   				sem_expr_init(&ar);

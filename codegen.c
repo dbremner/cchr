@@ -142,11 +142,14 @@ void static csm_generate_expr(sem_expr_t *expr,sem_cchr_varuse_t *tbl,output_t *
 		if (dos) output_fmt(out," ");
 		dos=1;
 		sem_exprpart_t *ep=alist_ptr(expr->parts,t);
+		char *str=ep->data.lit;
 		switch (ep->type) {
-			case SEM_EXPRPART_TYPE_FUN:
-			case SEM_EXPRPART_TYPE_LIT: {
+			case SEM_EXPRPART_TYPE_LIT:
+			case SEM_EXPRPART_TYPE_FUN: 
+			str=ep->data.fun.name;
+			{
 				if (!strcmp(ep->data.lit,"}")) {output_unindent(out);dos=0;}
-				output_fmt(out,"%s",ep->data.lit);
+				output_fmt(out,"%s",str);
 				if (!strcmp(ep->data.lit,"}")) {output_string(out," \\\n");}
 				if (!strcmp(ep->data.lit,";")) {output_string(out," \\\n");dos=0;}
 				if (!strcmp(ep->data.lit,"{")) {output_indent(out," \\","");dos=0;}
@@ -159,7 +162,12 @@ void static csm_generate_expr(sem_expr_t *expr,sem_cchr_varuse_t *tbl,output_t *
 			}
 		}
 		if (ep->type==SEM_EXPRPART_TYPE_FUN) {
-			output_string(out,"([something])");
+			output_string(out,"(");
+			for (int i=0; i<alist_len(ep->data.fun.args); i++) {
+				if (i) output_string(out,",");
+				csm_generate_expr(alist_ptr(ep->data.fun.args,i),tbl,out);
+			}
+			output_string(out,")");
 		}
 	}
 }

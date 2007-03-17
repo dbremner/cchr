@@ -1,11 +1,11 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 INTDIR := intermediate
 
-#MODE := efence
+MODE := normal
 
 ifeq ($(MODE),debug)
-  CFLAGS := -O3 -ggdb3 -fomit-frame-pointer
-  LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+  CFLAGS := -O0 -ggdb3 -fomit-frame-pointer
+  LDFLAGS := -Wl,-O0 -Wl,--enable-new-dtags -Wl,--sort-common
   OUTDIR := debug
 else
   ifeq ($(MODE),efence)

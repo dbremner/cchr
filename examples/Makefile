@@ -1,7 +1,7 @@
 CC := gcc -Wall -pipe -std=c99 -pedantic
 
-MODE := normal
-#MODE := debug
+#MODE := normal
+MODE := debug
 #MODE := efence
 
 ifeq ($(MODE),debug)

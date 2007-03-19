@@ -1,6 +1,6 @@
 /****************************************************************************\
 | CCHR - A CHR-in-C to C compiler                                            |
-| abs2sem.c - syntax tree to semantic tree conversion                        |
+| analyse.c - syntax tree to semantic tree conversion                        |
 | written by Pieter Wuille                                                   |
 \****************************************************************************/ 
 
@@ -156,16 +156,19 @@ void static sem_conoccout_destruct(sem_conoccout_t *con) {
 void static sem_out_init_con(sem_out_t *out, sem_conoccout_t *con) {
 	out->type=SEM_OUT_TYPE_CON;
 	out->data.con=*con;
+	alist_init(out->cdeps.co);
 }
 
 void static sem_out_init_expr(sem_out_t *out, sem_expr_t *exp,int stmt) {
 	out->type=(stmt ? SEM_OUT_TYPE_STM : SEM_OUT_TYPE_EXP);
 	out->data.exp=*exp;
+	alist_init(out->cdeps.co);
 }
 
 void static sem_out_init_var(sem_out_t *out, int var) {
 	out->type=SEM_OUT_TYPE_VAR;
 	out->data.var=var;
+	alist_init(out->cdeps.co);
 }
 
 void static sem_out_destruct(sem_out_t *out) {
@@ -180,6 +183,7 @@ void static sem_out_destruct(sem_out_t *out) {
 		case SEM_OUT_TYPE_VAR:
 			break;
 	}
+	alist_free(out->cdeps.co);
 }
 
 /* initialize a sem_var_t */
@@ -194,6 +198,7 @@ void static sem_var_init(sem_var_t *var, char *name, char *type, int anon) {
   var->occ[SEM_RULE_LEVEL_REM]=0;
   var->occ[SEM_RULE_LEVEL_GUARD]=0;
   var->occ[SEM_RULE_LEVEL_BODY]=0;
+  alist_init(var->cdeps.co);
   sem_expr_init(&(var->def));
 }
 
@@ -208,6 +213,7 @@ void static sem_var_init_local(sem_var_t *var, char *name, char *type, int body)
 void static sem_var_destruct(sem_var_t *var) {
   free(var->name);
   free(var->type);
+  alist_free(var->cdeps.co);
   if (var->local) sem_expr_destruct(&(var->def));
 }
 
@@ -673,6 +679,69 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 	return 1;
 }
 
+int sem_expr_fill_deps(sem_cchr_t *out,sem_rule_t *rule,sem_cdeps_t *cdeps,sem_expr_t *expr) {
+  int ret=0;
+  for (int k=0; k<alist_len(expr->parts); k++) {
+    sem_exprpart_t *sep=alist_ptr(expr->parts,k);
+    switch (sep->type) {
+      case SEM_EXPRPART_TYPE_LIT:
+        break;
+      case SEM_EXPRPART_TYPE_VAR: {
+        sem_var_t *vt=alist_ptr(rule->vt.vars,sep->data.var);
+        for (int l=0; l<alist_len(vt->cdeps.co); l++) {
+	  int vv=alist_get(vt->cdeps.co,l);
+	  int fnd=0;
+	  for (int s=0; s<alist_len(cdeps->co); s++) {
+	    if (alist_get(cdeps->co,s)==vv) {fnd=1;break;}
+	  }
+	  if (!fnd) {alist_add(cdeps->co,vv);ret=1;}
+	}
+	break;
+      }
+      case SEM_EXPRPART_TYPE_FUN: {
+        for (int p=0; p<alist_len(sep->data.fun.args); p++) {
+	  ret+=sem_expr_fill_deps(out,rule,cdeps,alist_ptr(sep->data.fun.args,p));
+	}
+	break;
+      }
+    }
+  }
+  return ret;
+}
+
+void sem_rule_fill_deps(sem_cchr_t *out,sem_rule_t *rule) {
+  for (int p=SEM_RULE_LEVEL_KEPT; p<=SEM_RULE_LEVEL_REM; p++) {
+    for (int k=0; k<alist_len(rule->head[p]); k++) {
+      sem_conocc_t *cot=alist_ptr(rule->head[p],k);
+      for (int j=0; j<alist_len(cot->args); j++) {
+        int vv=alist_get(cot->args,j);
+	sem_var_t *var=alist_ptr(rule->vt.vars,vv);
+	int fnd=0;
+	for (int s=0; s<alist_len(var->cdeps.co); s++) {
+	  if (alist_get(var->cdeps.co,s)==k+(p<<31)) {fnd=1; break;}
+	}
+	if (!fnd) alist_add(var->cdeps.co,k+(p<<31));
+      }
+    }
+  }
+  do {
+    int cont=0;
+    for (int j=0; j<alist_len(rule->vt.vars); j++) {
+      sem_var_t *var=alist_ptr(rule->vt.vars,j);
+      if (var->local) {
+        cont+=sem_expr_fill_deps(out,rule,&(var->cdeps),&(var->def));
+      }
+    }
+    if (!cont) break;
+  } while(1);
+  for (int f=0; f<alist_len(rule->out[0]); f++) {
+    sem_out_t *ott=alist_ptr(rule->out[0],f);
+    if (ott->type==SEM_OUT_TYPE_STM || ott->type==SEM_OUT_TYPE_EXP) {
+      sem_expr_fill_deps(out,rule,&(ott->cdeps),&(ott->data.exp));
+    }
+  }
+}
+
 void static sem_rule_hook(sem_cchr_t *out,int rulenum) {
 	sem_rule_t *rule=alist_ptr(out->rules,rulenum);
 	if (rule->hook<0 && alist_len(rule->head[SEM_RULE_LEVEL_REM])==0) {
@@ -875,6 +944,7 @@ int static sem_rule_generate(sem_cchr_t *out,rule_t *in) {
 	if (doret && sem_rule_hnf(&n)) {
 		sem_rule_related(out,&n);
 		alist_add(out->rules,n);
+		sem_rule_fill_deps(out,&n);
 		sem_rule_hook(out,alist_len(out->rules)-1);
 		return 1;
 	} else {

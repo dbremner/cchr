@@ -8,6 +8,7 @@
 #define _semtree_h_ 1
 
 #include "alist.h"
+#include <stdint.h>
 
 /* 4 types of rule expressions */
 typedef enum enum_sem_rule_level {
@@ -81,6 +82,10 @@ typedef struct {
   alist_declare(int,args); /* in KEPT & REM: just one var ID */
 } sem_conocc_t;
 
+typedef struct {
+  alist_declare(uint32_t,co);
+} sem_cdeps_t;
+
 /* a constraint occurrence in a body */
 typedef struct {
   int constr;
@@ -97,6 +102,7 @@ typedef struct {
   int poss; /* (if local==0: argument number of that constraint that defines the variable) */
   int anon;
   sem_expr_t def; /* only when local==1, this variable's definition */ 
+  sem_cdeps_t cdeps;
 } sem_var_t;
 
 /* variable table */
@@ -111,6 +117,11 @@ typedef enum _sem_out_type_t_enum {
 	SEM_OUT_TYPE_EXP  /* an expression (only guard) */
 } sem_out_type_t;
 
+#define SEM_OUT_TYPE_CON 0
+#define SEM_OUT_TYPE_VAR 1
+#define SEM_OUT_TYPE_STM 2
+#define SEM_OUT_TYPE_EXP 3
+
 typedef struct {
 	sem_out_type_t type;
 	union {
@@ -118,11 +129,8 @@ typedef struct {
 		int var;
 		sem_expr_t exp;
 	} data;
+	sem_cdeps_t cdeps;
 } sem_out_t;
-
-#define SEM_OUT_TYPE_CON 0
-#define SEM_OUT_TYPE_VAR 1
-#define SEM_OUT_TYPE_STM 2
 
 /* a rule, having a (optional) name, a list of variables, a list of constraint occurences (in head & body), and a guard */
 typedef struct {

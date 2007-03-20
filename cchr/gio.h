@@ -13,9 +13,7 @@ typedef enum {
 
 #define GIO_TYPE_ITER 0
 #define GIO_TYPE_IDXITER 1
-#define GIO_TYPE_LSTMT 2
-#define GIO_TYPE LVAR 3
-#define GIO_TYPE_IF 4
+#define GIO_TYPE_OUT 2
 
 typedef struct {
   gio_type_t type;
@@ -28,9 +26,7 @@ typedef struct {
       alist_declare(int,argp);
       alist_declare(sem_expr_t,args);
     } idxiter;
-    int lstmt;
-    int lvar;
-    int var;
+    int out;
   } data;
 } gio_entry_t;
 

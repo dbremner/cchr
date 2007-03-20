@@ -738,6 +738,11 @@ void sem_rule_fill_deps(sem_cchr_t *out,sem_rule_t *rule) {
     sem_out_t *ott=alist_ptr(rule->out[0],f);
     if (ott->type==SEM_OUT_TYPE_STM || ott->type==SEM_OUT_TYPE_EXP) {
       sem_expr_fill_deps(out,rule,&(ott->cdeps),&(ott->data.exp));
+      /* TODO: set cdeps of all referred variables to ott->cdeps */
+    }
+    if (ott->type==SEM_OUT_TYPE_VAR) {
+      sem_var_t *rv=alist_ptr(rule->vt.vars,ott->data.var);
+      alist_addall(ott->cdeps.co,rv->cdeps.co);
     }
   }
 }

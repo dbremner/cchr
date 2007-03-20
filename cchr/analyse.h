@@ -5,8 +5,10 @@
 \****************************************************************************/ 
 
 
-#ifndef ABS2SEM_H_
-#define ABS2SEM_H_
+#ifndef ANALYSE_H_
+#define ANALYSE_H_
+
+#include "semtree.h"
 
 int sem_generate_cchr(sem_cchr_t* out,cchr_t* in);
 void sem_cchr_destruct(sem_cchr_t* cchr);

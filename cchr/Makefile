@@ -43,8 +43,8 @@ $(INTDIR):
 # EXECUTABLES #
 ###############
 
-$(OUTDIR)/cchr: $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o
-	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o
+$(OUTDIR)/cchr: $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o $(OUTDIR)/gio.o
+	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o $(OUTDIR)/gio.o
 
 ######################
 # INTERMEDIATE FILES #
@@ -66,7 +66,7 @@ $(OUTDIR)/parser.o: $(INTDIR)/cchr.tab.c parsestr.h alist.h
 $(OUTDIR)/lexer.o: $(INTDIR)/cchr.tab.h $(INTDIR)/cchr.lex.c parsestr.h
 	$(CC) $(CFLAGS) -I . $(INTDIR)/cchr.lex.c -c -o $(OUTDIR)/lexer.o
 
-$(OUTDIR)/analyse.o: analyse.c semtree.h parsestr.h analyse.h alist.h
+$(OUTDIR)/analyse.o: analyse.c semtree.h parsestr.h analyse.h alist.h gio.h
 	$(CC) $(CFLAGS) analyse.c -c -o $(OUTDIR)/analyse.o
 
 $(OUTDIR)/codegen.o: codegen.c semtree.h codegen.h alist.h output.h
@@ -74,6 +74,9 @@ $(OUTDIR)/codegen.o: codegen.c semtree.h codegen.h alist.h output.h
 
 $(OUTDIR)/parsestr.o: parsestr.c parsestr.h alist.h
 	$(CC) $(CFLAGS) parsestr.c -c -o $(OUTDIR)/parsestr.o
+
+$(OUTDIR)/gio.o: gio.c gio.h semtree.h alist.h
+	$(CC) $(CFLAGS) gio.c -c -o $(OUTDIR)/gio.o
 
 $(OUTDIR)/output.o: output.c output.h
 	$(CC) $(CFLAGS) output.c -c -o $(OUTDIR)/output.o

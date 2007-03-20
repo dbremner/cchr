@@ -524,10 +524,8 @@
 #define cchr_consarg(var,type,num) (_##var##_data->arg##num)
 
 
-#define eq(expr,...) (expr)
-#define eqbin(v1,v2) eq(((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1)))),v1,v2)
-#define eqbinx(v1,v2,...) eq(((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(__VA_ARGS__),sizeof((v1)))),v1,v2,__VA_ARGS__)
-#define eqval(v1,v2) eq(((v1)==(v2)),v1,v2)
+#define alt(expr,...) (expr)
+#define bineq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
 
 /***** actual CSM code ****/
 

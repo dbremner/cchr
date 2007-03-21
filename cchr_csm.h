@@ -525,7 +525,7 @@
 
 
 #define alt(expr,...) (expr)
-#define bineq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
+#define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
 
 /***** actual CSM code ****/
 

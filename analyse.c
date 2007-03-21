@@ -19,10 +19,6 @@
 #include <efence.h>
 #endif
 
-void static sem_expr_init(sem_expr_t *expr);
-void static sem_expr_destruct(sem_expr_t *expr);
-
-
 /* allocate and copy a string */
 char static *copy_string(char *in) {
   if (in==NULL) return NULL;
@@ -103,12 +99,12 @@ void static sem_exprpart_destruct(sem_exprpart_t *exprp) {
 }
 
 /* initialize a sem_expr_t */
-void static sem_expr_init(sem_expr_t *expr) {
+void sem_expr_init(sem_expr_t *expr) {
   alist_init(expr->parts);
 }
 
 /* destruct a sem_expr_t */
-void static sem_expr_destruct(sem_expr_t *expr) {
+void sem_expr_destruct(sem_expr_t *expr) {
   for (int i=0; i<alist_len(expr->parts); i++) sem_exprpart_destruct(alist_ptr(expr->parts,i));
   alist_free(expr->parts);
 }

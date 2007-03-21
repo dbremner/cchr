@@ -8,19 +8,20 @@
 #include <stdlib.h>
 
 #include "gio.h"
+#include "analyse.h"
 #include "alist.h"
+
+int static gio_test_idxeq(sem_rule_t *rule, int cot, int rem, sem_expr_t *expr, gio_entry_t *gioe);
 
 void static gio_entry_init(gio_entry_t *entry, gio_type_t type) {
   entry->type=type;
   if (type==GIO_TYPE_IDXITER) {
-    alist_init(entry->data.idxiter.argp);
     alist_init(entry->data.idxiter.args);
   }
 }
 
 void static gio_entry_destruct(gio_entry_t *entry) {
   if (entry->type==GIO_TYPE_IDXITER) {
-    alist_free(entry->data.idxiter.argp);
     alist_free(entry->data.idxiter.args);
   }
 }
@@ -36,6 +37,18 @@ void gio_destruct(gio_t *gio) {
   alist_free(gio->order);
 }
 
+int static gio_checkcdep(uint32_t *order, int n, sem_cdeps_t *cdp) {
+  for (int c=0; c<alist_len(cdp->co); c++) {
+    int search=alist_get(cdp->co,c);
+    int found=0;
+    for (int k=0; k<n; k++) {
+      if (search==order[k]) {found=1; break;}
+    }
+    if (!found) return 0;
+  }
+  return 1;
+}
+
 void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio_t *out) {
   int size=alist_len(rule->head[SEM_RULE_LEVEL_REM])+alist_len(rule->head[SEM_RULE_LEVEL_KEPT]);
   int n=1;
@@ -45,17 +58,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
   do {
     for (int p=0; p<nguards; p++) {
       if (gd[p]) {
-        sem_cdeps_t *cdp=&(alist_get(rule->out[0],p).cdeps);
-	int cont=1;
-	for (int c=0; c<alist_len(cdp->co); c++) {
-	  int search=alist_get(cdp->co,c);
-	  int found=0;
-	  for (int k=0; k<n; k++) {
-	    if (search==order[k]) {found=1; break;}
-	  }
-	  if (!found) {cont=0;break;}
-	}
-	if (cont) {
+	if (gio_checkcdep(order,n,&(alist_get(rule->out[0],p).cdeps))) {
 	  gd[p]=0;
 	  gio_entry_t entry;
 	  gio_entry_init(&entry,GIO_TYPE_OUT);
@@ -65,21 +68,82 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
       }
     }
     if (n<size) {
+      int cot=order[n];
+      int rem=0;
+      if (cot & (1<<31)) {
+        cot ^= (1<<31);
+	rem=1;
+      }
+      sem_conocc_t *co=alist_ptr(rule->head[rem ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT],cot);
       gio_entry_t entry;
-      gio_entry_init(&entry,GIO_TYPE_ITER);
-      entry.data.iter.cot=order[n];
+      gio_entry_init(&entry,GIO_TYPE_IDXITER);
+      entry.data.idxiter.cot=order[n];
+      alist_ensure(entry.data.idxiter.args,alist_len(co->args));
+      int haveidx=0;
+      for (int i=0; i<alist_len(entry.data.idxiter.args); i++) alist_get(entry.data.idxiter.args,i)=NULL;
+      for (int g=0; g<nguards; g++) { /* loop over all guards */
+        if (gd[g]) { /* if this particular guard is still to be checked */
+	  sem_out_t *sot=alist_ptr(rule->out[0],g);
+	  if (sot->type==SEM_OUT_TYPE_EXP) { /* if it is a real guard (not a var or stm) */
+	    if (gio_checkcdep(order,n+1,&(sot->cdeps))) { /* and we have all prerequisites */
+	      if (gio_test_idxeq(rule,cot,rem,&(sot->data.exp),&entry)) {
+	        gd[g]=0;
+		haveidx=1;
+	      }
+	    }
+	  }
+	}
+      }
+      if (!haveidx) {
+        gio_entry_destruct(&entry);
+	gio_entry_init(&entry,GIO_TYPE_ITER);
+	entry.data.iter.cot=order[n];
+      }
       alist_add(out->order,entry);
     }
     n++;
   } while(n<=size);
+  free(gd);
+}
+
+int static gio_test_idxeq(sem_rule_t *rule, int cot, int rem, sem_expr_t *expr, gio_entry_t *gioe) {
+  if (alist_len(expr->parts)!=1) return 0;
+  sem_exprpart_t *ep=alist_ptr(expr->parts,0);
+  if (ep->type==SEM_EXPRPART_TYPE_FUN) {
+    if (!strcmp(ep->data.fun.name,"alt")) {
+      for (int i=0; i<alist_len(ep->data.fun.args); i++) {
+        if (gio_test_idxeq(rule,cot,rem,alist_ptr(ep->data.fun.args,i),gioe)) return 1;
+      }
+      return 0;
+    }
+    if (!strcmp(ep->data.fun.name,"eq") && alist_len(ep->data.fun.args)==2) {
+      sem_expr_t *e[2];
+      e[0]=alist_ptr(ep->data.fun.args,0);
+      e[1]=alist_ptr(ep->data.fun.args,1);
+      for (int k=0; k<2; k++) {
+        if (alist_len(e[k]->parts)==1 && alist_get(e[k]->parts,0).type==SEM_EXPRPART_TYPE_VAR) {
+	  int varid=alist_get(e[k]->parts,0).data.var;
+	  sem_var_t *var=alist_ptr(rule->vt.vars,varid);
+	  if (!var->local && var->occ[SEM_RULE_LEVEL_REM]==rem && var->pos==cot) {
+	    alist_get(gioe->data.idxiter.args,var->poss)=e[1-k];
+	    return 1;
+	  }
+	}
+      }
+      return 0;
+    }
+  }
+  return 0;
 }
 
 double static gio_score(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio) {
   return 1.0;
 }
 
-void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int *used, int left, gio_t *out, double *score) {
-  if (left==0) {
+void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int *used, int done, gio_t *out, double *score) {
+  int sizeK=alist_len(rule->head[SEM_RULE_LEVEL_KEPT]);
+  int sizeR=alist_len(rule->head[SEM_RULE_LEVEL_REM]);
+  if (done==sizeK+sizeR) {
     gio_t ngio;
     gio_init(&ngio);
     gio_genorder(chr,rule,order,&ngio);
@@ -95,11 +159,11 @@ void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int 
   }
   int k=0;
   for (int p=0; p<2; p++) {
-    for (int s=0; s<alist_len(rule->head[p ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT]); s++) {
+    for (int s=0; s<(p?sizeR:sizeK); s++) {
       if (!used[k]) {
         used[k]=1;
-	order[left-1]=s+(p<<31);
-	gio_iterate(chr,rule,order,used,left-1,out,score);
+	order[done]=s+(p<<31);
+	gio_iterate(chr,rule,order,used,done+1,out,score);
 	used[k]=0;
       }
       k++;
@@ -119,8 +183,8 @@ void gio_generate(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio, int activ) {
     apos = (apos ^ (1<<31)) + alist_len(rule->head[SEM_RULE_LEVEL_KEPT]);
   }
   used[apos]=1;
-  order[size-1]=activ;
+  order[0]=activ;
   double score=1.0/0.0;
-  gio_iterate(chr,rule,order,used,size-1,gio,&score);
+  gio_iterate(chr,rule,order,used,1,gio,&score);
   return;
 }

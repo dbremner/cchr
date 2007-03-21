@@ -9,11 +9,13 @@
 #define ANALYSE_H_
 
 #include "semtree.h"
+#include "parsestr.h"
 
-int sem_generate_cchr(sem_cchr_t* out,cchr_t* in);
+void sem_expr_destruct(sem_expr_t *expr);
+void sem_expr_init(sem_expr_t *expr);
 void sem_cchr_destruct(sem_cchr_t* cchr);
 void sem_cchr_init(sem_cchr_t* cchr);
-void destruct_cchr_t (cchr_t *cchr);
 
+int sem_generate_cchr(sem_cchr_t* out,cchr_t* in);
 
-#endif /*ABS2SEM_H_*/
+#endif /*ANALYSE_H_*/

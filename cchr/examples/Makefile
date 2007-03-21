@@ -60,6 +60,22 @@ fib_topdown.c: fib_topdown.cchr bin/cchr Makefile
 fib_topdown: fib_topdown.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown fib_topdown.c
 
+tak.c: tak.cchr bin/cchr Makefile
+	bin/cchr tak.cchr
+
+tak2.c: tak2.cchr bin/cchr Makefile
+	bin/cchr tak2.cchr
+
+tak: tak.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o tak tak.c
+
+tak2: tak2.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2 tak2.c
+
+tak.debug: tak.c ../cchr_csm.h Makefile
+	cpp -P -DUSE_EFENCE -DCSM_CONF_DEBUG -DDEBUG <tak.c | indent -kr -l1024 >tak.debug.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o tak.debug tak.debug.c
+
 fib_topdown.debug: fib_topdown.c ../cchr_csm.h ../logical.h ../dcls.h ../alist.h Makefile
 	cpp -P -DUSE_EFENCE -DCSM_CONF_DEBUG -DDEBUG <fib_topdown.c | indent -kr -l1024 >fib_topdown.debug.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown.debug fib_topdown.debug.c

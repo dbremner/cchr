@@ -23,8 +23,7 @@ typedef struct {
     } iter;
     struct {
       uint32_t cot;
-      alist_declare(int,argp);
-      alist_declare(sem_expr_t,args);
+      alist_declare(sem_expr_t*,args);
     } idxiter;
     int out;
   } data;

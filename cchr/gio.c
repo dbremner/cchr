@@ -26,7 +26,7 @@ void static gio_entry_destruct(gio_entry_t *entry) {
   }
 }
 
-void gio_init(gio_t *gio) {
+void static gio_init(gio_t *gio) {
   alist_init(gio->order);
 }
 
@@ -68,7 +68,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
       }
     }
     if (n<size) {
-      int cot=order[n];
+      uint32_t cot=order[n];
       int rem=0;
       if (cot & (1<<31)) {
         cot ^= (1<<31);
@@ -80,7 +80,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
       entry.data.idxiter.cot=order[n];
       alist_ensure(entry.data.idxiter.args,alist_len(co->args));
       int haveidx=0;
-      for (int i=0; i<alist_len(entry.data.idxiter.args); i++) alist_get(entry.data.idxiter.args,i)=NULL;
+      for (int i=0; i<alist_len(co->args); i++) alist_add(entry.data.idxiter.args,NULL);
       for (int g=0; g<nguards; g++) { /* loop over all guards */
         if (gd[g]) { /* if this particular guard is still to be checked */
 	  sem_out_t *sot=alist_ptr(rule->out[0],g);
@@ -94,12 +94,28 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
 	  }
 	}
       }
-      if (!haveidx) {
+      if (!haveidx) { /* no indices used, use normal (linked list) iterator */
         gio_entry_destruct(&entry);
 	gio_entry_init(&entry,GIO_TYPE_ITER);
 	entry.data.iter.cot=order[n];
       }
       alist_add(out->order,entry);
+      for (int i=0; i<n; i++) { /* loop for DIFF's */
+        uint32_t cot2=order[i];
+	int rem2=0;
+	if (cot2 & (1<<31)) {
+	  cot2 ^= (1<<31);
+	  rem=1;
+	}
+	sem_conocc_t *co2=alist_ptr(rule->head[rem2 ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT],cot2);
+	if (co->constr == co2->constr) {
+	  gio_entry_t entry2;
+	  gio_entry_init(&entry2,GIO_TYPE_DIFF);
+	  entry2.data.diff.cot[0]=order[i];
+	  entry2.data.diff.cot[1]=order[n];
+	  alist_add(out->order,entry2);
+	}
+      }
     }
     n++;
   } while(n<=size);
@@ -185,6 +201,7 @@ void gio_generate(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio, int activ) {
   used[apos]=1;
   order[0]=activ;
   double score=1.0/0.0;
+  gio_init(gio);
   gio_iterate(chr,rule,order,used,1,gio,&score);
   return;
 }

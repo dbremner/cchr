@@ -11,6 +11,7 @@
 #include "semtree.h"
 #include "alist.h"
 #include "output.h"
+#include "gio.h"
 
 #ifdef USE_EFENCE
 #include <efence.h>
@@ -281,6 +282,9 @@ void static csm_generate_code(sem_cchr_t *cchr,int cons,int occ,output_t *out) {
 	char buf3[256];
 	csm_rule_getname(cchr,ro->rule,buf3,256);
 	
+	gio_t gio;
+	gio_generate(cchr,ru,&gio,ro->pos | (rem << 31));
+	gio_destruct(&gio);
 	output_fmt(out,"\n");
 	output_fmt(out,"#undef CODELIST_%s\n",buf);
 	output_fmt(out,"#define CODELIST_%s ",buf);

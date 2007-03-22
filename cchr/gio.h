@@ -6,31 +6,37 @@
 typedef enum {
   GIO_TYPE_ITER,
   GIO_TYPE_IDXITER,
-  GIO_TYPE_LSTMT,
-  GIO_TYPE_LVAR,
-  GIO_TYPE_IF
+  GIO_TYPE_OUT,
+  GIO_TYPE_DIFF
 } gio_type_t;
 
 #define GIO_TYPE_ITER 0
 #define GIO_TYPE_IDXITER 1
 #define GIO_TYPE_OUT 2
+#define GIO_TYPE_DIFF 3
 
 typedef struct {
   gio_type_t type;
   union {
     struct {
-      uint32_t cot;
+      uint32_t cot; /* pos in rem/kept + (rem ? 1<<32 : 0) */
     } iter;
     struct {
       uint32_t cot;
       alist_declare(sem_expr_t*,args);
     } idxiter;
     int out;
+    struct {
+      uint32_t cot[2];
+    } diff;
   } data;
 } gio_entry_t;
 
 typedef struct {
   alist_declare(gio_entry_t,order);
 } gio_t;
+
+void gio_generate(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio, int activ);
+void gio_destruct(gio_t *gio);
 
 #endif

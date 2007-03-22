@@ -116,6 +116,12 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
 	  alist_add(out->order,entry2);
 	}
       }
+      for (int i=0; i<alist_len(co->args); i++) { /* so we go on, define variables from this conocc */
+        gio_entry_t entry3;
+	gio_entry_init(&entry3,GIO_TYPE_VAR),
+	entry3.data.var=alist_get(co->args,i);
+	alist_add(out->order,entry3);
+      }
     }
     n++;
   } while(n<=size);
@@ -164,7 +170,7 @@ void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int 
     gio_init(&ngio);
     gio_genorder(chr,rule,order,&ngio);
     double nscr=gio_score(chr,rule,&ngio);
-    if (nscr<*score) {
+    if ((*score)==0.0 || nscr<(*score)) {
       gio_destruct(out);
       *out=ngio;
       *score=nscr;
@@ -200,7 +206,7 @@ void gio_generate(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio, int activ) {
   }
   used[apos]=1;
   order[0]=activ;
-  double score=1.0/0.0;
+  double score=0.0;
   gio_init(gio);
   gio_iterate(chr,rule,order,used,1,gio,&score);
   return;

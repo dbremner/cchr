@@ -7,13 +7,15 @@ typedef enum {
   GIO_TYPE_ITER,
   GIO_TYPE_IDXITER,
   GIO_TYPE_OUT,
-  GIO_TYPE_DIFF
+  GIO_TYPE_DIFF,
+  GIO_TYPE_VAR
 } gio_type_t;
 
 #define GIO_TYPE_ITER 0
 #define GIO_TYPE_IDXITER 1
 #define GIO_TYPE_OUT 2
 #define GIO_TYPE_DIFF 3
+#define GIO_TYPE_VAR 4
 
 typedef struct {
   gio_type_t type;
@@ -29,6 +31,7 @@ typedef struct {
     struct {
       uint32_t cot[2];
     } diff;
+    int var;
   } data;
 } gio_entry_t;
 

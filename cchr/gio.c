@@ -22,6 +22,13 @@ void static gio_entry_init(gio_entry_t *entry, gio_type_t type) {
 
 void static gio_entry_destruct(gio_entry_t *entry) {
   if (entry->type==GIO_TYPE_IDXITER) {
+    for (int j=0; j<alist_len(entry->data.idxiter.args); j++) {
+      sem_expr_t *ex=alist_get(entry->data.idxiter.args,j);
+      if (ex) {
+        sem_expr_destruct(ex);
+        free(ex);
+      }
+    }
     alist_free(entry->data.idxiter.args);
   }
 }
@@ -128,31 +135,56 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
   free(gd);
 }
 
-int static gio_test_idxeq(sem_rule_t *rule, int cot, int rem, sem_expr_t *expr, gio_entry_t *gioe) {
-  if (alist_len(expr->parts)!=1) return 0;
-  sem_exprpart_t *ep=alist_ptr(expr->parts,0);
-  if (ep->type==SEM_EXPRPART_TYPE_FUN) {
-    if (!strcmp(ep->data.fun.name,"alt")) {
-      for (int i=0; i<alist_len(ep->data.fun.args); i++) {
-        if (gio_test_idxeq(rule,cot,rem,alist_ptr(ep->data.fun.args,i),gioe)) return 1;
-      }
-      return 0;
+int static gio_test_idxeq_var(int cot, int rem, gio_entry_t *gioe, sem_var_t *var, sem_expr_t *expr,int start,int stop) {
+  if (!var->local && var->occ[SEM_RULE_LEVEL_REM]==rem && var->pos==cot) {
+    if (alist_get(gioe->data.idxiter.args,var->poss)==NULL) {
+      sem_expr_t *nex=malloc(sizeof(sem_expr_t));
+      sem_expr_copy(expr,nex,start,stop);
+      alist_get(gioe->data.idxiter.args,var->poss)=nex;
+      return 1;
     }
-    if (!strcmp(ep->data.fun.name,"eq") && alist_len(ep->data.fun.args)==2) {
-      sem_expr_t *e[2];
-      e[0]=alist_ptr(ep->data.fun.args,0);
-      e[1]=alist_ptr(ep->data.fun.args,1);
-      for (int k=0; k<2; k++) {
-        if (alist_len(e[k]->parts)==1 && alist_get(e[k]->parts,0).type==SEM_EXPRPART_TYPE_VAR) {
-	  int varid=alist_get(e[k]->parts,0).data.var;
-	  sem_var_t *var=alist_ptr(rule->vt.vars,varid);
-	  if (!var->local && var->occ[SEM_RULE_LEVEL_REM]==rem && var->pos==cot) {
-	    alist_get(gioe->data.idxiter.args,var->poss)=e[1-k];
-	    return 1;
-	  }
-	}
+  }
+  return 0;
+}
+
+int static gio_test_idxeq(sem_rule_t *rule, int cot, int rem, sem_expr_t *expr, gio_entry_t *gioe) {
+  if (alist_len(expr->parts)==1) {
+    sem_exprpart_t *ep=alist_ptr(expr->parts,0);
+    if (ep->type==SEM_EXPRPART_TYPE_FUN) {
+      if (!strcmp(ep->data.fun.name,"alt")) {
+        for (int i=0; i<alist_len(ep->data.fun.args); i++) {
+          if (gio_test_idxeq(rule,cot,rem,alist_ptr(ep->data.fun.args,i),gioe)) return 1;
+        }
+        return 0;
       }
-      return 0;
+      if (!strcmp(ep->data.fun.name,"eq") && alist_len(ep->data.fun.args)==2) {
+        sem_expr_t *e[2];
+        e[0]=alist_ptr(ep->data.fun.args,0);
+        e[1]=alist_ptr(ep->data.fun.args,1);
+        for (int k=0; k<2; k++) {
+          if (alist_len(e[k]->parts)==1 && alist_get(e[k]->parts,0).type==SEM_EXPRPART_TYPE_VAR) {
+	    int varid=alist_get(e[k]->parts,0).data.var;
+	    sem_var_t *var=alist_ptr(rule->vt.vars,varid);
+	    if (gio_test_idxeq_var(cot,rem,gioe,var,e[1-k],0,-1)) return 1;
+	  }
+        }
+      }
+    }
+  }
+  if (alist_len(expr->parts)>=3) {
+    sem_exprpart_t *ep1=alist_ptr(expr->parts,1);
+    if (ep1->type==SEM_EXPRPART_TYPE_LIT && !strcmp(ep1->data.lit,"==")) {
+      sem_exprpart_t *ep0=alist_ptr(expr->parts,0);
+      if (ep0->type==SEM_EXPRPART_TYPE_VAR) {
+        if (gio_test_idxeq_var(cot,rem,gioe,alist_ptr(rule->vt.vars,ep0->data.var),expr,2,-1)) return 1;
+      }
+    }
+    sem_exprpart_t *el1=alist_ptr(expr->parts,alist_len(expr->parts)-2);
+    if (el1->type==SEM_EXPRPART_TYPE_LIT && !strcmp(el1->data.lit,"==")) {
+      sem_exprpart_t *el0=alist_ptr(expr->parts,alist_len(expr->parts)-1);
+      if (el0->type==SEM_EXPRPART_TYPE_VAR) {
+        if (gio_test_idxeq_var(cot,rem,gioe,alist_ptr(rule->vt.vars,el0->data.var),expr,0,alist_len(expr->parts)-2)) return 1;
+      }
     }
   }
   return 0;

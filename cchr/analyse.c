@@ -218,6 +218,35 @@ void static sem_vartable_init(sem_vartable_t *vt) {
   alist_init(vt->vars);
 }
 
+void sem_expr_copy(sem_expr_t *src,sem_expr_t *dst,int start,int stop) {
+  alist_init(dst->parts);
+  alist_ensure(dst->parts,(stop<0 ? alist_len(src->parts) : stop)-start);
+  for (int i=start; i<(stop<0 ? alist_len(src->parts) : stop); i++) {
+    sem_exprpart_t np={.type=0};
+    sem_exprpart_t *op=alist_ptr(src->parts,i);
+    switch (op->type) {
+      case SEM_EXPRPART_TYPE_LIT: {
+        sem_exprpart_init_lit(&np,copy_string(op->data.lit));
+	break;
+      }
+      case SEM_EXPRPART_TYPE_VAR: {
+        sem_exprpart_init_var(&np,op->data.var);
+	break;
+      }
+      case SEM_EXPRPART_TYPE_FUN: {
+        sem_exprpart_init_fun(&np,copy_string(op->data.fun.name));
+        for (int k=0; k<alist_len(op->data.fun.args); k++) {
+	  sem_expr_t nex;
+	  sem_expr_copy(alist_ptr(op->data.fun.args,k),&nex,0,-1);
+	  alist_add(np.data.fun.args,nex);
+	}
+	break;
+      }
+    }
+    alist_add(dst->parts,np);
+  }
+}
+
 /* initialize a vartable to have only $%i vars */
 void static sem_vartable_init_args(sem_vartable_t *vt, int nargs) {
 	sem_vartable_init(vt);

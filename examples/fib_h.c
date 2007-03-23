@@ -52,7 +52,7 @@
   CSM_LOOP(init_1,K1, \
     CSM_DEFIDXVAR(fib_2,hash1,K3) \
     CSM_SETIDXVAR(fib_2,hash1,K3,arg1,CSM_ARG(fib_2,arg1)+1) \
-    CSM_IDXSAFELOOP(fib_2,hash1,K3, \
+    CSM_IDXUNILOOP(fib_2,hash1,K3, \
       CSM_IF(CSM_DIFFSELF(K3), \
         CSM_HISTCHECK(calc, \
           CSM_IMMLOCAL(int,Max,CSM_LARG(init_1,K1,arg1)) \
@@ -67,7 +67,7 @@
             CSM_ADD(fib_2,CSM_LOCAL(N) + 2,CSM_LOCAL(M3)) \
             CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, \
               CSM_STROUT("abort") \
-	      CSM_IDXSAFEEND(fib_2,hash1,K3) \
+	      CSM_IDXUNIEND(fib_2,hash1,K3) \
               CSM_END \
             ) \
           ) \
@@ -83,7 +83,7 @@
   CSM_LOOP(init_1,K1, \
     CSM_DEFIDXVAR(fib_2,hash1,K2) \
     CSM_SETIDXVAR(fib_2,hash1,K2,arg1,CSM_ARG(fib_2,arg1)-1) \
-    CSM_IDXSAFELOOP(fib_2,hash1,K2, \
+    CSM_IDXUNILOOP(fib_2,hash1,K2, \
       CSM_IF(CSM_DIFFSELF(K2), \
         CSM_HISTCHECK(calc, \
           CSM_IMMLOCAL(int,Max,CSM_LARG(init_1,K1,arg1)) \
@@ -96,7 +96,7 @@
             CSM_HISTADD(calc,K1,K2,self_) \
             CSM_DEFLOCAL(uint64_t,M3,CSM_LOCAL(M1) + CSM_LOCAL(M2)) \
             CSM_ADD(fib_2,CSM_LOCAL(N) + 2,CSM_LOCAL(M3)) \
-            CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, CSM_STROUT("abort") CSM_IDXSAFEEND(fib_2,hash1,K2) CSM_END) \
+            CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, CSM_STROUT("abort") CSM_IDXUNIEND(fib_2,hash1,K2) CSM_END) \
           ) \
         ,K1,K2,self_) \
       ) \
@@ -139,7 +139,7 @@
   CSM_LOOP(fib_2,K2, \
     CSM_DEFIDXVAR(fib_2,hash1,K3) \
     CSM_SETIDXVAR(fib_2,hash1,K3,arg1,CSM_LARG(fib_2,K2,arg1)+1) \
-    CSM_IDXSAFELOOP(fib_2,hash1,K3, \
+    CSM_IDXUNILOOP(fib_2,hash1,K3, \
       CSM_IF(CSM_DIFF(K3,K2), \
         CSM_HISTCHECK(calc, \
           CSM_IMMLOCAL(int,Max,CSM_ARG(init_1,arg1)) \
@@ -152,7 +152,7 @@
             CSM_HISTADD(calc,self_,K2,K3) \
             CSM_DEFLOCAL(uint64_t,M3,CSM_LOCAL(M1) + CSM_LOCAL(M2)) \
             CSM_ADD(fib_2,CSM_LOCAL(N) + 2,CSM_LOCAL(M3)) \
-            CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, CSM_STROUT("abort") CSM_END CSM_IDXSAFEEND(fib_2,hash1,K3)) \
+            CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, CSM_STROUT("abort") CSM_IDXUNIEND(fib_2,hash1,K3) CSM_END ) \
           ) \
         ,self_,K2,K3) \
       ) \

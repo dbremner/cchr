@@ -80,6 +80,7 @@
 #define CSM_CB_TypeEnum_D(NAME) CCHR_CONS_TYPE_ ## NAME
 
 #define CSM_CB_IdxDefDefList_D(A,T,X) T A;
+#define CSM_CB_IdxDefDefList_S
   
 #define CSM_CB_IdxDefDef_S
 #define CSM_CB_IdxDefDef_D(H,C) \
@@ -409,10 +410,10 @@
 	} \
 }
 
-#define CSM_IDXSAFELOOP(CON,HASH,VAR,CODE) { \
+#define CSM_IDXUNILOOP(CON,HASH,VAR,CODE) { \
 	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
 	if (_idx_##VAR) { \
-	  CSM_FMTOUT("in idxsafeloop (%s.%s var=%s)",#CON,#HASH,#VAR); \
+	  CSM_FMTOUT("in IDXUNILOOP (%s.%s var=%s)",#CON,#HASH,#VAR); \
 	  cchr_htdc_t _idxcopy_##VAR; \
 	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
 	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
@@ -421,11 +422,11 @@
 	      CODE \
             } \
 	  } \
-          CSM_IDXSAFEEND(CON,HASH,VAR) \
+          CSM_IDXUNIEND(CON,HASH,VAR) \
 	} \
 }
 
-#define CSM_IDXSAFEEND(CON,HASH,VAR) {cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
+#define CSM_IDXUNIEND(CON,HASH,VAR) {cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
 	
 #define CSM_END { \
 	CSM_DEBUG( \

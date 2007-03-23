@@ -5,8 +5,8 @@
 
 #include "logical.h"
 
-/* define a log_int_t to be a logical uint64_t, with no destructor */
-logical_code(uint64_t,log_int_t,logical_nodestr)
+/* define a log_int_t to be a logical int64_t, with no destructor */
+logical_code(int32_t,log_int_t,logical_nodestr)
 
 /* the cchr block */
 cchr {
@@ -23,16 +23,15 @@ cchr {
   /* declare the constraint fib(A,B), with a destructor and a debug-output-format */
   constraint fib(int,log_int_t) destr( {del($2);} ) fmt("fib(%i,%p)");
 
-  /* the 3 chr rules */
+  /* the 4 chr rules */
   dup @ fib(N,M1) \ fib(N,M2) <=> { set(M1,M2); };
-    
-  f01 @ fib(N,M) ==> (N==0 || N==1) | { set(M,1); };
-  
-  fn @ fib(N,M) ==> N>=2 | 
+  f0 @ fib(0,M) ==> { set(M,1); };
+  f1 @ fib(1,M) ==> { set(M,1); };
+  fn @ fib(N,M) ==> N>1 | 
     log_int_t M1=new(M1), log_int_t M2=new(M2), /* create 2 logical variables */
-    {cb(M1,cchr_reactivate_all,NULL); cb(M2,cchr_reactivate_all,NULL);}, /* initialize reactivation callbacks */
+    // {cb(M1,cchr_reactivate_all,NULL); cb(M2,cchr_reactivate_all,NULL);}, /* initialize reactivation callbacks */
     fib(N-2,copy(M1)), fib(N-1,copy(M2)), /* add two constraints (to solve lower-valued fib's) */
-    { if (set(M1) && set(M2)) { set(M,get(M1)+get(M2));}}, /* if M1 and M2 get a value, set M's value */
+    { set(M,get(M1)+get(M2)); },
     { del(M1); del(M2); }; /* destroy M1 and M2 */
 }
 
@@ -41,7 +40,7 @@ int main(int argc, char **argv) {
   int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
   log_int_t answer=log_int_t_create();
   cchr_add_fib_2(a,log_int_t_copy(answer));
-  printf("answer=%llu\n",log_int_t_hasval(answer) ? (unsigned long long)log_int_t_getval(answer) : -1);
+  printf("answer=%li\n",log_int_t_hasval(answer) ? (long)log_int_t_getval(answer) : -1);
   cchr_runtime_free();
   log_int_t_destruct(answer); 
   return 0;

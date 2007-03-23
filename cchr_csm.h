@@ -469,6 +469,7 @@
 }
 #define CSM_NEEDSELF(CON) { \
 	if (doadd) { \
+		CSM_MAKE(CON) \
 		CSM_FMTOUT("store pid=%i - begin",(int)pid_self_); \
 		cchr_store(pid_self_); \
 		cchr_index_##CON(pid_self_); \

@@ -25,6 +25,8 @@ cchr {
   constraint tak(int64_t,int64_t,int64_t,log_int_t) destr({del($4);}) fmt("tak(%lli,%lli,%lli,%p)");
 
   takid @ tak(X1,Y1,Z1,A1) \ tak(X2,Y2,Z2,A2) <=> alt(X1==X2,eq(X1,X2)),alt(Y1==Y2,eq(Y1,Y2)),alt(Z1==Z2,eq(Z1,Z2)) | { set(A1,A2); };
+  // takid @ tak(X1,Y1,Z1,A1) \ tak(X2,Y2,Z2,A2) <=> X1==X2,Y1==Y2,Z1==Z2 | { set(A1,A2); };
+  
   taklow @ tak(X,Y,Z,A) ==> X <= Y | { set(A,Z); };
   takhi  @ tak(X,Y,Z,A) ==> X > Y | 
     log_int_t A1=new(A1),

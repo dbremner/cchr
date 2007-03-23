@@ -68,14 +68,14 @@ void static csm_hashdefs_add(csm_hashdefs_t *hd,csm_hashdef_t *def) {
 }
 
 char static *csm_hashdef_strify(csm_hashdef_t *def) {
-  char *ret=malloc(4+(alist_len(def->list)+4)/5);
+  char *ret=malloc(4+(alist_len(def->list)+3)/4);
   strcpy(ret,"idx");
-  char hex[]="0123456789ABCDEFGHIJKLMNOPQRSTUV";
-  for (int i=0; i<(alist_len(def->list)+4)/5; i++) {
+  char hex[]="0123456789ABCDEF";
+  for (int i=0; i<(alist_len(def->list)+3)/4; i++) {
     int dig=0;
-    for (int k=5*i; k<5*(i+1); k++) {
-      if (k<alist_len(def->list)) {
-        dig=2*dig+!!alist_get(def->list,k);
+    for (int k=0; k<4; k++) {
+      if (k+4*i<alist_len(def->list)) {
+        dig|=((!!alist_get(def->list,k+4*i))<<(k));
       }
     }
     ret[i+3]=hex[dig];
@@ -429,7 +429,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	  cl.pos=cid;
 	  alist_add(clean,cl);
 	}
-	csm_hashdefs_add(hd,&def);
+	csm_hashdefs_add(&(hd[cicon]),&def);
 	break;
       }
     }
@@ -529,10 +529,12 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 			output_fmt(out,"#define RULE_REM_%s (%i)\n",buf2,alist_len(r->head[SEM_RULE_LEVEL_REM]));
 		}
 	}
+	csm_hashdefs_t *hd=malloc(sizeof(csm_hashdefs_t)*alist_len(in->cons));
+	for (int i=0; i<alist_len(in->cons); i++) {
+	  csm_hashdefs_init(&(hd[i]));
+	}
 	for (int i=0; i<alist_len(in->cons); i++) {
 		sem_constr_t *con=alist_ptr(in->cons,i);
-		csm_hashdefs_t hd;
-		csm_hashdefs_init(&hd);
 		char conn[256];
 		csm_constr_getname(in,i,conn,256);
 		output_fmt(out,"#undef ARGLIST_%s\n",conn);
@@ -602,22 +604,29 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
 			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
 				/*csm_generate_code(in,i,j,out);*/
-				csm_generate_code_gio(in,i,j,out,&hd);
+				csm_generate_code_gio(in,i,j,out,hd);
 			}
 		}
 		output_string(out,"\n");
+		csm_destruct_vartable_constr(con,vt);
+		output_fmt(out,"\n");
+	}
+	for (int i=0; i<alist_len(in->cons); i++) {
+		sem_constr_t *con=alist_ptr(in->cons,i);
+		char conn[256];
+		csm_constr_getname(in,i,conn,256);
 		output_fmt(out,"#undef HASHLIST_%s\n",conn);
 		output_fmt(out,"#define HASHLIST_%s(CB,...) ",conn);
-		for (int i=0; i<alist_len(hd.defs); i++) {
-		  if (i) output_fmt(out,"CB##_S ");
-		  csm_hashdef_t *def=alist_ptr(hd.defs,i);
+		for (int m=0; m<alist_len(hd[i].defs); m++) {
+		  if (m) output_fmt(out,"CB##_S ");
+		  csm_hashdef_t *def=alist_ptr(hd[i].defs,m);
 		  char *dn=csm_hashdef_strify(def);
 		  output_fmt(out,"CB##_D(%s,__VA_ARGS__) ",dn);
 		  free(dn);
 		}
 		output_fmt(out,"\n");
-		for (int i=0; i<alist_len(hd.defs); i++) {
-		  csm_hashdef_t *def=alist_ptr(hd.defs,i);
+		for (int m=0; m<alist_len(hd[i].defs); m++) {
+		  csm_hashdef_t *def=alist_ptr(hd[i].defs,m);
 		  char *dn=csm_hashdef_strify(def);
 		  output_fmt(out,"#undef HASHDEF_%s_%s\n",conn,dn);
 		  output_fmt(out,"#define HASHDEF_%s_%s(CB,...) ",conn,dn);
@@ -630,11 +639,11 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		    }
 		  }
 		  output_fmt(out,"\n");
+		  free(dn);
 		}
 		output_fmt(out,"\n");
-		csm_destruct_vartable_constr(con,vt);
-		csm_hashdefs_destroy(&hd);
-		output_fmt(out,"\n");
+		csm_hashdefs_destroy(&(hd[i]));
 	}
 	output_fmt(out,"#include \"cchr_csm.h\"\n");
+	free(hd);
 }

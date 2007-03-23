@@ -9,6 +9,7 @@ typedef struct {
 cchr {
   constraint fib(int,bigint_t) destr({mpz_clear($2.v);});
   constraint init(int);
+  extern alt;
   
   begin @ 
       init(_) 
@@ -24,10 +25,11 @@ cchr {
 
   calc @ 
   	  init(Max),
-  	  fib(N-1,M1),
+  	  fib(N1,M1),
   	  fib(N,M2)
   	==>
-  	  N<Max 
+	  alt(N1+1==N,N1==N-1),
+  	  N<Max
   	| 
   	  bigint_t Sum=,
   	  {
@@ -37,8 +39,8 @@ cchr {
   	  fib(N+1, Sum);
 
   fini @ 
-/*  	  fib(Max,_) \ init(Max) */
-          init(_) 
+  	  fib(Max,_) \ init(Max) 
+/*          init(_)  */
   	<=>
   	  true;
 }
@@ -47,7 +49,7 @@ int main(int argc, char **argv) {
   cchr_runtime_init();
   int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
   cchr_add_init_1(a);
-  cchr_consloop(j,fib_2,{gmp_printf("fib(%i,%Zd)\n",(int)cchr_consarg(j,fib_2,1),cchr_consarg(j,fib_2,2).v);});
+  // cchr_consloop(j,fib_2,{gmp_printf("fib(%i,%Zd)\n",(int)cchr_consarg(j,fib_2,1),cchr_consarg(j,fib_2,2).v);});
   cchr_runtime_free();
   return 0;
 }

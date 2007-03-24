@@ -214,7 +214,25 @@ double static gio_score(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio) {
 	break;
       }
       case GIO_TYPE_OUT: {
-        ret += val;
+        sem_out_t *out=alist_ptr(rule->out[0],entry->data.out);
+	switch (out->type) {
+	  case SEM_OUT_TYPE_CON: {
+	    break;
+	  }
+	  case SEM_OUT_TYPE_VAR: {
+	    ret += val*0.8;
+	    break;
+	  }
+	  case SEM_OUT_TYPE_STM: {
+	    ret += val*2;
+	    break;
+	  }
+	  case SEM_OUT_TYPE_EXP: {
+	    ret += val*0.4;
+	    val *= 0.8;
+	    break;
+	  }
+	}
 	break;
       }
       case GIO_TYPE_DIFF: {

@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "gio.h"
 #include "analyse.h"
@@ -191,7 +192,43 @@ int static gio_test_idxeq(sem_rule_t *rule, int cot, int rem, sem_expr_t *expr, 
 }
 
 double static gio_score(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio) {
-  return 1.0;
+  double ret=0.01;
+  double val=1.0;
+  for (int i=0; i<alist_len(gio->order); i++) {
+    gio_entry_t *entry=alist_ptr(gio->order,i);
+    switch (entry->type) {
+      case GIO_TYPE_ITER: {
+        ret += val*0.5;
+	val *= 10;
+	ret += val*0.3;
+	break;
+      }
+      case GIO_TYPE_IDXITER: {
+        int k=0;
+	for (int l=0; l<alist_len(entry->data.idxiter.args); l++) {
+	  if (alist_get(entry->data.idxiter.args,l)==NULL) k++;
+	}
+        ret += val*1.5;
+	val *= pow(10.0,(double)k/alist_len(entry->data.idxiter.args));
+	ret += val*0.4;
+	break;
+      }
+      case GIO_TYPE_OUT: {
+        ret += val;
+	break;
+      }
+      case GIO_TYPE_DIFF: {
+        ret += val*0.5;
+	val=val-1;
+	break;
+      }
+      case GIO_TYPE_VAR: {
+        ret += val*0.2;
+	break;
+      }
+    }
+  }
+  return ret;
 }
 
 void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int *used, int done, gio_t *out, double *score) {

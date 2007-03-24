@@ -90,8 +90,8 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 "("               LIT_RETURN(TOK_LRBRAC);
 ")"               LIT_RETURN(TOK_RRBRAC);
 
-"++"|"--"|"+"|"-"|"*"|"/"|"->"|"."|"<<"|">>"|"<"|">"|"="|"=="|"<="|">="|"%"|"%="               LIT_RETURN(TOK_OP)
-"^"|"~"|"&"|"&&"|"||"|"+="|"*="|"/="|"-="|">>="|"<<="|"&="|"|="|"||="|"&&="   LIT_RETURN(TOK_OP)
+"++"|"--"|"+"|"-"|"*"|"/"|"->"|"."|"<<"|">>"|"<"|">"|"="|"=="|"<="|">="|"%"|"%="               	LIT_RETURN(TOK_OP)
+"^"|"~"|"&"|"&&"|"||"|"+="|"*="|"/="|"-="|">>="|"<<="|"&="|"|="|"||="|"&&="|"!="   		LIT_RETURN(TOK_OP)
 {integer}         LIT_RETURN(TOK_CONST)
 {real}            LIT_RETURN(TOK_CONST)
 {hex_integer}     LIT_RETURN(TOK_CONST)

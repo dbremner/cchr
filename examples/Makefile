@@ -1,4 +1,4 @@
-CC := gcc -Wall -pipe -std=c99 -pedantic
+CC := gcc -Wall -Wno-unused -pipe -std=c99 -pedantic
 
 #MODE := normal
 MODE := normal
@@ -12,7 +12,7 @@ else
     CFLAGS := -O0 -ggdb3 -DUSE_EFENCE lookup3.c
     LDFLAGS := -lefence 
   else
-    CFLAGS := -O3 -g0 -fomit-frame-pointer -march=athlon64 -frename-registers -ftracer -fweb lookup3.c
+    CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers lookup3.c
     LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
   endif
 endif
@@ -63,11 +63,17 @@ fib_topdown: fib_topdown.c ../cchr_csm.h Makefile
 tak.c: tak.cchr bin/cchr Makefile
 	bin/cchr tak.cchr
 
+ram.c: ram.cchr bin/cchr Makefile
+	bin/cchr ram.cchr
+
 tak2.c: tak2.cchr bin/cchr Makefile
 	bin/cchr tak2.cchr
 
 tak: tak.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak tak.c
+
+ram: ram.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o ram ram.c
 
 tak2: tak2.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2 tak2.c

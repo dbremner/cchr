@@ -1,20 +1,23 @@
-CC := gcc -Wall -pipe -std=c99 -pedantic -lm
+CC := gcc
+CFLAGS := -Wall -pipe -std=c99 -pedantic
+LDFLAGS := -lm
+
 INTDIR := intermediate
 
 MODE := normal
 
 ifeq ($(MODE),debug)
-  CFLAGS := -O0 -ggdb3 -fomit-frame-pointer
-  LDFLAGS := -Wl,-O0 -Wl,--enable-new-dtags -Wl,--sort-common
+  CFLAGS := $(CFLAGS) -O0 -ggdb3 -fomit-frame-pointer
+  LDFLAGS := $(LDFLAGS) -Wl,-O0 -Wl,--enable-new-dtags -Wl,--sort-common
   OUTDIR := debug
 else
   ifeq ($(MODE),efence)
-    CFLAGS := -O0 -ggdb3 -DUSE_EFENCE
-    LDFLAGS := -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
+    CFLAGS := $(CFLAGS) -O0 -ggdb3 -DUSE_EFENCE
+    LDFLAGS := $(LDFLAGS) -lefence -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common
     OUTDIR := efence
   else
-    CFLAGS := -O3 -g0 -fomit-frame-pointer
-    LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
+    CFLAGS := $(CFLAGS) -O3 -g0 -fomit-frame-pointer
+    LDFLAGS := $(LDFLAGS) -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
     OUTDIR := bin
   endif
 endif

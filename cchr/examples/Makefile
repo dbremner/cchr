@@ -66,6 +66,9 @@ tak.c: tak.cchr bin/cchr Makefile
 ram.c: ram.cchr bin/cchr Makefile
 	bin/cchr ram.cchr
 
+acker.c: acker.cchr bin/cchr Makefile
+	bin/cchr acker.cchr
+
 tak2.c: tak2.cchr bin/cchr Makefile
 	bin/cchr tak2.cchr
 
@@ -74,6 +77,9 @@ tak: tak.c ../cchr_csm.h Makefile
 
 ram: ram.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o ram ram.c
+
+acker: acker.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o acker acker.c
 
 tak2: tak2.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2 tak2.c

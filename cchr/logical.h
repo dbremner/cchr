@@ -181,12 +181,7 @@ typedef enum  {
 	int static INLINE out##_testeq(out var1, out var2) { \
 		var1=out##_normalize(var1); \
 		var2=out##_normalize(var2); \
-		return ((var1)==(var2) || \
-			( \
-				(var1)->_type==LOGICAL_NODE_TYPE_VAL && \
-				(var2)->_type==LOGICAL_NODE_TYPE_VAL && \
-				(var1)->_data.root.val==(var2)->_data.root.val \
-			)); \
+		return ((var1)==(var2)); \
 	} \
 	int static INLINE out##_hasval(out var) { \
 		var=out##_normalize(var); \

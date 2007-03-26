@@ -71,8 +71,7 @@ typedef struct {
   alist_declare(int,hooked);
   alist_declare(int,related); /* list of constr id's that are related to this one */
   alist_declare(sem_ruleocc_t,occ);
-  sem_expr_t fmt;
-  sem_expr_t destr;
+  sem_expr_t fmt,destr,init; /* format specification, destructor, initializer */
   /*alist_declare(sem_expr_t,fmtargs);*/
 } sem_constr_t;
 

@@ -23,7 +23,10 @@ A: upto(8), fib(0,1), fib(1,1), .., fib(7,21), fib(8,34).
 
 :- module(fib_bu,[fib/2, upto/1]).
 :- use_module(library(chr)).
-
+:- chr_option(debug,off).                                                                                            
+:- chr_option(optimize,full).                                                                                        
+:- chr_option(check_guard_bindings,off).                                                                             
+ 
 %% Deprecated syntax used for SICStus 3.x
 %handler fib.
 %constraints fib/2, upto/1.

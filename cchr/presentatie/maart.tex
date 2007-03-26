@@ -10,7 +10,7 @@
 {
   \usepackage{hyperref}
   \setbeamertemplate{background canvas}[vertical shading][bottom=white!10,top=blue!10]
-  \usetheme{Frankfurt}
+  \usetheme{Warsaw}
   \usefonttheme[onlysmall]{structurebold}
 }
 
@@ -29,9 +29,9 @@
 \renewcommand{\emph}[1]{\textit{{#1}}}
 \newcommand{\bs}{$\backslash$}
 
-%\setbeamercolor{background canvas}{bg=white}
-%\setbeamertemplate{footline}[frame number]
-%\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{background canvas}{bg=white}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{navigation symbols}{}
 
 \title{CCHR: De snelste CHR implementatie}
 \subtitle{Promotor: \\
@@ -40,7 +40,7 @@ Begeleider: \\
 Dr. ir. Tom Schrijvers}
 
 \author{Pieter Wuille}
-\date{29 maar 2007}
+\date{29 maart 2007}
 
 \begin{document}
 
@@ -64,8 +64,11 @@ Dr. ir. Tom Schrijvers}
 \frame{\frametitle{Waarom CHR in C?}
   \begin{block}{Waarom CHR in C?}
   \begin{itemize}
-  \item De mogelijkheid om CHR te gebruiken in pure C programma's
-  \item Een poging tot CHR heel snel maken (oa. door grote vrijheid in C datastructuren)
+  \item CHR kunnen gebruiken in pure C programma's
+  \item Een poging tot CHR heel snel maken: \begin{itemize}
+    \item Vrijheid datastructuren
+    \item Optimalisaties C compiler benutten
+    \end{itemize}
   \end{itemize}
   \end{block}
 }
@@ -107,17 +110,16 @@ Dr. ir. Tom Schrijvers}
   \begin{itemize}
     \item Willekeurige ariteit
     \item Alle C datatypes (behalve arrays) als argumenten
-    \item Extra parameters voor weergave of voor destructors
   \end{itemize}
   \end{block}
   
-  \begin{block}{voorbeeld}
+  \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
 \textcolor{red}{constraint} init(int),fib(int,bignum_t)
   \textcolor{red}{destr}(destruct_bignum(&$2))\textcolor{blue}{;}
   \end{Verbatim}
-  \end{block}
-}
+  \end{example}
+} %$
 
 \frame[containsverbatim]{\frametitle{Mogelijkheden}
   \begin{block}{CHR Rules}
@@ -129,80 +131,23 @@ Dr. ir. Tom Schrijvers}
   \end{itemize}
   \end{block}
   
-  \begin{block}{voorbeelden}
+  \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
 \textcolor{blue}{begin @} init(_) \textcolor{blue}{==>} fib(0,1), fib(1,1)\textcolor{blue}{;}
 \textcolor{blue}{triv @} gcd(0) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
 \textcolor{blue}{dec @} gcd(N) \textcolor{blue}{\bs} gcd(M) \textcolor{blue}{<=>} M>=N \textcolor{blue}{|} gcd(M-N)\textcolor{blue}{;}
   \end{Verbatim}
-  \end{block}
+  \end{example}
 }
 
 \frame[containsverbatim]{\frametitle{Mogelijkheden}
-  \begin{block}{Variabelen}
-  Variabelen in CHR Rules zijn geimplementeerd:
+  \begin{block}{Guards en Bodys}
+  De volgende zaken zijn mogelijk als guard en body:
   \begin{itemize}
-    \item Als constraint-argument in head
-    \item Als lokale variabele in guard
-    \item Als lokale variabele in body
-  \end{itemize}
-  \end{block}
-  
-  \begin{block}{voorbeelden}
-  \begin{Verbatim}[commandchars=\\\{\}]
-con(N) \textcolor{blue}{==>} N>0 \textcolor{blue}{|} cons(N-1)\textcolor{blue}{;}
-con(N) \textcolor{blue}{==>} int M=N-1, M>=0 \textcolor{blue}{|} con(M)\textcolor{blue}{;}
-con(N) \textcolor{blue}{==>} N>0 \textcolor{blue}{|} int M=N-1, con(M)\textcolor{blue}{;}
-  \end{Verbatim}
-  \end{block}
-}
-
-\frame[containsverbatim]{\frametitle{Mogelijkheden}
-  \begin{block}{Niet-HNF Rules}
-  Het is mogelijk CHR Rules die niet in HNF (Head-Normal Form) staan te gebruiken:
-  \begin{itemize}
-    \item Er kunnen C-expressies als argument voorkomen
-    \item Een variabele mag meermaals voorkomen
-    \item Een variabele mag in een expressie voorkomen
-  \end{itemize}
-  \end{block}
-  
-  \begin{block}{voorbeelden}
-  \begin{Verbatim}[commandchars=\\\{\}]
-con(0) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
-fib(N,_) \textcolor{blue}{\bs} init(N) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
-fib(N-1,M1), fib(N,M2) \textcolor{blue}{==>} fib(N+1,M1+M2)\textcolor{blue}{;}
-  \end{Verbatim}
-  \end{block}
-}
-
-\frame[containsverbatim]{\frametitle{Mogelijkheden}
-  \begin{block}{C statements}
-  Het is mogelijk willekeurige C statements in guard of body te plaatsen:
-  \begin{itemize}
-   \item Moet tussen \{ \ldots \}
-   \item Bv initialisatie van ingwikkelde argumenten
-  \end{itemize}
-  \end{block}
-
-  \begin{block}{voorbeeld}
-  \begin{Verbatim}[commandchars=\\\{\}]
-str(Str1) \textcolor{blue}{==>} 
-  char *Str2=malloc(2*strlen(Str1)), \textcolor{blue}{\{}
-    strcpy(Str2,Str1);
-    strcat(Str2,Str1);
-  \textcolor{blue}{\}}, dblstr(Str2)\textcolor{blue}{;}
-  \end{Verbatim}
-  \end{block}
-}
-
-\frame[containsverbatim]{\frametitle{Mogelijkheden}
-  \begin{block}{Debug-modus}
-  Er is een debug modus:
-  \begin{itemize}
-    \item Door een optie aan C compiler mee te geven
-    \item Print alle constraints, uitgevoerde regels, propagation history toevoegingen, \ldots uit
-    \item vereist een debug(``printf string'') tag bij alle constraints
+   \item Voorwaardelijke expressies (enkel guard)
+   \item Variabele declaraties (en initialisaties)
+   \item Willekeurige C code (tussen accolades)
+   \item Toe te voegen CHR contraints (enkel body)
   \end{itemize}
   \end{block}
 }
@@ -225,51 +170,36 @@ str(Str1) \textcolor{blue}{==>}
   \end{psmatrix}
 }
 
-\subsection{Overzicht}
-\frame{\frametitle{Overzicht}
+\subsection{Structuur}
+\frame{\frametitle{Structuur}
   \begin{columns}[c]
   \column{0.6\textwidth}
   \implstruct{3ex}{3em}{black}{black}{black}{black}
   \end{columns}
 }
 
-\frame{\frametitle{Overzicht}
+\frame{\frametitle{Structuur - Main, Lexer, Parser}
   \begin{columns}
    \column{.43\textwidth}
-    {\small \implstruct{1.5ex}{1.5em}{red}{black}{black}{black}}
+    {\small \implstruct{1.5ex}{1.5em}{red}{red}{black}{black}}
    \column{.57\textwidth}
   \begin{block}{de main module}
   \begin{itemize}
     \item Bevat de main() C routine
     \item Overloopt alle opgegeven sourcefiles
-    \item Vervangt .chr of .cchr door .c voor output
-    \item Kopieert input naar output, behalve cchr-blokken
-    \item Voor cchr blokken worden lexer, parser, analyser en code-generator aangeroepen
+    \item Roept andere modules aan voor cchr-blokken
+  \end{itemize}
+  \end{block}
+  \begin{block}{Lexer en Parser}
+  \begin{itemize}
+    \item Geschreven in Flex en Bison resp.
+    \item Herkennen CCHR tokens en grammatica
+    \item Enkel voor CCHR blokken
   \end{itemize}
   \end{block}
   \end{columns}
 }
-\frame[containsverbatim]{\frametitle{Overzicht}
-  \begin{columns}
-   \column{.43\textwidth}
-    {\small \implstruct{1.5ex}{1.5em}{black}{red}{black}{black}}
-   \column{.57\textwidth}
-    \begin{block}{de lexer}
-     \begin{itemize}
-      \item Geschreven mbv. Flex (die lexer genereert in C)
-      \item Herkent operatoren, haakjes, symbolen
-      \item Parser vraagt deze 'tokens'  op aan lexer
-     \end{itemize}
-    \end{block}
-    \begin{block}{de parser}
-     \begin{itemize}
-      \item Geschreven mbv. Bison (die parser genereert in C)
-      \item Herkent regels, code-blokken, argumenten, constraints, \ldots
-     \end{itemize}
-    \end{block}
-  \end{columns}
-}
-\frame{\frametitle{Overzicht}
+\frame{\frametitle{Structuur - Analyse}
   \begin{columns}
    \column{.43\textwidth}
     {\small \implstruct{1.5ex}{1.5em}{black}{black}{red}{black}}
@@ -279,12 +209,12 @@ str(Str1) \textcolor{blue}{==>}
     \item Analyseert output van de parser (abstract syntax tree)
     \item Genereert nieuwe data structuur met expressions, variabelen, constraints, regels, \ldots
     \item Doet conversie naar Head Normal Form
-    \item Analyseert gebruik van variabelen, waar propagation history bij te houden, \ldots
+    \item Optimaliseert (iteratie volgorde, propagation history, indexen, \ldots)
   \end{itemize}
   \end{block}
   \end{columns}
 }
-\frame{\frametitle{Overzicht}
+\frame{\frametitle{Structuur - Code generatie}
   \begin{columns}
    \column{.43\textwidth}
     {\small \implstruct{1.5ex}{1.5em}{black}{black}{black}{red}}
@@ -298,147 +228,130 @@ str(Str1) \textcolor{blue}{==>}
   \end{block}
   \end{columns}
 }
-\section{Ontwerpbeslissingen}
-\subsection{Geheugenallocatie}
-\frame{\frametitle{Geheugenallocatie}
-  \begin{block}{Geheugenallocatie}
+\subsection{Logische variabelen}
+\frame{\frametitle{Logische variabelen}
+  \begin{block}{Wat?}
   \begin{itemize}
-    \item Alle ge-malloc()-ed geheugen wordt ge-free()-d
-    \item Garbage Collector is niet noodzakelijk, dmv. user-defined destructors
-    \item Eventueel kan alternatieve malloc()/free() gebruikt worden (eg. Boehm)
+    \item Variabelen die niet noodzakelijk een waarde hebben
+    \item Eventueel 'equalities' tussen bekend
+    \item vgl. met Prolog
+  \end{itemize}
+  \end{block}
+  \begin{block}{Implementatie}
+  \begin{itemize}
+    \item Gebruikt 'Union-Find' algoritme voor efficientie
+    \item Aan te roepen met een C macro
+    \item Voorlopig los van CCHR zelf
   \end{itemize}
   \end{block}
 }
-\subsection{Macro's}
-\frame{\frametitle{Gebruik van C macro's}
-  Gebruik van C macro's:
-  \begin{block}{voordelen}
+\subsection{Hashtables}
+\frame{\frametitle{Hashtables}
+  \begin{block}{Waarom?}
+  Versnellen van opzoekingen:
   \begin{itemize}
-    \item Minder echte code in CCHR compiler zelf (hardcoded)
-    \item Keuze van eg. datastructuren kan buiten compiler
-    \item Overzichtelijkere outputcode
-    \item Debug-mode door simpel optie meegeven aan C compiler
+    \item Propagation-history checks
+    \item Iteratie over constraints met bepaald argument
+    \item Iteratie over logische variabelen en reactivatie ervan
   \end{itemize}
   \end{block}
-  \begin{block}{nadelen}
+  \begin{block}{Implementatie}
   \begin{itemize}
-    \item Veel moeilijker locatie van bugs te vinden
-    \item Macro definities redelijk moeilijk leesbare code
+    \item Alweer gedefinieerd door C macros
+    \item Als hash-algoritme: lookup3
+    \item Als table-algoritme: cuckoo-hashing
   \end{itemize}
   \end{block}
 }
-\section{Performantie}
-
-\subsection{GCD Voorbeeld}
-\frame[containsverbatim]{\frametitle{GCD Voorbeeld}
+\frame{\frametitle{Hashtables - Lookup3}
+  \begin{block}{Lookup3}
+  \begin{itemize}
+    \item Willekeurige bytesequenties als key
+    \item Heel uniform, gecontroleerd voor veel patronen
+    \item Waarschijnlijk overkill voor heel simpele keys
+  \end{itemize}
+  \end{block}
+}
+\frame{\frametitle{Hashtables - Cuckoo Hashing}
+  \begin{block}{Cuckoo Hashing}
+  \begin{itemize}
+    \item 2 aparte hashtables, met onafhankelijke hashfunctie
+    \item Indien een plaats bezet in table 1, overschrijven en oud element in table 2 plaatsen. Indien dat bezet \ldots
+    \item Vrij simpel te implementeren
+    \item Geen aparte list per plaats nodig, en geen fragmentatie
+    \item Enkel lastig om over te itereren
+  \end{itemize}
+  \end{block}
+}
+\frame[containsverbatim]{\frametitle{Hashtables - Gebruik}
+  \begin{block}{Wanneer?}
+  \begin{itemize}
+    \item Propagation history wordt erin bijgehouden
+    \item Gelijkheden in guards worden hashtable indexen
+  \end{itemize}
+  \end{block}
+  \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
-\textcolor{red}{constraint} gcd(uint64_t)\textcolor{blue}{;}
-\textcolor{blue}{triv @} gcd(0ULL) \textcolor{blue}{<=>} true\textcolor{blue}{;}
-\textcolor{blue}{dec @} gcd(N) \textcolor{blue}{\bs} gcd(M) \textcolor{blue}{<=>} M>=N \textcolor{blue}{|} gcd(M-N)\textcolor{blue}{;}
+\textcolor{blue}{dec @} fib(N2,F1) \textcolor{blue}{\bs} fib(N1,F2) \textcolor{blue}{<=>}
+  alt(N1+1==N2,N1==N2-1) \textcolor{blue}{|} fib(N2+1,F1+F2)\textcolor{blue}{;}
   \end{Verbatim}
-  \vspace{2ex}
-  Beginnen met: gcd(100000000),gcd(5). \\
-  \vspace{2ex}
-  \begin{block}{resultaten}
-  \begin{tabular}{c|cc}
-    implementatie & runtime & cycles/iteratie \\
-    \hline
-    swi-prolog & 37.1s & 4100 \\
-    cchr       & 0.08s & 8.8 \\
-  \end{tabular}
-  \end{block}
-  \vspace{2ex}
-  Java heeft geen tail recursion $\rightarrow$ stack overflow
+  \end{example}
 }
-\subsection{FIB Voorbeeld}
-\frame[containsverbatim] {
-\frametitle{FIB Voorbeeld (met GMP library)}
-\scriptsize \begin{Verbatim}[commandchars=\\\{\}]
-typedef struct \{ mpz_t v; \} bigint_t;
+    
+\section{Resultaten}
 
-cchr \{
-  \textcolor{red}{constraint} fib(int,bigint_t) \textcolor{red}{destr}(mpz_clear($2.v))\textcolor{blue}{;}
-  \textcolor{red}{constraint} init(int)\textcolor{blue}{;}
-  
-  \textcolor{blue}{begin @} init(_) \textcolor{blue}{==>} bigint_t Z=, bigint_t Y=, \textcolor{blue}{\{}
-    mpz_init_set_si(Z.v,1);
-    mpz_init_set_si(Y.v,1);
-  \textcolor{blue}{\}}, fib(0,Z), fib(1,Y)\textcolor{blue}{;}
-  
-  \textcolor{blue}{calc @} init(Max), fib(N-1,M1), fib(N,M2) \textcolor{blue}{==>} N<Max \textcolor{blue}{|}
-    bigint_t Sum=, \textcolor{blue}{\{}
-      mpz_init(Sum.v);
-      mpz_add(Sum.v,M1.v,M2.v);
-    \textcolor{blue}{\}}, fib(N+1, Sum)\textcolor{blue}{;}
-  
-  \textcolor{blue}{fini @} init(_) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
-\}
-\end{Verbatim}
-}
-
-
-\frame[containsverbatim]{\frametitle{FIB Voorbeeld: resultaten}
-  Beginnen met: init(7499). \\
-  Versie 2 gebruikt:
-\begin{Verbatim}[commandchars=\\\{\}]
-  \textcolor{blue}{fini @} fib(Max,_) \textcolor{blue}{\bs} init(Max) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
-\end{Verbatim}
-in plaats van:
-\begin{Verbatim}[commandchars=\\\{\}]
-  \textcolor{blue}{fini @} init(_) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
-\end{Verbatim}
-  \vspace{2ex}
+\subsection{Performantie}
+\frame{\frametitle{Resultaten}
   \begin{block}{resultaten}
-  \begin{tabular}{c|cc}
-    implementatie & runtime(v1) & runtime(v2) \\
-    \hline
-    swi-prolog & 740s & 294s \\
-    jchr & 4.56s & 0.149s \\
-    cchr & 2.06s & 1.22s \\
-    cchr (no hist) & - & 0.505s
+  \begin{tabular}{c|ccc|l}
+  test & swi-prolog & jchr & cchr & test\\
+  \hline
+  gcd & 37.1s & - & 0.084 & gcd(100000000,5) \\
+  fib & 708s & 5.0s & 0.023s & fib up to 7499 \\
+  primes & 4.12s & 4.3s & 0.090s & primes up to 7500 \\
+  tak & 6.19s & 0.57s & 0.048s & tak(500,450,405) \\
+  ram & 0.63s & 0.62s & 0.016s & count to 2750 \\
+  \hline
+  avg & 291 & 46.7 & 1 & relative averages\\
   \end{tabular}
   \end{block}
 }
 
-\subsection{Primes Voorbeeld}
-\frame[containsverbatim] {
-\frametitle{Primes Voorbeeld}
-
-\small \begin{Verbatim}[commandchars=\\\{\}]
-\textcolor{red}{constraint} candidate(int),prime(int)\textcolor{blue}{;}
-candidate(1) \textcolor{blue}{<=>} true\textcolor{blue}{;}
-candidate(N) \textcolor{blue}{<=>} prime(N), candidate(N-1)\textcolor{blue}{;}
-prime(Y) \textcolor{blue}{\bs} prime(X) \textcolor{blue}{<=>} (X%Y)==0 \textcolor{blue}{|} \textcolor{red}{true}\textcolor{blue}{;}
+\subsection{Voorbeelden}
+\frame[containsverbatim]{\frametitle{Voorbeeld - CCHR code}
+  \begin{example}
+  \begin{Verbatim}[commandchars=\\\{\}]
+constraint fib(int,uint64_t);
+  
+begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
+calc @  init(Max), fib(N2,M2) \bs fib(N1,M1) <=> 
+  alt(N2==N1+1,N2-1==N1), N2<Max | fib(N2+1, M1+M2);
+  \end{Verbatim}
+  \end{example}
+}
+\frame[containsverbatim]{\frametitle{Voorbeeld - C Macros}
+  \begin{example}[generated code]
+  {\scriptsize \begin{Verbatim}[commandchars=\\\{\}]
+#define CODELIST_fib_2_calc_R1 \bs 
+  CSM_IMMLOCAL(int,N1,CSM_ARG(fib_2,arg1)) \bs
+  CSM_IMMLOCAL(uint64_t,M1,CSM_ARG(fib_2,arg2)) \bs
+  CSM_DEFIDXVAR(fib_2,idx1,K2) \bs
+  CSM_SETIDXVAR(fib_2,idx1,K2,arg1,CSM_LOCAL(N1) + 1) \bs
+  CSM_IDXLOOP(fib_2,idx1,K2, \bs
+    CSM_IF(CSM_DIFFSELF(K2), \bs
+      CSM_IMMLOCAL(int,N2,CSM_LARG(fib_2,K2,arg1)) \bs
+      CSM_IMMLOCAL(uint64_t,M2,CSM_LARG(fib_2,K2,arg2)) \bs
+      CSM_LOOP(init_1,K1, \bs
+        CSM_IMMLOCAL(int,Max,CSM_LARG(init_1,K1,arg1)) \bs
+        CSM_IF(CSM_LOCAL(N2) < CSM_LOCAL(Max), \bs
+          CSM_KILLSELF(fib_2) \bs
+          CSM_ADD(fib_2,CSM_LOCAL(N2)+1,CSM_LOCAL(M1)+CSM_LOCAL(M2)) \bs
+          CSM_END \bs
+        ) \bs
+      ) \bs
+    ) \bs
+  )
 \end{Verbatim}
-  Beginnen met: candidate(23000). \\
-  \vspace{2ex}
-  \begin{block}{resultaten}
-  \begin{tabular}{c|c}
-    implementatie & runtime \\
-    \hline
-    swi-prolog & 330s \\
-    jchr & 48.5s \\
-    cchr & 8.9s
-  \end{tabular}
-  \end{block}
-}
-
-\section{Gepland werk}
-\subsection{Gepland werk}
-\frame{\frametitle{Gepland werk}
-  \begin{block}{Gepland werk}
-  \begin{itemize}
-    \item Built-in constraints (mbv. union find) \& reactivatie
-    \item Meer datastructuren (eg. hashtables)
-    \item Functies om over constraint store te itereren
-    \item Meer voorbeelden uitwerken en testen
-    \item Parameters bij rules (pragma's, eg. ``passive'')
-    \item Meer optimalisaties
-  \end{itemize}
-  \end{block}
-}
-
-\frame{\frametitle{Einde}
-  Nog vragen?
+  }\end{example}
 }
 \end{document}

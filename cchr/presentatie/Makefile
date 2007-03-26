@@ -1,3 +1,6 @@
+#~/lea.ulyssis.org/www/maart.pdf: maart.pdf
+#	cp maart.pdf ~/lea.ulyssis.org/www/maart.pdf
+
 maart.pdf: maart.dvi
 	dvipdf maart.dvi
 

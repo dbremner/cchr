@@ -7,11 +7,10 @@
 
 cchr {
   constraint fib(int,uint64_t) fmt("fib(%i,%llu)"),init(int) fmt("init(%i)");
+  extern alt;
   
   begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
-  calc @  init(Max), fib(N,M1), fib(N+1,M2) ==> N+1<Max | uint64_t M3=M1+M2, fib(N+2, M3);
-  fini @ init(_) <=> true;
-  /* fini @ fib(Max,_) \ init(Max) <=> true; */
+  calc @  init(Max), fib(N2,M2) \ fib(N1,M1) <=> alt(N2==N1+1,N2-1==N1), N2<Max | fib(N2+1, M1+M2);
 }
 
 int main(int argc, char **argv) {

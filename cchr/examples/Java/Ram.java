@@ -1,6 +1,6 @@
 import java.util.Collection;
 
-public class Primes {
+public class Ram {
 
     public static void main(String[] args) throws Exception {
     if (args.length != 1) printUsage();
@@ -13,10 +13,18 @@ return;
 }
 
 // First we create a new JCHR constraint handler:
-PrimesHandler handler = new PrimesHandler();
+RamHandler handler = new RamHandler();
 
 // Next we tell the JCHR handler the following two constraints:             
-handler.tellCandidate(i0);
+        handler.tellMem(1,1);
+        handler.tellMem(2,i0);
+        handler.tellMem(3,0);
+        handler.tellProg(1,2,Instruction.ADD,1,3);
+        handler.tellProg(2,3,Instruction.SUB,1,2);
+        handler.tellProg(3,1,Instruction.CJUMP,2,4);
+        handler.tellProg(4,0,Instruction.HALT,0,0);
+	handler.tellProg_counter(1);
+
 // Afterwards we can lookup the constraints in the 
 // resulting constraint store: 
 
@@ -35,7 +43,7 @@ printUsage();
     
 public final static void printUsage() {
 System.out.println(
-"Usage: java Primes <positive int>"
+"Usage: java Ram <positive int>"
 );
 }
 }

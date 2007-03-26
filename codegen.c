@@ -470,7 +470,6 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
     output_fmt(out,"CSM_END \\\n");
   } else {
     output_indent(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, \\",") \\");
-    output_fmt(out,"CSM_STROUT(\"abort\") \\\n");
     for (int k=0; k<alist_len(clean); k++) {
       csm_idxclean_t *cl=alist_ptr(clean,k);
       char chc[256];

@@ -113,7 +113,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
 	int rem2=0;
 	if (cot2 & (1<<31)) {
 	  cot2 ^= (1<<31);
-	  rem=1;
+	  rem2=1;
 	}
 	sem_conocc_t *co2=alist_ptr(rule->head[rem2 ? SEM_RULE_LEVEL_REM : SEM_RULE_LEVEL_KEPT],cot2);
 	if (co->constr == co2->constr) {

@@ -36,6 +36,7 @@ void static sem_constr_init(sem_constr_t* con,char *name) {
   /*alist_init(con->fmtargs);*/
   sem_expr_init(&(con->fmt));
   sem_expr_init(&(con->destr));
+  sem_expr_init(&(con->init));
   con->name=name;
 }
 
@@ -55,7 +56,7 @@ void static sem_constr_destruct(sem_constr_t *con) {
   alist_free(con->fmtargs);*/
   sem_expr_destruct(&(con->fmt));
   sem_expr_destruct(&(con->destr));
-  
+  sem_expr_destruct(&(con->init));
 }
 
 /* initialize a sem_exprpart_t as a variable reference */
@@ -1008,13 +1009,14 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   			}*/
   			ok=1;
   		}
-  		if (!ok && !strcmp(t->data,"destr")) {
+  		if (!ok && ((!strcmp(t->data,"destr")) || (!strcmp(t->data,"init"))) ) {
 			sem_vartable_t svt;
   			sem_vartable_init_constr(&svt,n);
-  			/*sem_vartable_init_args(&svt,alist_len(n->types));*/
-  			sem_expr_init(&(n->destr));
-  			sem_expr_generate(&(n->destr),&svt,out,alist_ptr(t->args,0),n->name,0,1);
-  			sem_expr_expand(out,&svt,&(n->destr),NULL,NULL);
+			sem_expr_t *res=&(n->destr);
+			if (!strcmp(t->data,"init")) res=&(n->init);
+  			sem_expr_init(res);
+  			sem_expr_generate(res,&svt,out,alist_ptr(t->args,0),n->name,0,1);
+  			sem_expr_expand(out,&svt,res,NULL,NULL);
   			sem_vartable_destruct(&svt);
   			ok=1;  			
   		}

@@ -21,7 +21,7 @@ cchr {
   macro cb(log_int_t,_,_) log_int_t_setcb($1,$2,$3);
 
   /* declare the constraint fib(A,B), with a destructor and a debug-output-format */
-  constraint fib(int,log_int_t) destr( {del($2);} ) fmt("fib(%i,%p)");
+  constraint fib(int,log_int_t) destr({del($2);}) init({copy($2);}) fmt("fib(%i,%p)");
 
   /* the 4 chr rules */
   dup @ fib(N,M1) \ fib(N,M2) <=> { set(M1,M2); };
@@ -30,7 +30,7 @@ cchr {
   fn @ fib(N,M) ==> N>1 | 
     log_int_t M1=new(M1), log_int_t M2=new(M2), /* create 2 logical variables */
     // {cb(M1,cchr_reactivate_all,NULL); cb(M2,cchr_reactivate_all,NULL);}, /* initialize reactivation callbacks */
-    fib(N-2,copy(M1)), fib(N-1,copy(M2)), /* add two constraints (to solve lower-valued fib's) */
+    fib(N-2,M1), fib(N-1,M2), /* add two constraints (to solve lower-valued fib's) */
     { set(M,get(M1)+get(M2)); },
     { del(M1); del(M2); }; /* destroy M1 and M2 */
 }
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   cchr_runtime_init();
   int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
   log_int_t answer=log_int_t_create();
-  cchr_add_fib_2(a,log_int_t_copy(answer));
+  cchr_add_fib_2(a,answer);
   printf("answer=%li\n",log_int_t_hasval(answer) ? (long)log_int_t_getval(answer) : -1);
   cchr_runtime_free();
   log_int_t_destruct(answer); 

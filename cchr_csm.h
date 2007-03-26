@@ -249,6 +249,9 @@
     int doadd=(pid_self_==DCLS_EMPTY_PID); \
     int oldid; \
     int oldgen; \
+    if (doadd) { \
+      CONSTRUCT_##NAME; \
+    } \
     CSM_DEBUG( \
 	  CSM_PRINTF("fire ",NAME); \
       _global_runtime.debugindent++; \
@@ -325,7 +328,7 @@
 
 /* callback macro for arguments of code of fire functions */ 
 #define CSM_CB_FFCAR_S
-#define CSM_CB_FFCAR_D(NAME,TYPE,...) , TYPE arg_##NAME
+#define CSM_CB_FFCAR_D(NAME,TYPE,...) , TYPE NAME
 
 /* callback macro for inclusion of constraint-occurrence code in fire functions */
 #define CSM_CB_FFCCO_S
@@ -333,14 +336,14 @@
 
 /* callback macro for arguments of code of add functions */
 #define CSM_CB_FFCAA_S ,
-#define CSM_CB_FFCAA_D(NAME,TYPE,...) TYPE arg_##NAME
+#define CSM_CB_FFCAA_D(NAME,TYPE,...) TYPE NAME
 
 /* callback macro for arguments passed to fire function in add functions */
 #define CSM_CB_FFCFC_S
-#define CSM_CB_FFCFC_D(NAME,TYPE,...) , arg_##NAME
+#define CSM_CB_FFCFC_D(NAME,TYPE,...) , NAME
 
 
-#define CSM_ARG(TYPE,NAME) (arg_##NAME)
+#define CSM_ARG(TYPE,NAME) (NAME)
 
 #define CSM_IF(EXP,CODE) { \
 	if (EXP) { \
@@ -449,7 +452,7 @@
 
 /* callback macro for constraint suspension argument setting */ 
 #define CSM_CB_MAKSA_S 
-#define CSM_CB_MAKSA_D(NAME,TYPE,CON) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = arg_##NAME ;
+#define CSM_CB_MAKSA_D(NAME,TYPE,CON) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = NAME ;
 
 #define CSM_CB_PHI_D(T,V,A) CSM_PROP( \
 	cchr_propstr_##V##_t_init(&(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V)); \

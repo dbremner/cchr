@@ -143,7 +143,7 @@ csm_varuse_t static *csm_generate_vartable_constr(sem_cchr_t *chr,int coni) {
   csm_constr_getname(chr,coni,c,256);
   csm_varuse_t *tbl=malloc(sizeof(csm_varuse_t)*alist_len(co->types));
   for (int i=0; i<alist_len(co->types); i++) {
-    tbl[i].code=make_message("_arg_%i",i+1);
+    tbl[i].code=make_message("arg%i",i+1);
     tbl[i].use=0;
   }
   return tbl;
@@ -291,7 +291,7 @@ void static csm_generate_body(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl
       int w=0;
       while (ok && w<alist_len(co->args)) {
         sem_var_t *var=alist_ptr(rule->vt.vars,alist_get(co->args,w));
-        if (tbl[alist_get(co->args,w)].use != var->occ[SEM_RULE_LEVEL_BODY]+var->occ[SEM_RULE_LEVEL_GUARD]) ok=0;
+        if (tbl[alist_get(co->args,w)].use != var->occ[SEM_RULE_LEVEL_BODY]) ok=0;
         w++;
       }
       if (ok) {
@@ -465,6 +465,8 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
   if (ru->hook>=0) {
     output_fmt(out,"CSM_HISTADD(%s%s\n",buf3,end);
   }
+  csm_destruct_vartable_rule(ru,tbl_c); /* destruct the vartable and recreate it, so the body generation starts with zeroed varuses */
+  tbl_c=csm_generate_vartable_rule_cached(cchr,ru,rem,ro->pos);
   csm_generate_body(cchr,ru,tbl_c,out);
   if (rem) {
     output_fmt(out,"CSM_END \\\n");
@@ -576,11 +578,17 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		output_fmt(out,"#define DESTRUCT_%s(",conn);
 		for (int l=0; l<alist_len(con->types); l++) {
 			if (l) output_fmt(out,",");
-			output_fmt(out,"_arg_%i",l+1);
+			output_fmt(out,"arg%i",l+1);
 		}
 		output_fmt(out,") ");
 		if (alist_len(con->destr.parts)>0) {
 			csm_generate_expr(&(con->destr),vt,out);
+		}
+		output_string(out,"\n");
+		output_fmt(out,"#undef CONSTRUCT_%s\n",conn);
+		output_fmt(out,"#define CONSTRUCT_%s ",conn);
+		if (alist_len(con->init.parts)>0) {
+			csm_generate_expr(&(con->init),vt,out);
 		}
 		output_string(out,"\n");
 		/*output_fmt(out,"#undef DESTRUCT_PID_%s\n",conn);

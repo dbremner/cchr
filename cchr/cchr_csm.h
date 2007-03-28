@@ -104,7 +104,7 @@
     uint32_t static inline cchr_propent_##V##_hash1(cchr_propent_##V##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x2B7E1516UL); } \
     uint32_t static inline cchr_propent_##V##_hash2(cchr_propent_##V##_t *val) { return (uint32_t)hashword(val->hist+1,RULE_KEPT_##V-1,0x3243F6A8UL); } \
     int static inline cchr_propent_##V##_eq(cchr_propent_##V##_t *v1,cchr_propent_##V##_t *v2) { \
-      for (int i=0; i<RULE_KEPT_##V-1; i++) { \
+      for (int i=1; i<RULE_KEPT_##V; i++) { \
         if (v1->hist[i] != v2->hist[i]) return 0; \
       } \
       return 1; \

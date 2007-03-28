@@ -43,6 +43,7 @@ void strip_sl(char *c);
 %x BCOMMENT
 %X LCOMMENT
 %X STRING
+%X CHAR
 
 white_space       [ \t\n]*
 digit             [0-9]
@@ -74,6 +75,12 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 <STRING>"\""	  BEGIN(INITIAL); LIT_RETURN(TOK_ESTRING);
 <STRING>.		  LIT_RETURN(TOK_STRING)
 
+"\'"			  BEGIN(CHAR); LIT_RETURN(TOK_BCHAR);
+<CHAR>"\\"(x{hex_integer}{hex_integer})	LIT_RETURN(TOK_CHAR)
+<CHAR>"\\".	  LIT_RETURN(TOK_CHAR)
+<CHAR>"\'"	  BEGIN(INITIAL); LIT_RETURN(TOK_ECHAR);
+<CHAR>.		  LIT_RETURN(TOK_CHAR)
+
 "constraint"      LIT_RETURN(TOK_CONSTRAINT);
 "true"            LIT_RETURN(TOK_TRUE);
 "extern"	  	  LIT_RETURN(TOK_EXTERN);
@@ -89,9 +96,9 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 "\\"              LIT_RETURN(TOK_BSLASH);
 "("               LIT_RETURN(TOK_LRBRAC);
 ")"               LIT_RETURN(TOK_RRBRAC);
+"*"		  LIT_RETURN(TOK_ASTER);
 
-"++"|"--"|"+"|"-"|"*"|"/"|"->"|"."|"<<"|">>"|"<"|">"|"="|"=="|"<="|">="|"%"|"%="               	LIT_RETURN(TOK_OP)
-"^"|"~"|"&"|"&&"|"||"|"+="|"*="|"/="|"-="|">>="|"<<="|"&="|"|="|"||="|"&&="|"!="   		LIT_RETURN(TOK_OP)
+"++"|"--"|"+"|"-"|"/"|"->"|"."|"<<"|">>"|"<"|">"|"="|"=="|"<="|">="|"%"|"%="|"^"|"~"|"&"|"&&"|"||"|"+="|"*="|"/="|"-="|">>="|"<<="|"&="|"|="|"||="|"&&="|"!="|"^="|"?":":"   		LIT_RETURN(TOK_OP)
 {integer}         LIT_RETURN(TOK_CONST)
 {real}            LIT_RETURN(TOK_CONST)
 {hex_integer}     LIT_RETURN(TOK_CONST)

@@ -43,15 +43,36 @@ typedef uint32_t dcls_pid_t;
 #define dcls_iter_hasnext(var,pid,type) ((pid) != (type))
 #define dcls_iter_next(var,pid) ((var)._d[(pid)]._next)
 
-#define dcls_iter(var,pid,type,code) { \
-  dcls_pid_t pid=dcls_iter_first((var),(type)); \
-  while (dcls_iter_hasnext(var,pid,type)) { \
-  	dcls_pid_t _nextpid=dcls_iter_next(var,pid); { \
+#define dcls_safeiter(var,pid,type,code) { \
+  int _cont; \
+  do { \
+     _cont=0; \
+     dcls_pid_t pid=dcls_iter_first((var),(type)); \
+     while (dcls_iter_hasnext(var,pid,type)) { \
+  	dcls_pid_t _nextpid=dcls_iter_next(var,pid); \
+	if (dcls_used(var,pid)) { \
   	  code \
-  	}\
+  	} else { \
+	  _cont=1;\
+	  break; \
+	} \
   	(pid)=_nextpid;\
+     } \
+  } while(_cont); \
+}
+
+#define dcls_unsafeiter(var,pid,type,code) { \
+  dcls_pid_t pid=dcls_iter_first((var),(type)); \
+   while (dcls_iter_hasnext(var,pid,type)) { \
+     dcls_pid_t _nextpid=dcls_iter_next(var,pid); \
+     if (dcls_used(var,pid)) { \
+       code \
+     } \
+     (pid)=_nextpid;\
   } \
 }
+
+#define dcls_iter dcls_safeiter
 
 #define dcls_used(var,pid) ((var)._d[(pid)]._prev != DCLS_EMPTY_PID)
 

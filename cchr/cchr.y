@@ -51,14 +51,14 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
   exprlist_t elist;
 }
 
-%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING TOK_MACRO
+%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING TOK_MACRO TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR
 
 %token TOK_ERROR
 
-%type  <lit> literal type rname string stringparts
+%type  <lit> literal type rname string stringparts char charparts
 
 
-%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname TOK_EXTERN TOK_STRING TOK_BSTRING TOK_ESTRING
+%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname TOK_EXTERN TOK_STRING TOK_BSTRING TOK_ESTRING TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR
 
 %type <constr> typelistc typelist constr carglist
 %destructor { destruct_constr_t(&$$); } typelistc typelist constr carglist
@@ -127,6 +127,7 @@ functio : TOK_FUNC arglist TOK_RRBRAC {
 token : literal { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); }
 	  | functio
 	  | string  { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); }
+	  | char  { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); }
 	  | TOK_LCBRAC stokenlist TOK_RCBRAC { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_addall($$.list,$2.list); alist_new($$.list,tok); tok->data=$3; tok->type=TOKEN_TYPE_LIT; alist_free($2.list); }
       | TOK_SYMB  { 
    		    alist_init($$.list);
@@ -173,8 +174,21 @@ exprlist : TOK_TRUE { free($1); alist_init($$.list); }
 string : TOK_BSTRING stringparts TOK_ESTRING { $$=malloc(strlen($1)+strlen($2)+strlen($3)+1); strcpy($$,$1); strcat($$,$2); strcat($$,$3); free($1); free($2); free($3); }
 	   ;
 
+char : TOK_BCHAR charparts TOK_ECHAR { $$=malloc(strlen($1)+strlen($2)+strlen($3)+1); strcpy($$,$1); strcat($$,$2); strcat($$,$3); free($1); free($2); free($3); }
+	   ;
+
 stringparts : { $$=malloc(1); $$[0]=0; }
 			| stringparts TOK_STRING { 
+				$$=malloc(strlen($1)+strlen($2)+1);
+				strcpy($$,$1);
+				strcat($$,$2);
+				free($1);
+				free($2);
+			  }
+			;
+
+charparts : { $$=malloc(1); $$[0]=0; }
+			| charparts TOK_CHAR { 
 				$$=malloc(strlen($1)+strlen($2)+1);
 				strcpy($$,$1);
 				strcat($$,$2);
@@ -193,6 +207,7 @@ literal : TOK_COMMA
         | TOK_CONST
         | TOK_OP
         | TOK_AT
+	| TOK_ASTER
         ;
 
 rname : TOK_SYMBAT { $$=$1; }
@@ -235,8 +250,9 @@ typelistc : type		{ $$.name=NULL; alist_init($$.list); alist_add($$.list,$1); }
 		  ;
 
 type : TOK_SYMB { $$ = $1; }
-	 | type TOK_SYMB { $$ = realloc($1,strlen($1)+strlen($2)+2); strcat($$," "); strcat($$,$2); free($2); }
-	 ;
+     | type TOK_SYMB { $$ = realloc($1,strlen($1)+strlen($2)+2); strcat($$," "); strcat($$,$2); free($2); }
+     | type TOK_ASTER { $$ = realloc($1,strlen($1)+strlen($2)+2); strcat($$," "); strcat($$,$2); free($2); }
+     ;
 
 %%
 

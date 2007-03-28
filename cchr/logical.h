@@ -179,9 +179,10 @@ typedef enum  {
 		} \
 	} \
 	int static INLINE out##_testeq(out var1, out var2) { \
-		var1=out##_normalize(var1); \
-		var2=out##_normalize(var2); \
-		return ((var1)==(var2)); \
+		out var1b=out##_normalize(var1); \
+		out var2b=out##_normalize(var2); \
+		LOG_DEBUG(fprintf(stderr,"[testeq %p:#%i(#%i) %p:#%i(#%i)]\n",var1,var1->_id,var1b->_id,var2,var2->_id,var2b->_id);) \
+		return ((var1b)==(var2b)); \
 	} \
 	int static INLINE out##_hasval(out var) { \
 		var=out##_normalize(var); \

@@ -9,14 +9,14 @@ int genPrimes(int upto) {
   int n=1;
   for (int j=3; j<=upto; j++) {
     int k=0;
-    do {
-      int t=primes[k++];
-      if (t*t>j) {
-        primes[n++]=j;
-	break;
-      }
+    while (k<n) {
+      int t=primes[k];
       if ((j%t)==0) break;
-    } while(1);
+      k++;
+    }
+    if (k==n) {
+      primes[n++]=j;
+    }
   } 
   int ret=primes[n-1];
   free(primes);

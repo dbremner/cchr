@@ -11,7 +11,7 @@
   \usepackage{hyperref}
   \setbeamertemplate{background canvas}[vertical shading][bottom=white!10,top=blue!10]
   \usetheme{Warsaw}
-  \usefonttheme[onlysmall]{structurebold}
+%  \usefonttheme[onlysmall]{structurebold}
 }
 
 \usepackage{amsmath}
@@ -37,12 +37,13 @@
 \setbeamertemplate{navigation symbols}{}
 
 \title{CCHR: De snelste CHR implementatie}
-\subtitle{Promotor: \\
+\subtitle{Pieter Wuille}
+
+\author{Promotor: \\
 Prof. Dr. Bart Demoen \\
 Begeleider: \\
 Dr. ir. Tom Schrijvers}
 
-\author{Pieter Wuille}
 \date{29 maart 2007}
 
 \begin{document}
@@ -51,14 +52,14 @@ Dr. ir. Tom Schrijvers}
 
 \begin{frame}
   \frametitle{Overzicht}
-  {\scriptsize \tableofcontents}
+  \tableofcontents
 \end{frame}
 
 \AtBeginSection[]
 {
   \begin{frame}<beamer>
     \frametitle{Overzicht}
-    {\scriptsize \tableofcontents[current,currentsubsection]}
+    \tableofcontents[current,currentsubsection]
   \end{frame}
 }
 
@@ -80,7 +81,7 @@ Dr. ir. Tom Schrijvers}
 \frame{\frametitle{Opbouw CCHR}
   De verschillende stappen bij het gebruik van CCHR zijn: \\
   \vspace{2ex}
-  \begin{columns}
+  \begin{columns}[c]
   \column{0.45\textwidth}
   \begin{psmatrix}[rowsep=0.3,colsep=0.2]
     \psshadowbox{CCHR code} \\
@@ -182,7 +183,7 @@ Dr. ir. Tom Schrijvers}
 }
 
 \frame{\frametitle{Structuur - Main, Lexer, Parser}
-  \begin{columns}
+  \begin{columns}[c]
    \column{.43\textwidth}
     {\small \implstruct{1.5ex}{1.5em}{red}{red}{black}{black}}
    \column{.57\textwidth}
@@ -203,7 +204,7 @@ Dr. ir. Tom Schrijvers}
   \end{columns}
 }
 \frame{\frametitle{Structuur - Analyse}
-  \begin{columns}
+  \begin{columns}[c]
    \column{.43\textwidth}
     {\small \implstruct{1.5ex}{1.5em}{black}{black}{red}{black}}
    \column{.57\textwidth}
@@ -218,8 +219,8 @@ Dr. ir. Tom Schrijvers}
   \end{columns}
 }
 \frame{\frametitle{Structuur - Code generatie}
-  \begin{columns}
-   \column{.43\textwidth}
+  \begin{columns}[c]
+  \column{.43\textwidth}
     {\small \implstruct{1.5ex}{1.5em}{black}{black}{black}{red}}
    \column{.57\textwidth}
   \begin{block}{de code-generator}
@@ -269,6 +270,7 @@ Dr. ir. Tom Schrijvers}
 \frame{\frametitle{Hashtables - Lookup3}
   \begin{block}{Lookup3}
   \begin{itemize}
+    \item Public-domain algoritme
     \item Willekeurige bytesequenties als key
     \item Heel uniform, gecontroleerd voor veel patronen
     \item Waarschijnlijk overkill voor heel simpele keys
@@ -279,7 +281,7 @@ Dr. ir. Tom Schrijvers}
   \begin{block}{Cuckoo Hashing}
   \begin{itemize}
     \item 2 aparte hashtables, met onafhankelijke hashfunctie
-    \item Indien een plaats bezet in table 1, overschrijven en oud element in table 2 plaatsen. Indien dat bezet \ldots
+    \item Indien een plaats bezet in table 1, overschrijven en oud element in table 2 plaatsen. Indien dat bezet is \ldots
     \item Vrij simpel te implementeren
     \item Geen aparte list per plaats nodig, en geen fragmentatie
     \item Enkel lastig om over te itereren
@@ -296,7 +298,7 @@ Dr. ir. Tom Schrijvers}
   \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
 \cBlue{dec @} fib(N2,F1) \cBlue{\bs} fib(N1,F2) \cBlue{<=>}
-  alt(N1+1==N2,N1==N2-1) \cBlue{|} fib(N2+1,F1+F2)\cBlue{;}
+  \cRed{alt}(N1+1==N2,N1==N2-1) \cBlue{|} fib(N2+1,F1+F2)\cBlue{;}
   \end{Verbatim}
   \end{example}
 }
@@ -307,17 +309,17 @@ Dr. ir. Tom Schrijvers}
 \frame{\frametitle{Resultaten}
   \begin{block}{resultaten}
   \begin{tabular}{c|ccccc}
-  test & swi-prolog & jchr & cchr & cchr(noidx) & C \\
+  {\bf test} & swi-prolog & jchr & cchr & cchr(noidx) & C \\
   \hline
-  gcd & 37.1s & - & 0.084s & 0.084s & 0.019s \\
-  fib & 708s & 5.0s & 0.023s & 1.2s & 0.003s \\
-  primes & 4.12s & 4.3s & 0.090s & 0.090s & 0.0007s \\
-  tak & 6.19s & 0.57s & 0.048s & 17.6s & 0.007s \\
-  ram & 0.63s & 0.62s & 0.016s & 0.005s & 0.0001s \\
-  merge & 0.33s & 1.6s & 0.035s & 0.016s & 0.0005s \\
-  leq & 947s & 2.8s & 1.09s & 1.09s & 0.0038s  \\
+  {\bf gcd} & 37.1s & - & 0.084s & 0.084s & 0.019s \\
+  {\bf fib} & 708s & 5.0s & 0.023s & 1.2s & 0.003s \\
+  {\bf primes} & 4.12s & 4.3s & 0.090s & 0.090s & 0.010s \\
+  {\bf tak} & 6.19s & 0.57s & 0.048s & 17.6s & 0.007s \\
+  {\bf ram} & 0.63s & 0.62s & 0.016s & 0.005s & 0.0001s \\
+  {\bf merge} & 0.33s & 1.6s & 0.035s & 0.016s & 0.0005s \\
+  {\bf leq} & 947s & 2.8s & 1.09s & 1.09s & 0.0038s  \\
   \hline
-  avg & 197 & 29 & 1 & 3.7 & 0.019 \\
+  {\bf avg} & 197 & 29 & 1 & 3.7 & 0.03 \\
   \end{tabular}
   \end{block}
 }
@@ -326,39 +328,50 @@ Dr. ir. Tom Schrijvers}
 \frame[containsverbatim]{\frametitle{Voorbeeld - CCHR code}
   \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
-constraint fib(int,uint64_t);
+\cRed{constraint} fib(int,uint64_t)\cBlue{;}
   
-begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
-calc @  init(Max), fib(N2,M2) \bs fib(N1,M1) <=> 
-  alt(N2==N1+1,N2-1==N1), N2<Max | fib(N2+1, M1+M2);
+begin \cBlue{@} init(_) \cBlue{==>} fib(0,1ULL), fib(1,1ULL)\cBlue{;}
+calc \cBlue{@}  init(Max), fib(N2,M2) \cBlue{\bs} fib(N1,M1) \cBlue{<=>}
+  \cRed{alt}(N2==N1+1,N2-1==N1), N2<Max \cBlue{|} fib(N2+1, M1+M2)\cBlue{;}
   \end{Verbatim}
   \end{example}
 }
 \frame[containsverbatim]{\frametitle{Voorbeeld - C Macros}
   \begin{example}[generated code]
   {\scriptsize \begin{Verbatim}[commandchars=\\\{\}]
-#define CODELIST_fib_2_calc_R1 \bs 
-  CSM_IMMLOCAL(int,N1,CSM_ARG(fib_2,arg1)) \bs
-  CSM_IMMLOCAL(uint64_t,M1,CSM_ARG(fib_2,arg2)) \bs
-  CSM_DEFIDXVAR(fib_2,idx1,K2) \bs
-  CSM_SETIDXVAR(fib_2,idx1,K2,arg1,CSM_LOCAL(N1) + 1) \bs
-  CSM_IDXLOOP(fib_2,idx1,K2, \bs
-    CSM_IF(CSM_DIFFSELF(K2), \bs
-      CSM_IMMLOCAL(int,N2,CSM_LARG(fib_2,K2,arg1)) \bs
-      CSM_IMMLOCAL(uint64_t,M2,CSM_LARG(fib_2,K2,arg2)) \bs
-      CSM_LOOP(init_1,K1, \bs
-        CSM_IMMLOCAL(int,Max,CSM_LARG(init_1,K1,arg1)) \bs
-        CSM_IF(CSM_LOCAL(N2) < CSM_LOCAL(Max), \bs
-          CSM_KILLSELF(fib_2) \bs
-          CSM_ADD(fib_2,CSM_LOCAL(N2)+1,CSM_LOCAL(M1)+CSM_LOCAL(M2)) \bs
-          CSM_END \bs
-        ) \bs
-      ) \bs
-    ) \bs
+#define CODELIST_fib_2_calc_R1 \cRed{\bs}
+  \cBlue{CSM_IMMLOCAL}(int,N1,\cBlue{CSM_ARG}(fib_2,arg1)) \cRed{\bs}
+  \cBlue{CSM_IMMLOCAL}(uint64_t,M1,\cBlue{CSM_ARG}(fib_2,arg2)) \cRed{\bs}
+  \cBlue{CSM_DEFIDXVAR}(fib_2,idx1,K2) \cRed{\bs}
+  \cBlue{CSM_SETIDXVAR}(fib_2,idx1,K2,arg1,\cBlue{CSM_LOCAL}(N1) + 1) \cRed{\bs}
+  \cBlue{CSM_IDXLOOP}(fib_2,idx1,K2, \cRed{\bs}
+    \cBlue{CSM_IF}(\cBlue{CSM_DIFFSELF}(K2), \cRed{\bs}
+      \cBlue{CSM_IMMLOCAL}(int,N2,\cBlue{CSM_LARG}(fib_2,K2,arg1)) \cRed{\bs}
+      \cBlue{CSM_IMMLOCAL}(uint64_t,M2,\cBlue{CSM_LARG}(fib_2,K2,arg2)) \cRed{\bs}
+      \cBlue{CSM_LOOP}(init_1,K1, \cRed{\bs}
+        \cBlue{CSM_IMMLOCAL}(int,Max,\cBlue{CSM_LARG}(init_1,K1,arg1)) \cRed{\bs}
+        \cBlue{CSM_IF}(\cBlue{CSM_LOCAL}(N2) < \cBlue{CSM_LOCAL}(Max), \cRed{\bs}
+          \cBlue{CSM_KILLSELF}(fib_2) \cRed{\bs}
+          \cBlue{CSM_ADD}(fib_2,\cBlue{CSM_LOCAL}(N2)+1,\cBlue{CSM_LOCAL}(M1)+\cBlue{CSM_LOCAL}(M2)) \cRed{\bs}
+          \cBlue{CSM_END} \cRed{\bs}
+        ) \cRed{\bs}
+      ) \cRed{\bs}
+    ) \cRed{\bs}
   )
 \end{Verbatim}
   }\end{example}
 }
-
-
+\subsection{Wat nog rest}
+\frame{\frametitle{Wat nog rest}
+  \begin{block}{Wat nog rest}
+  \begin{itemize}
+    \item Integratie logische variabelen met CCHR (en indexen erop)
+    \item Nog enkele foutjes oplossen
+    \item Documentatie schrijven
+    \item Thesistekst schrijven
+  \end{itemize}
+  \end{block}
+  \vspace{2ex}
+  Nog vragen?
+}
 \end{document}

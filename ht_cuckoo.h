@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+static void hook_predouble(void) {}
+
 #define ht_cuckoo_code(hash_t,entry_t,gethash1,gethash2,eq,defined,init,unset) \
   typedef struct { \
     int size; \
@@ -31,6 +33,7 @@
     return ((hash_t ## _find(ht,entry)) != NULL); \
   } \
   void static inline hash_t ## _double(hash_t *ht) { \
+    hook_predouble(); \
     entry_t *nw=malloc(sizeof(entry_t)*(4 << (ht->size))); \
     for (int i=0; i<(2 << ht->size); i++) { \
       if (ht->size && defined((ht->data)+i)) { \

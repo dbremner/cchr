@@ -28,6 +28,9 @@
 
 \renewcommand{\emph}[1]{\textit{{#1}}}
 \newcommand{\bs}{$\backslash$}
+\newcommand{\cBlue}[1]{\textcolor{blue}{#1}}
+\newcommand{\cRed}[1]{\textcolor{red}{#1}}
+\newcommand{\cGreen}[1]{\textcolor{green}{#1}}
 
 \setbeamercolor{background canvas}{bg=white}
 \setbeamertemplate{footline}[frame number]
@@ -115,8 +118,8 @@ Dr. ir. Tom Schrijvers}
   
   \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
-\textcolor{red}{constraint} init(int),fib(int,bignum_t)
-  \textcolor{red}{destr}(destruct_bignum(&$2))\textcolor{blue}{;}
+\cRed{constraint} init(int),fib(int,bignum_t)
+  \cRed{destr}(destruct_bignum(&$2))\cBlue{;}
   \end{Verbatim}
   \end{example}
 } %$
@@ -125,17 +128,17 @@ Dr. ir. Tom Schrijvers}
   \begin{block}{CHR Rules}
   CHR Rules zijn ge\"implementeerd:
   \begin{itemize}
-    \item Propagation ($ K,\ldots \textcolor{blue}{==>} \ldots $)
-    \item Simplification ($ R,\ldots \textcolor{blue}{<=>} \ldots $)
-    \item Simpagation ($ K,\ldots \textcolor{blue}{\backslash}\ R,\ldots \textcolor{blue}{<=>} \ldots $)
+    \item Propagation ($ K,\ldots \cBlue{==>} \ldots $)
+    \item Simplification ($ R,\ldots \cBlue{<=>} \ldots $)
+    \item Simpagation ($ K,\ldots \cBlue{\backslash}\ R,\ldots \cBlue{<=>} \ldots $)
   \end{itemize}
   \end{block}
   
   \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
-\textcolor{blue}{begin @} init(_) \textcolor{blue}{==>} fib(0,1), fib(1,1)\textcolor{blue}{;}
-\textcolor{blue}{triv @} gcd(0) \textcolor{blue}{<=>} \textcolor{red}{true}\textcolor{blue}{;}
-\textcolor{blue}{dec @} gcd(N) \textcolor{blue}{\bs} gcd(M) \textcolor{blue}{<=>} M>=N \textcolor{blue}{|} gcd(M-N)\textcolor{blue}{;}
+\cBlue{begin @} init(_) \cBlue{==>} fib(0,1), fib(1,1)\cBlue{;}
+\cBlue{triv @} gcd(0) \cBlue{<=>} \cRed{true}\cBlue{;}
+\cBlue{dec @} gcd(N) \cBlue{\bs} gcd(M) \cBlue{<=>} M>=N \cBlue{|} gcd(M-N)\cBlue{;}
   \end{Verbatim}
   \end{example}
 }
@@ -292,8 +295,8 @@ Dr. ir. Tom Schrijvers}
   \end{block}
   \begin{example}
   \begin{Verbatim}[commandchars=\\\{\}]
-\textcolor{blue}{dec @} fib(N2,F1) \textcolor{blue}{\bs} fib(N1,F2) \textcolor{blue}{<=>}
-  alt(N1+1==N2,N1==N2-1) \textcolor{blue}{|} fib(N2+1,F1+F2)\textcolor{blue}{;}
+\cBlue{dec @} fib(N2,F1) \cBlue{\bs} fib(N1,F2) \cBlue{<=>}
+  alt(N1+1==N2,N1==N2-1) \cBlue{|} fib(N2+1,F1+F2)\cBlue{;}
   \end{Verbatim}
   \end{example}
 }
@@ -303,16 +306,18 @@ Dr. ir. Tom Schrijvers}
 \subsection{Performantie}
 \frame{\frametitle{Resultaten}
   \begin{block}{resultaten}
-  \begin{tabular}{c|ccc|l}
-  test & swi-prolog & jchr & cchr & test\\
+  \begin{tabular}{c|ccccc}
+  test & swi-prolog & jchr & cchr & cchr(noidx) & C \\
   \hline
-  gcd & 37.1s & - & 0.084 & gcd(100000000,5) \\
-  fib & 708s & 5.0s & 0.023s & fib up to 7499 \\
-  primes & 4.12s & 4.3s & 0.090s & primes up to 7500 \\
-  tak & 6.19s & 0.57s & 0.048s & tak(500,450,405) \\
-  ram & 0.63s & 0.62s & 0.016s & count to 2750 \\
+  gcd & 37.1s & - & 0.084s & 0.084s & 0.019s \\
+  fib & 708s & 5.0s & 0.023s & 1.2s & 0.003s \\
+  primes & 4.12s & 4.3s & 0.090s & 0.090s & 0.0007s \\
+  tak & 6.19s & 0.57s & 0.048s & 17.6s & 0.007s \\
+  ram & 0.63s & 0.62s & 0.016s & 0.005s & 0.0001s \\
+  merge & 0.33s & 1.6s & 0.035s & 0.016s & 0.0005s \\
+  leq & 947s & 2.8s & 1.09s & 1.09s & 0.0038s  \\
   \hline
-  avg & 291 & 46.7 & 1 & relative averages\\
+  avg & 197 & 29 & 1 & 3.7 & 0.019 \\
   \end{tabular}
   \end{block}
 }
@@ -354,4 +359,6 @@ calc @  init(Max), fib(N2,M2) \bs fib(N1,M1) <=>
 \end{Verbatim}
   }\end{example}
 }
+
+
 \end{document}

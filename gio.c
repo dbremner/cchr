@@ -12,6 +12,8 @@
 #include "analyse.h"
 #include "alist.h"
 
+//#define NO_IDX
+
 int static gio_test_idxeq(sem_rule_t *rule, int cot, int rem, sem_expr_t *expr, gio_entry_t *gioe);
 
 void static gio_entry_init(gio_entry_t *entry, gio_type_t type) {
@@ -89,19 +91,21 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
       alist_ensure(entry.data.idxiter.args,alist_len(co->args));
       int haveidx=0;
       for (int i=0; i<alist_len(co->args); i++) alist_add(entry.data.idxiter.args,NULL);
+#ifndef NO_IDX
       for (int g=0; g<nguards; g++) { /* loop over all guards */
         if (gd[g]) { /* if this particular guard is still to be checked */
-	  sem_out_t *sot=alist_ptr(rule->out[0],g);
-	  if (sot->type==SEM_OUT_TYPE_EXP) { /* if it is a real guard (not a var or stm) */
+          sem_out_t *sot=alist_ptr(rule->out[0],g);
+          if (sot->type==SEM_OUT_TYPE_EXP) { /* if it is a real guard (not a var or stm) */
 	    if (gio_checkcdep(order,n+1,&(sot->cdeps))) { /* and we have all prerequisites */
 	      if (gio_test_idxeq(rule,cot,rem,&(sot->data.exp),&entry)) {
 	        gd[g]=0;
-		haveidx=1;
+	        haveidx=1;
 	      }
 	    }
 	  }
-	}
+        }
       }
+#endif
       if (!haveidx) { /* no indices used, use normal (linked list) iterator */
         gio_entry_destruct(&entry);
 	gio_entry_init(&entry,GIO_TYPE_ITER);

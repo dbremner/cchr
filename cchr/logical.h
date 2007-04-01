@@ -27,15 +27,9 @@ typedef enum  {
 	LOGICAL_NODE_TYPE_VAL=2 /* a root with value */
 } logical_node_type_t;
 
-#define logical_nodestr(val)
-
-#define logical_header(in,out) \
+#define logical_header(in,tag,out) \
 	LOG_DEBUG(static int _##out##_nextid = 1;) \
 	typedef struct _##out##_struct_ *out; \
-	typedef struct { \
-		void (*cb)(void*); \
-		void *data; \
-	} out##_cb_data_t; \
 	struct _##out##_struct_ { \
 		logical_node_type_t	_type; \
 		union { \
@@ -44,9 +38,8 @@ typedef enum  {
 			} nonroot; \
 			struct { \
 				in val; /* value (for _type==VAL) */ \
+				tag extra; /* for all roots, evan when not TYPE_VAL */  \
 				int rank; /* depth of this tree (for type != NONROOT) */ \
-				alist_declare(out##_cb_data_t,cbs); /* callbacks upon change of variable data */ \
-				out##_cb_data_t cb; \
 			} root; \
 		} _data; \
 		int _refcount; /* reference count */ \
@@ -60,21 +53,9 @@ typedef enum  {
 	int static INLINE out##_testeq(out var1, out var2); \
 	int static INLINE out##_hasval(out var); \
 	in static INLINE out##_getval(out var); \
-	void static INLINE out##_setcb(out var,void (*cb)(void*),void *data); \
-	void static INLINE out##_addcb(out var,void (*cb)(void*),void *data);
 	
-#define logical_code(in,out,destr) \
-	logical_header(in,out) \
-	/* requires normalized argument */ \
-	void static out##_docallbacks(out var) { \
-		if (var->_data.root.cb.cb) { \
-			var->_data.root.cb.cb(var->_data.root.cb.data); \
-		} \
-		for (int i=0; i<alist_len(var->_data.root.cbs); i++) { \
-			out##_cb_data_t *cbd=alist_ptr(var->_data.root.cbs,i); \
-			cbd->cb(cbd->data); \
-		} \
-	} \
+#define logical_code(in,tag,out,cb) \
+	logical_header(in,tag,out) \
 	out static out##_normalize(out var) { \
 		LOG_DEBUG( \
 			if (var->_refcount<=0) { \
@@ -117,18 +98,24 @@ typedef enum  {
 		ret->_type=LOGICAL_NODE_TYPE_ROOT; \
 		ret->_refcount=1; \
 		ret->_data.root.rank=0; \
-		alist_init(ret->_data.root.cbs); \
+		cb##_merged(&(ret->_data.root.extra),NULL); \
 		LOG_DEBUG(ret->_id=_##out##_nextid++;) \
 		LOG_DEBUG(fprintf(stderr,"[created logical (%s) #%i]\n",#out,ret->_id);) \
-		ret->_data.root.cb.cb=NULL; \
 		return ret; \
 	} \
 	void static INLINE out##_setval(out var,in value) { \
 		var=out##_normalize(var); \
 		(var)->_type=LOGICAL_NODE_TYPE_VAL; \
 		(var)->_data.root.val=value; \
+		cb##_gotval(((var)->_data.root.val),((var)->_data.root.extra)); \
 		LOG_DEBUG(fprintf(stderr,"[setval logical (%s #%i]\n",#out,var->_id);) \
-		out##_docallbacks(var); \
+	} \
+	void static INLINE out##_setvalp(out var,in *value) { \
+		var=out##_normalize(var); \
+		(var)->_type=LOGICAL_NODE_TYPE_VAL; \
+		(var)->_data.root.val=(*value); \
+		cb##_gotval(((var)->_data.root.val),((var)->_data.root.extra)); \
+		LOG_DEBUG(fprintf(stderr,"[setvalp logical (%s #%i]\n",#out,var->_id);) \
 	} \
 	void static out##_seteq(out var1, out var2) { \
 		LOG_DEBUG(fprintf(stderr,"[seteq logical (%s) #%i <-> #%i]\n",#out,var1->_id,var2->_id);) \
@@ -145,14 +132,12 @@ typedef enum  {
 				(var1)->_type=LOGICAL_NODE_TYPE_VAL; \
 				(var1)->_data.root.val=(var2)->_data.root.val; /* this value is moved to parent */ \
 			} \
-			alist_addall(var1->_data.root.cbs,var2->_data.root.cbs); /* join callbacks together */ \
-			if ((var2)->_data.root.cb.cb) (var1)->_data.root.cb = (var2)->_data.root.cb; /* overwrite single-callback */ \
 			(var2)->_type=LOGICAL_NODE_TYPE_NONROOT; /* child becomes type NONROOT */ \
 			(var2)->_data.nonroot.par=var1; /* its parent is set */ \
+			cb_##merged(&((var1)->_data.root.extra),((var2)->_data.root.extra)); \
 			(var1)->_refcount++; /* its parent's refcount increased */ \
 			LOG_DEBUG(fprintf(stderr,"[seteq refc: (%s) #%i=%i #%i=%i]\n",#out,var1->_id,var1->_refcount,var2->_id,var2->_refcount);) \
 			if ((var1)->_data.root.rank==(var2)->_data.root.rank) (var1)->_data.root.rank++; /* rank increase if necessary */ \
-			out##_docallbacks(var1); \
 		} \
 	} \
 	void static INLINE out##_destruct(out var) { \
@@ -172,8 +157,7 @@ typedef enum  {
 			top->_refcount--; \
 			if (top->_refcount==0) { \
 				LOG_DEBUG(fprintf(stderr,"[destruct free:    (%s) #%i]\n",#out,var->_id);) \
-				{ destr((top->_data.root.val)); } \
-				alist_free(top->_data.root.cbs); \
+				{ cb##_destr((top->_data.root.val),(top->_data.root.extra)); } \
 				free(top); \
 			} \
 		} \
@@ -192,17 +176,13 @@ typedef enum  {
 		var=out##_normalize(var); \
 		return (var)->_data.root.val; \
 	} \
-	void static INLINE out##_setcb(out var,void (*cb)(void*),void *data) { \
+	tag static INLINE *out##_getextrap(out var) { \
 		var=out##_normalize(var); \
-		var->_data.root.cb.cb=cb; \
-		var->_data.root.cb.data=data; \
+		return &((var)->_data.root.extra); \
 	} \
-	void static INLINE out##_addcb(out var,void (*cb)(void*),void *data) { \
+	in static INLINE *out##_getvalp(out var) { \
 		var=out##_normalize(var); \
-		out##_cb_data_t cbd; \
-		cbd.cb=cb; \
-		cbd.data=data; \
-		alist_add(var->_data.root.cbs,cbd); \
+		return &((var)->_data.root.val); \
 	}
 
 #endif /*LOGICAL_H_*/

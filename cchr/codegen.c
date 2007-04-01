@@ -17,6 +17,11 @@
 #include <efence.h>
 #endif
 
+char *csm_get_type(sem_cchr_t *chr, int var) {
+  if (var<0) return "void /* ERROR */";
+  return alist_get(chr->types,var).name;
+}
+
 typedef struct {
   char *code;
   int use;
@@ -266,7 +271,7 @@ void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,
     case SEM_OUT_TYPE_VAR: {
       sem_var_t *var=alist_ptr(rule->vt.vars,so->data.var);
       if (alist_len(var->def.parts)>0) {
-        output_fmt(out,"CSM_DEFLOCAL(%s,%s,",var->type,var->name);
+        output_fmt(out,"CSM_DEFLOCAL(%s,%s,",csm_get_type(chr,var->type),var->name);
         csm_generate_expr(&(var->def),tbl,out);
         output_fmt(out,") \\\n");
       } else {
@@ -347,7 +352,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
   for (int i=0; i<alist_len(co->args); i++) {
     int vid=alist_get(co->args,i);
     sem_var_t *var=alist_ptr(ru->vt.vars,vid);
-    output_fmt(out,"CSM_IMMLOCAL(%s,%s,%s) \\\n",var->type,var->name,tbl[vid].code);
+    output_fmt(out,"CSM_IMMLOCAL(%s,%s,%s) \\\n",csm_get_type(cchr,var->type),var->name,tbl[vid].code);
     tbl[vid].use=0;
     tbl_c[vid].use=0;
   }
@@ -385,7 +390,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
       case GIO_TYPE_VAR: {
         int vid=entry->data.var;
 	sem_var_t *var=alist_ptr(ru->vt.vars,vid);
-	output_fmt(out,"CSM_IMMLOCAL(%s,%s,%s) \\\n",var->type,var->name,tbl[vid].code);
+	output_fmt(out,"CSM_IMMLOCAL(%s,%s,%s) \\\n",csm_get_type(cchr,var->type),var->name,tbl[vid].code);
 	tbl[vid].use=0;
 	tbl_c[vid].use=0;
         break;
@@ -542,7 +547,7 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		output_fmt(out,"#define ARGLIST_%s(CB,...) ",conn);
 		for (int j=0; j<alist_len(con->types); j++) {
 			if (j) output_fmt(out," CB##_S ");
-			output_fmt(out,"CB##_D(arg%i,%s,__VA_ARGS__)",j+1,alist_get(con->types,j));
+			output_fmt(out,"CB##_D(arg%i,%s,__VA_ARGS__)",j+1,csm_get_type(in,alist_get(con->types,j)));
 		}
 		output_fmt(out,"\n");
 		output_fmt(out,"#undef RULELIST_%s\n",conn);
@@ -642,7 +647,7 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		    if (alist_get(def->list,j)) {
 		      if (nn) output_fmt(out,"CB##_S ");
 		      nn=1;
-		      output_fmt(out,"CB##_D(arg%i,%s,__VA_ARGS__) ",j+1,alist_get(con->types,j));
+		      output_fmt(out,"CB##_D(arg%i,%s,__VA_ARGS__) ",j+1,csm_get_type(in,alist_get(con->types,j)));
 		    }
 		  }
 		  output_fmt(out,"\n");

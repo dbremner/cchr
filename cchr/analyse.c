@@ -27,6 +27,32 @@ char static *copy_string(char *in) {
   return ret;
 }
 
+void static sem_vartype_init(sem_vartype_t *vt,char *name) {
+  vt->name=copy_string(name);
+  vt->logcb=NULL;
+}
+
+void static sem_vartype_destruct(sem_vartype_t *vt) {
+  free(vt->name);
+  vt->name=NULL;
+  if (vt->logcb) {
+    free(vt->logcb);
+    vt->logcb=NULL;
+  }
+}
+
+int sem_cchr_gettype(sem_cchr_t *cchr,char *type) {
+  for (int i=0; i<alist_len(cchr->types); i++) {
+    if (!strcmp(alist_get(cchr->types,i).name,type)) {
+      return i;
+    }
+  }
+  sem_vartype_t nw;
+  sem_vartype_init(&nw,type);
+  alist_add(cchr->types,nw);
+  return alist_len(cchr->types)-1;
+}
+
 /* initialize a sem_constr_t */
 void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->types);
@@ -46,9 +72,6 @@ void static sem_constr_destruct(sem_constr_t *con) {
   alist_free(con->occ);
   alist_free(con->hooked);
   alist_free(con->related);
-  for (int i=0; i<alist_len(con->types); i++) {
-    free(alist_get(con->types,i));
-  }
   alist_free(con->types);
   /*for (int i=0; i<alist_len(con->fmtargs); i++) {
     sem_expr_destruct(alist_ptr(con->fmtargs,i));
@@ -120,7 +143,6 @@ void static sem_macro_init(sem_macro_t *macro) {
 /* destuct a sem_macro_t */
 void static sem_macro_destruct(sem_macro_t *macro) {
   free(macro->name);
-  for (int i=0; i<alist_len(macro->types); i++) free(alist_get(macro->types,i));
   alist_free(macro->types);
   sem_expr_destruct(&(macro->def));
 }
@@ -184,7 +206,7 @@ void static sem_out_destruct(sem_out_t *out) {
 }
 
 /* initialize a sem_var_t */
-void static sem_var_init(sem_var_t *var, char *name, char *type, int anon) {
+void static sem_var_init(sem_var_t *var, char *name, int type, int anon) {
   var->name=name;
   var->type=type;
   var->local=0;
@@ -200,7 +222,7 @@ void static sem_var_init(sem_var_t *var, char *name, char *type, int anon) {
 }
 
 /* initialize a variable as local */
-void static sem_var_init_local(sem_var_t *var, char *name, char *type, int body) {
+void static sem_var_init_local(sem_var_t *var, char *name, int type, int body) {
 	sem_var_init(var,name,type,0);
 	var->local=body+1;
 	sem_expr_init(&(var->def));
@@ -209,7 +231,6 @@ void static sem_var_init_local(sem_var_t *var, char *name, char *type, int body)
 /* destruct a sem_var_t */
 void static sem_var_destruct(sem_var_t *var) {
   free(var->name);
-  free(var->type);
   alist_free(var->cdeps.co);
   if (var->local) sem_expr_destruct(&(var->def));
 }
@@ -255,7 +276,7 @@ void static sem_vartable_init_args(sem_vartable_t *vt, int nargs) {
 		char c[16];
 		snprintf(c,16,"$%i",i+1);
 		sem_var_t var;
-		sem_var_init(&var,copy_string(c),NULL,0);
+		sem_var_init(&var,copy_string(c),-1,0);
 		alist_add(vt->vars,var);
 	}
 }
@@ -263,7 +284,7 @@ void static sem_vartable_init_args(sem_vartable_t *vt, int nargs) {
 void static sem_vartable_init_constr(sem_vartable_t *vt, sem_constr_t *con) {
 	sem_vartable_init_args(vt,alist_len(con->types));
 	for (int i=0; i<alist_len(con->types); i++) {
-		alist_get(vt->vars,i).type=copy_string(alist_get(con->types,i));
+		alist_get(vt->vars,i).type=alist_get(con->types,i);
 	}
 }
 
@@ -301,6 +322,7 @@ void static sem_rule_destruct(sem_rule_t *rule) {
 
 /* initialize a sem_cchr_t */
 void sem_cchr_init(sem_cchr_t *cchr) {
+  alist_init(cchr->types);
   alist_init(cchr->rules);
   alist_init(cchr->macros);
   alist_init(cchr->cons);
@@ -309,6 +331,8 @@ void sem_cchr_init(sem_cchr_t *cchr) {
 
 /* destruct a sem_cchr_t */
 void sem_cchr_destruct(sem_cchr_t *cchr) {
+  for (int i=0; i<alist_len(cchr->types); i++) sem_vartype_destruct(alist_ptr(cchr->types,i));
+  alist_free(cchr->types);
   for (int i=0; i<alist_len(cchr->rules); i++) sem_rule_destruct(alist_ptr(cchr->rules,i));
   alist_free(cchr->rules);
   for (int i=0; i<alist_len(cchr->cons); i++) sem_constr_destruct(alist_ptr(cchr->cons,i));
@@ -336,7 +360,7 @@ int static sem_var_generate_anon(sem_vartable_t *vt) {
 		j++;
 	} while(1);
 	sem_var_t var;
-	sem_var_init(&var,copy_string(test),NULL,1);
+	sem_var_init(&var,copy_string(test),-1,1);
 	int ret=alist_len(vt->vars);
 	alist_add(vt->vars,var);
 	return ret;
@@ -406,7 +430,7 @@ int static sem_expr_generate(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cch
 						if (vt) {
 							int nvp=alist_len(vt->vars);
 							sem_var_t nv;
-							sem_var_init(&nv,copy_string(tok->data),NULL,0);
+							sem_var_init(&nv,copy_string(tok->data),-1,0);
 							alist_add(vt->vars,nv);
 							sem_exprpart_init_var(&se,nvp);
 							alist_add(expr->parts,se);
@@ -503,8 +527,8 @@ void static sem_rule_assign(sem_cchr_t *cchr,sem_rule_t *rule) {
 					var->pos=j;
 					var->poss=k;
 				}
-				if (var->type == NULL) {
-					var->type=copy_string(alist_get(alist_get(cchr->cons,co->constr).types,k));
+				if (var->type == -1) {
+					var->type=alist_get(alist_get(cchr->cons,co->constr).types,k);
 				}
 			}
 		}
@@ -556,7 +580,9 @@ int static sem_localvar_generate(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr,
 				}
 				sem_var_t *var;
 				alist_new(rule->vt.vars,var);
-				sem_var_init_local(var,copy_string(pep->data),type,body);
+				int type_id=sem_cchr_gettype(cchr,type);
+				free(type);
+				sem_var_init_local(var,copy_string(pep->data),type_id,body);
 				sem_out_t out;
 				sem_out_init_var(&out,alist_len(rule->vt.vars)-1);
 				alist_add(rule->out[body],out);
@@ -693,7 +719,7 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 								alist_get(rule->vt.vars,nv).occ[SEM_RULE_LEVEL_GUARD]++; /* replacement also occurs in guard */
 								alist_get(rule->vt.vars,nv).pos=k; /* where replacement var is definied */
 								alist_get(rule->vt.vars,nv).poss=l; /* idem */
-								alist_get(rule->vt.vars,nv).type=copy_string(alist_get(rule->vt.vars,kv).type); /* new var is same type as (replaced) double var */
+								alist_get(rule->vt.vars,nv).type=alist_get(rule->vt.vars,kv).type; /* new var is same type as (replaced) double var */
 							}
 							oc=1;
 						}
@@ -816,14 +842,14 @@ void static sem_rule_related(sem_cchr_t *out,sem_rule_t *rule) {
 	}
 }
 
-char static *sem_expr_gettype(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *expr) {
-	if (alist_len(expr->parts)!=1) return NULL;
+int static sem_expr_gettype(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *expr) {
+	if (alist_len(expr->parts)!=1) return -1;
 	sem_exprpart_t *sep=alist_ptr(expr->parts,0);
 	if (sep->type==SEM_EXPRPART_TYPE_VAR) {
 		sem_var_t *var=alist_ptr(vt->vars,sep->data.var);
-		if (var->type) return var->type;
+		if (var->type>=0) return var->type;
 	}
-	return NULL;
+	return -1;
 }
 
 void static sem_expr_expand(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *in,sem_expr_t *out,sem_fun_t *fun) {
@@ -846,8 +872,8 @@ void static sem_expr_expand(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *in,se
 	    			if (strcmp(mac->name,se->data.fun.name)) continue;
 	    			int l=0;
 	    			while (l<alist_len(mac->types)) {
-	    				char *type=vt ? sem_expr_gettype(chr,vt,alist_ptr(se->data.fun.args,l)) : NULL;
-	    				if (alist_get(mac->types,l) && (!type || strcmp(alist_get(mac->types,l),type))) {
+	    				int type=vt ? sem_expr_gettype(chr,vt,alist_ptr(se->data.fun.args,l)) : -1;
+	    				if (alist_get(mac->types,l) && (type<0 || alist_get(mac->types,l)==type)) {
 	    					/*fprintf(stderr,"[expand of %s: arg %i of type %s (macro needs %s)]\n",mac->name,l+1,type,alist_get(mac->types,l));*/
 	    					break;
 	    				}
@@ -990,7 +1016,7 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   alist_new(out->cons,n);
   sem_constr_init(n,copy_string(in->name));
   for (int i=0; i<alist_len(in->list); i++) {
-  	alist_add(n->types,copy_string(alist_get(in->list,i)));
+  	alist_add(n->types,sem_cchr_gettype(out,alist_get(in->list,i)));
   }
   for (int i=0; i<alist_len(in->args); i++) {
   	expr_t *e=alist_ptr(in->args,i);
@@ -1032,8 +1058,8 @@ void static sem_macro_generate(sem_cchr_t *out,macro_t *in) {
   sem_macro_init(&n);
   n.name=copy_string(in->name.name);
   for (int i=0; i<alist_len(in->name.list); i++) {
-  	char *str=(!strcmp(alist_get(in->name.list,i),"_")) ? NULL : copy_string(alist_get(in->name.list,i));
-  	alist_add(n.types,str);
+  	int type=(!strcmp(alist_get(in->name.list,i),"_")) ? -1 : sem_cchr_gettype(out,alist_get(in->name.list,i));
+  	alist_add(n.types,type);
   }
   sem_vartable_t vt;
   sem_vartable_init_args(&vt,alist_len(in->name.list));

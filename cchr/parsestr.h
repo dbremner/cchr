@@ -63,11 +63,17 @@ typedef struct {
   expr_t def;
 } macro_t;
 
+typedef struct {
+  char *name;
+  char *cb;
+} logical_t;
+
 /* a syntax tree, having constraints, rules, and a list of external symbols */
 typedef struct {
   alist_declare(constr_t,constrs);
   alist_declare(rule_t,rules);
   alist_declare(macro_t,macros);
+  alist_declare(logical_t,logicals);
   alist_declare(char*,exts);
 } cchr_t;
 

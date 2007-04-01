@@ -532,6 +532,9 @@
 #define alt(expr,...) (expr)
 #define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
 
+/***** helper for logicals ******/
+
+#define CSM_LOGICAL
 /***** actual CSM code ****/
 
 CSM_START

@@ -51,14 +51,14 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
   exprlist_t elist;
 }
 
-%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING TOK_MACRO TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR
+%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING TOK_MACRO TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR TOK_LOGICAL
 
 %token TOK_ERROR
 
 %type  <lit> literal type rname string stringparts char charparts
 
 
-%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname TOK_EXTERN TOK_STRING TOK_BSTRING TOK_ESTRING TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR
+%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname TOK_EXTERN TOK_STRING TOK_BSTRING TOK_ESTRING TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR TOK_LOGICAL
 
 %type <constr> typelistc typelist constr carglist
 %destructor { destruct_constr_t(&$$); } typelistc typelist constr carglist
@@ -226,6 +226,7 @@ rule : rname exprlist TOK_BSLASH exprlist TOK_SIMP exprlist TOK_SPIPE exprlist T
 stmt : TOK_CONSTRAINT constrlist TOK_SEMI { $$=$2; free($1); free($3); }
      | TOK_EXTERN extlist TOK_SEMI { $$=$2; free($1); free($3); }
      | TOK_MACRO constr etokenlist TOK_SEMI { cchr_init(&$$); macro_t *nw; alist_new($$.macros,nw); nw->name=$2; nw->def=$3; free($1); free($4); }
+     | TOK_LOGICAL type TOK_SYMB TOK_SEMI { cchr_init(&$$); logical_t *nw; alist_new($$.logicals,nw); nw->name=$2; nw->cb=$3; free($1); free($4); }
      | rule
      ;
 
@@ -261,6 +262,7 @@ void cchr_init(cchr_t *cchr) {
   alist_init(cchr->rules);
   alist_init(cchr->exts);
   alist_init(cchr->macros);
+  alist_init(cchr->logicals);
 }
 
 void cchr_merge(cchr_t *out,cchr_t *in) {
@@ -268,10 +270,12 @@ void cchr_merge(cchr_t *out,cchr_t *in) {
   alist_addall(out->rules,in->rules);
   alist_addall(out->exts,in->exts);
   alist_addall(out->macros,in->macros);
+  alist_addall(out->logicals,in->logicals);
   alist_free(in->constrs);
   alist_free(in->rules);
   alist_free(in->exts);
   alist_free(in->macros);
+  alist_free(in->logicals);
 }
 
 void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,exprlist_t *guard,exprlist_t *body) {

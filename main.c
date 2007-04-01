@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "parsestr.h"
 #include "semtree.h"
@@ -25,7 +26,7 @@
 int do_scan(FILE *file, int *line, cchr_t *chr);
 
 /* process an input stream, considering it CCHR code */
-int process_file_cchr(FILE *in, output_t *out, int *line) {
+int process_file_cchr(FILE *in, output_t *out, output_t *outh, int *line) {
 	cchr_t cchr;
 	int ok=1;
 	timing_t total,sub;
@@ -62,7 +63,7 @@ int process_file_cchr(FILE *in, output_t *out, int *line) {
 
 /* process a single file. This function will read the passed file, byte per
  * byte, and call process_file_cchr when necessary */
-int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname) {
+int process_file(FILE *in, output_t *out, output_t *outh, int *line, char *inname, char *outname) {
 	char wb[256];
 	int ws=0; /* size of word buffer */
 	char sb[256];
@@ -75,6 +76,7 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 	timing_t filetime;
 	timing_start(&filetime);
 	output_fmt(out,"#line %i \"%s\"\n",*line,inname);
+	output_fmt(outh,"#ifndef _CCHR_OUTPUT_H\n#define _CCHR_OUTPUT_H\n\n");
 	while ((c=getc(in)) != EOF) { /* loop over all bytes in the source */
 		if (c == '\n') {(*line)++;ls=1;} /* line-number counter */
 		if (isalpha(c)) { /* for alphabetical characters */
@@ -120,7 +122,7 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 			if (ws==4 && !strncmp(wb,"cchr",4)) {
 				output_fmt(out,"#line %i \"%s\"\n",output_get_line(out)+1,outname);
 				printf("- processing cchr block #%i:\n",(++ncchr));
-				if (!process_file_cchr(in,out,line)) ok=0;
+				if (!process_file_cchr(in,out,outh,line)) ok=0;
 				output_fmt(out,"#line %i \"%s\"\n",*line,inname);
 				ws=0;
 				ss=0;
@@ -136,6 +138,7 @@ int process_file(FILE *in, output_t *out, int *line, char *inname, char *outname
 	}
 	output_chars(out,wb,ws);
 	output_chars(out,sb,ss);
+	output_fmt(outh,"#endif\n");
 	timing_stop(&filetime);
 	printf("- %i lines written to %s\n",output_get_line(out),outname);
 	printf("- total %s: " TIMING_FORMAT "s\n",inname,timing_get(&filetime));
@@ -153,19 +156,29 @@ int main(int argc, char *argv[])
 	    char *arg=argv[i];
 	    int line=1;
 	    char *oa=malloc(strlen(arg)+3);
+	    char *oah=malloc(strlen(arg)+8);
 	    strcpy(oa,arg);
 	    if (strlen(arg)>4 && !strcmp(arg+strlen(arg)-4,".chr")) oa[strlen(arg)-4]=0;
 	    if (strlen(arg)>5 && !strcmp(arg+strlen(arg)-5,".cchr")) oa[strlen(arg)-5]=0;
+	    strcpy(oah,oa);
 	    strcat(oa,".c");
+	    strcat(oah,"_cchr.h");
 	    FILE *in=fopen(arg,"r");
-	    FILE *out=fopen(oa,"w");
-	    output_t oo;
-	    output_init(&oo,out);
-	    if (!process_file(in,&oo,&line,arg,oa)) ok=0;
-	    free(oa);
-	    output_destruct(&oo);
-	    fclose(out);
-	    fclose(in);
+	    if (in) {
+	      FILE *out=fopen(oa,"w");
+	      FILE *outh=fopen(oah,"w");
+	      output_t oo;
+	      output_t ooh;
+	      output_init(&oo,out);
+	      output_init(&ooh,outh);
+	      if (!process_file(in,&oo,&ooh,&line,arg,oa)) ok=0;
+	      free(oa);
+	      output_destruct(&oo);
+	      fclose(out);
+	      fclose(in);
+	    } else {
+	      fprintf(stderr,"Error opening %s: %s\n",arg,strerror(errno));
+	    }
 	}
 	timing_stop(&totaltime);
 	printf("total: " TIMING_FORMAT "s\n",timing_get(&totaltime));

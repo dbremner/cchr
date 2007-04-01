@@ -6,7 +6,7 @@
 #include "logical.h"
 
 /* define a log_int_t to be a logical int, with no destructor */
-logical_code(int,log_int_t,logical_nodestr)
+logical_code(int,char,log_int_t,logical_nodestr,logical_nomerged,logical_nogotval)
 
 /* the cchr block */
 cchr {

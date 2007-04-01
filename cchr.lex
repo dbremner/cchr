@@ -83,8 +83,9 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 
 "constraint"      LIT_RETURN(TOK_CONSTRAINT);
 "true"            LIT_RETURN(TOK_TRUE);
-"extern"	  	  LIT_RETURN(TOK_EXTERN);
-"macro"			  LIT_RETURN(TOK_MACRO);
+"extern"	  LIT_RETURN(TOK_EXTERN);
+"logical"	  LIT_RETURN(TOK_LOGICAL);
+"macro"		  LIT_RETURN(TOK_MACRO);
 "{"               LIT_RETURN(TOK_LCBRAC);
 "}"               LIT_RETURN(TOK_RCBRAC);
 ";"               LIT_RETURN(TOK_SEMI);

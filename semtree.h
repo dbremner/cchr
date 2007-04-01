@@ -63,11 +63,16 @@ struct _sem_expr_t_struct {
   alist_declare(sem_exprpart_t,parts);
 };
 
+/* a (variable) type definition */
+typedef struct {
+  char *name;
+  char *logcb; /* non-NULL for logical variables */
+} sem_vartype_t;
 
 /* a constraint, having a name, a list of types, and a list of rule occurences */
 typedef struct {
   char *name;
-  alist_declare(char*,types);
+  alist_declare(int,types);
   alist_declare(int,hooked);
   alist_declare(int,related); /* list of constr id's that are related to this one */
   alist_declare(sem_ruleocc_t,occ);
@@ -94,7 +99,7 @@ typedef struct {
 /* a variable, with a name, a type (unused ftm), and occurence counts in both head constraints of rules */
 typedef struct {
   char *name;
-  char *type;
+  int type;
   int occ[4]; /* occurrences in removed,kept,guard,body */
   int local; /* whether is variable is local in the body; 1=guard, 2=body */
   int pos; /* (if local==0: position in removed or kept where var is defined) */
@@ -143,12 +148,13 @@ typedef struct {
 
 typedef struct {
   char *name;
-  alist_declare(char *,types);
+  alist_declare(int,types);
   sem_expr_t def;
 } sem_macro_t;
 
 /* a semantic tree, which is hardly a tree anymore */
 typedef struct {
+  alist_declare(sem_vartype_t,types);
   alist_declare(sem_rule_t,rules);
   alist_declare(char*,exts);
   alist_declare(sem_constr_t,cons);

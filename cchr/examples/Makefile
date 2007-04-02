@@ -63,6 +63,12 @@ fib_topdown: fib_topdown.c ../cchr_csm.h Makefile
 tak.c: tak.cchr bin/cchr Makefile
 	bin/cchr tak.cchr
 
+leq.c: leq.cchr bin/cchr Makefile
+	bin/cchr leq.cchr
+
+leq.prep.c: leq.c
+	cpp -P -DCSM_CONF_DEBUG <leq.c | egrep -v '^#' | indent -kr -l127 >leq.prep.c
+
 ram.c: ram.cchr bin/cchr Makefile
 	bin/cchr ram.cchr
 
@@ -74,6 +80,12 @@ tak2.c: tak2.cchr bin/cchr Makefile
 
 tak: tak.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak tak.c
+
+leq: leq.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o leq leq.c
+
+leq.prep: leq.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o leq.prep leq.prep.c
 
 ram: ram.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o ram ram.c

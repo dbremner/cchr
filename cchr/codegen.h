@@ -12,6 +12,6 @@
 #include "semtree.h"
 #include "output.h"
 
-void csm_generate(sem_cchr_t *in,output_t *out);
+void csm_generate(sem_cchr_t *in,output_t *out,output_t *header);
 
 #endif

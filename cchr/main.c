@@ -44,7 +44,7 @@ int process_file_cchr(FILE *in, output_t *out, output_t *outh, int *line) {
 		        printf(" done, " TIMING_FORMAT "s\n",timing_get(&total));
 			printf("  - code generation...");
 			timing_start(&sub);
-			csm_generate(&sem_cchr,out);
+			csm_generate(&sem_cchr,out,outh);
 			timing_stop(&sub);
 			printf(" done, " TIMING_FORMAT "s\n",timing_get(&sub));
 		} else {

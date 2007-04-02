@@ -5,6 +5,8 @@
 #include <efence.h>
 #endif
 
+#include "fib_cchr.h"
+
 cchr {
   constraint fib(int,uint64_t) fmt("fib(%i,%llu)"),init(int) fmt("init(%i)");
   extern alt;

@@ -154,5 +154,13 @@ static void hook_predouble(void) {}
     } \
     return NULL; \
   } \
+  void static hash_t ## _addall(hash_t *to, hash_t *from) { \
+    entry_t *ent=hash_t##_first(from); \
+    while (ent) { \
+      entry_t ent2=(*ent); \
+      hash_t##_set(to,(&ent2)); \
+      ent=hash_t##_next(from,ent); \
+    } \
+  } \
 
 #endif

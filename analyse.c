@@ -29,15 +29,18 @@ char static *copy_string(char *in) {
 
 void static sem_vartype_init(sem_vartype_t *vt,char *name) {
   vt->name=copy_string(name);
-  vt->logcb=NULL;
+  vt->log_cb=NULL;
+  vt->log_prefix=NULL;
 }
 
 void static sem_vartype_destruct(sem_vartype_t *vt) {
   free(vt->name);
   vt->name=NULL;
-  if (vt->logcb) {
-    free(vt->logcb);
-    vt->logcb=NULL;
+  if (vt->log_cb) {
+    free(vt->log_cb);
+    vt->log_cb=NULL;
+    free(vt->log_prefix);
+    vt->log_prefix=NULL;
   }
 }
 
@@ -270,11 +273,11 @@ void sem_expr_copy(sem_expr_t *src,sem_expr_t *dst,int start,int stop) {
 }
 
 /* initialize a vartable to have only $%i vars */
-void static sem_vartable_init_args(sem_vartable_t *vt, int nargs) {
+void static sem_vartable_init_args(sem_vartable_t *vt, int from, int to) {
 	sem_vartable_init(vt);
-	for (int i=0; i<nargs; i++) {
+	for (int i=0; i<to-from; i++) {
 		char c[16];
-		snprintf(c,16,"$%i",i+1);
+		snprintf(c,16,"$%i",i+from);
 		sem_var_t var;
 		sem_var_init(&var,copy_string(c),-1,0);
 		alist_add(vt->vars,var);
@@ -282,9 +285,9 @@ void static sem_vartable_init_args(sem_vartable_t *vt, int nargs) {
 }
 
 void static sem_vartable_init_constr(sem_vartable_t *vt, sem_constr_t *con) {
-	sem_vartable_init_args(vt,alist_len(con->types));
+	sem_vartable_init_args(vt,0,alist_len(con->types)+1);
 	for (int i=0; i<alist_len(con->types); i++) {
-		alist_get(vt->vars,i).type=alist_get(con->types,i);
+		alist_get(vt->vars,i+1).type=alist_get(con->types,i);
 	}
 }
 
@@ -1035,11 +1038,21 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   			}*/
   			ok=1;
   		}
-  		if (!ok && ((!strcmp(t->data,"destr")) || (!strcmp(t->data,"init"))) ) {
+		int par=0;
+		if (!strcmp(t->data,"destr")) par=1;
+		if (!strcmp(t->data,"init")) par=2;
+		if (!strcmp(t->data,"kill")) par=3;
+		if (!strcmp(t->data,"add")) par=4;
+  		if (!ok && par) {
 			sem_vartable_t svt;
   			sem_vartable_init_constr(&svt,n);
-			sem_expr_t *res=&(n->destr);
-			if (!strcmp(t->data,"init")) res=&(n->init);
+			sem_expr_t *res=NULL;
+			switch (par) {
+			  case 1: {res=&(n->destr); break; }
+			  case 2: {res=&(n->init); break; }
+			  case 3: {res=&(n->kill); break; }
+			  case 4: {res=&(n->add); break; }
+			}
   			sem_expr_init(res);
   			sem_expr_generate(res,&svt,out,alist_ptr(t->args,0),n->name,0,1);
   			sem_expr_expand(out,&svt,res,NULL,NULL);
@@ -1062,13 +1075,19 @@ void static sem_macro_generate(sem_cchr_t *out,macro_t *in) {
   	alist_add(n.types,type);
   }
   sem_vartable_t vt;
-  sem_vartable_init_args(&vt,alist_len(in->name.list));
+  sem_vartable_init_args(&vt,1,alist_len(in->name.list)+1);
   sem_expr_generate(&(n.def),&vt,out,&(in->def),n.name,0,1);
   sem_expr_expand(out,NULL,&(n.def),NULL,NULL);
   sem_vartable_destruct(&vt);
   alist_add(out->macros,n);
 }
 
+void static sem_logicals(sem_cchr_t *out,logical_t *log) {
+  int vid=sem_cchr_gettype(out,log->name);
+  sem_vartype_t *vt=alist_ptr(out->types,vid);
+  vt->log_cb=copy_string(log->cb);
+  vt->log_prefix=copy_string("");
+}
 
 /* generate a semantic form (sem_cchr_t) of the syntax tree (cchr_t) */
 int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
@@ -1085,6 +1104,9 @@ int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   }
   for (int i=0; i<alist_len(in->rules); i++) {
   	if (!sem_rule_generate(out,alist_ptr(in->rules,i))) ok=0;
+  }
+  for (int i=0; i<alist_len(in->logicals); i++) {
+	sem_logicals(out,alist_ptr(in->logicals,i));
   }
   return ok;
 }

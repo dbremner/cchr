@@ -146,9 +146,25 @@ csm_varuse_t static *csm_generate_vartable_constr(sem_cchr_t *chr,int coni) {
   sem_constr_t *co=alist_ptr(chr->cons,coni);
   char c[256];
   csm_constr_getname(chr,coni,c,256);
-  csm_varuse_t *tbl=malloc(sizeof(csm_varuse_t)*alist_len(co->types));
-  for (int i=0; i<alist_len(co->types); i++) {
-    tbl[i].code=make_message("arg%i",i+1);
+  csm_varuse_t *tbl=malloc(sizeof(csm_varuse_t)*(alist_len(co->types)+1));
+  tbl[0].code=make_message("");
+  tbl[0].use=0;
+  for (int i=1; i<=alist_len(co->types); i++) {
+    tbl[i].code=make_message("arg%i",i);
+    tbl[i].use=0;
+  }
+  return tbl;
+}
+
+csm_varuse_t static *csm_generate_vartable_killadd(sem_cchr_t *chr,int coni) {
+  sem_constr_t *co=alist_ptr(chr->cons,coni);
+  char c[256];
+  csm_constr_getname(chr,coni,c,256);
+  csm_varuse_t *tbl=malloc(sizeof(csm_varuse_t)*(alist_len(co->types)+1));
+  tbl[0].code=make_message("PID");
+  tbl[0].use=0;
+  for (int i=1; i<=alist_len(co->types); i++) {
+    tbl[i].code=make_message("CSM_LARG(%s,PID,arg%i)",c,i);
     tbl[i].use=0;
   }
   return tbl;
@@ -199,7 +215,7 @@ void static csm_destruct_vartable_rule(sem_rule_t *rule,csm_varuse_t *tbl) {
 
 /* nice destructor for the variable table */
 void static csm_destruct_vartable_constr(sem_constr_t *con,csm_varuse_t *tbl) {
-  for (int u=0; u<alist_len(con->types); u++) free(tbl[u].code);
+  for (int u=0; u<=alist_len(con->types); u++) free(tbl[u].code);
   free(tbl);
 }
 
@@ -214,8 +230,9 @@ void static csm_generate_expr(sem_expr_t *expr,csm_varuse_t *tbl,output_t *out) 
     switch (ep->type) {
       case SEM_EXPRPART_TYPE_LIT:
       case SEM_EXPRPART_TYPE_FUN: 
-      str=ep->data.fun.name; {
-        if (!strcmp(ep->data.lit,"}")) {output_unindent(out);dos=0;}
+      str=ep->data.fun.name; 
+      {
+        if (!strcmp(ep->data.lit,"}")) {output_string(out," \\\n"); output_unindent(out);dos=0;}
 	output_fmt(out,"%s",str);
 	if (!strcmp(ep->data.lit,"}")) {output_string(out," \\\n");}
 	if (!strcmp(ep->data.lit,";")) {output_string(out," \\\n");dos=0;}
@@ -275,7 +292,7 @@ void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,
         csm_generate_expr(&(var->def),tbl,out);
         output_fmt(out,") \\\n");
       } else {
-        output_fmt(out,"CSM_DECLOCAL(%s,%s) \\\n",var->type,var->name);
+        output_fmt(out,"CSM_DECLOCAL(%s,%s) \\\n",csm_get_type(chr,var->type),var->name);
       }
       break;
     }
@@ -317,7 +334,6 @@ void static csm_generate_body(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl
 
 typedef struct {
   int constr;
-  char *idxname;
   int rem;
   int pos;
 } csm_idxclean_t;
@@ -429,12 +445,33 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	if (!rem) {
 	  csm_idxclean_t cl;
 	  cl.constr=cicon;
-	  cl.idxname=csm_hashdef_strify(&def);
 	  cl.rem=ci_rem;
 	  cl.pos=cid;
 	  alist_add(clean,cl);
 	}
 	csm_hashdefs_add(&(hd[cicon]),&def);
+	break;
+      }
+      case GIO_TYPE_LOGITER: {
+	uint32_t cid=entry->data.logiter.cot & (~(1<<31));
+	int ci_rem=!!(entry->data.logiter.cot & (1<<31));
+	int cicon=alist_get(ru->head[ci_rem],cid).constr;
+	char cicon_name[256];
+	csm_constr_getname(cchr,cicon,cicon_name,256);
+	char *idxname=make_message("%s_arg%i",cicon_name,entry->data.logiter.pos+1);
+	int vartype=alist_get(alist_get(cchr->cons,cicon).types,entry->data.logiter.pos);
+	sem_vartype_t *vt=alist_ptr(cchr->types,vartype);
+	output_fmt(out,"%s(%s,%s%i,%s%s,%s,",(!rem) ? "CSM_LOGUNILOOP" : "CSM_LOGLOOP",cicon_name,ci_rem ? "R" : "K",cid+1,vt->log_prefix,idxname,vt->name);
+	csm_generate_expr(&(entry->data.logiter.arg),tbl_c,out);
+	free(idxname);
+	output_indent(out,", \\",") \\");
+	if (!rem) {
+	  csm_idxclean_t cl;
+	  cl.constr=cicon;
+	  cl.rem=ci_rem;
+	  cl.pos=cid;
+	  alist_add(clean,cl);
+	}
 	break;
       }
     }
@@ -481,8 +518,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
       csm_idxclean_t *cl=alist_ptr(clean,k);
       char chc[256];
       csm_constr_getname(cchr,cl->constr,chc,256);
-      output_fmt(out,"CSM_IDXUNIEND(%s,%s,%s%i) \\\n",chc,cl->idxname,cl->rem ? "R" : "K",cl->pos+1);
-      free(cl->idxname);
+      output_fmt(out,"CSM_UNIEND(%s,%s%i) \\\n",chc,cl->rem ? "R" : "K",cl->pos+1);
     }
     output_fmt(out,"CSM_END \\\n");
     output_unindent(out);
@@ -497,8 +533,9 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 }
 
 /* generate code for a CCHR block (based on the semantic tree) */
-void csm_generate(sem_cchr_t *in,output_t *out) {
+void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 	char buf[256];
+	output_fmt(header,"#include \"cchr_csm.h\"\n\n");
 	output_fmt(out,"#undef CONSLIST\n");
 	output_fmt(out,"#define CONSLIST(CB) ");
 	for (int i=0; i<alist_len(in->cons); i++) {
@@ -595,7 +632,21 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		if (alist_len(con->init.parts)>0) {
 			csm_generate_expr(&(con->init),vt,out);
 		}
+		csm_varuse_t *vtak=csm_generate_vartable_killadd(in,i);
 		output_string(out,"\n");
+		output_fmt(out,"#undef ADD_%s\n",conn);
+		output_fmt(out,"#define ADD_%s(PID) ",conn);
+		if (alist_len(con->init.parts)>0) {
+			csm_generate_expr(&(con->add),vtak,out);
+		}
+		output_string(out,"\n");
+		output_fmt(out,"#undef KILL_%s\n",conn);
+		output_fmt(out,"#define KILL_%s(PID) ",conn);
+		if (alist_len(con->init.parts)>0) {
+			csm_generate_expr(&(con->kill),vtak,out);
+		}
+		output_string(out,"\n");
+		csm_destruct_vartable_constr(con,vtak);
 		/*output_fmt(out,"#undef DESTRUCT_PID_%s\n",conn);
 		output_fmt(out,"#define DESTRUCT_PID_%s(PID) DESTRUCT_%s(",conn,conn);
 		for (int l=0; l<alist_len(con->types); l++) {
@@ -656,6 +707,6 @@ void csm_generate(sem_cchr_t *in,output_t *out) {
 		output_fmt(out,"\n");
 		csm_hashdefs_destroy(&(hd[i]));
 	}
-	output_fmt(out,"#include \"cchr_csm.h\"\n");
+	output_fmt(out,"CSM_START\n");
 	free(hd);
 }

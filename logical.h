@@ -98,7 +98,7 @@ typedef enum  {
 		ret->_type=LOGICAL_NODE_TYPE_ROOT; \
 		ret->_refcount=1; \
 		ret->_data.root.rank=0; \
-		cb##_merged(&(ret->_data.root.extra),NULL); \
+		cb##_created((&(ret->_data.root.extra))); \
 		LOG_DEBUG(ret->_id=_##out##_nextid++;) \
 		LOG_DEBUG(fprintf(stderr,"[created logical (%s) #%i]\n",#out,ret->_id);) \
 		return ret; \
@@ -134,7 +134,7 @@ typedef enum  {
 			} \
 			(var2)->_type=LOGICAL_NODE_TYPE_NONROOT; /* child becomes type NONROOT */ \
 			(var2)->_data.nonroot.par=var1; /* its parent is set */ \
-			cb_##merged(&((var1)->_data.root.extra),((var2)->_data.root.extra)); \
+			cb##_merged((&((var1)->_data.root.extra)),((var2)->_data.root.extra)); \
 			(var1)->_refcount++; /* its parent's refcount increased */ \
 			LOG_DEBUG(fprintf(stderr,"[seteq refc: (%s) #%i=%i #%i=%i]\n",#out,var1->_id,var1->_refcount,var2->_id,var2->_refcount);) \
 			if ((var1)->_data.root.rank==(var2)->_data.root.rank) (var1)->_data.root.rank++; /* rank increase if necessary */ \

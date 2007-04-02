@@ -170,11 +170,6 @@
 
 /* main macro */
 #define CSM_START \
-  typedef struct { \
-    int id; \
-    dcls_pid_t pid; \
-  } cchr_idxlist_t; \
-  ht_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF) \
   enum cchr_cons_type { CONSLIST(CSM_CB_TypeEnum) , CCHR_CONS_COUNT }; \
   CONSLIST(CSM_CB_DTD) \
   CONSLIST(CSM_CB_IdxDef) \
@@ -362,20 +357,17 @@
 /* after a killself should always be a CSM_END */
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
-		CSM_FMTOUT("kill pid=%i (self) - start",(int)pid_self_); \
-		CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,self_);) \
-		cchr_unindex_##TYPE(pid_self_); \
-		dcls_free(_global_runtime.store,pid_self_); \
-		CSM_FMTOUT("kill pid=%i (self) - end",(int)pid_self_); \
+	    CSM_KILL(self_,TYPE) \
 	} \
 }
 
 #define CSM_KILL(VAR,TYPE) { \
-	CSM_FMTOUT("kill pid=%i - start",(int)pid_##VAR); \
+	CSM_FMTOUT("kill pid=%s(%i) - start",#VAR,(int)pid_##VAR); \
 	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
 	cchr_unindex_##TYPE(pid_##VAR); \
+	KILL_##TYPE(VAR); \
 	dcls_free(_global_runtime.store,pid_##VAR); \
-	CSM_FMTOUT("kill pid=%i - end",(int)pid_##VAR); \
+	CSM_FMTOUT("kill pid=%s(%i) - end",#VAR,(int)pid_##VAR); \
 }
 
 #define CSM_DESTRUCT_PID(TYPE,PID) DESTRUCT_##TYPE CSM_CB_DPH_F(TYPE,PID)
@@ -421,16 +413,40 @@
 	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
 	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
             dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
-            { \
+            if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
 	      CODE \
             } \
 	  } \
-          CSM_IDXUNIEND(CON,HASH,VAR) \
+          CSM_UNIEND(CON,VAR) \
 	} \
 }
 
-#define CSM_IDXUNIEND(CON,HASH,VAR) {cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
-	
+#define CSM_UNIEND(CON,VAR) {cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
+
+#define CSM_LOGLOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
+  cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
+  CSM_FMTOUT("in logloop (%s;%s var=%s)",#CON,#ENT,#VAR); \
+  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(_log_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(_log_##VAR,_idxlst_##VAR) ) { \
+    dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+    { \
+      CODE \
+    } \
+  } \
+}
+
+#define CSM_LOGUNILOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
+  cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
+  CSM_FMTOUT("in logsafeloop (%s;%s var=%s)",#CON,#ENT,#VAR); \
+  cchr_htdc_t _idxcopy_##VAR; \
+  cchr_htdc_t_copy(_log_##VAR,&_idxcopy_##VAR); \
+  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
+    dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+    if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
+      CODE \
+    } \
+  } \
+}
+
 #define CSM_END { \
 	CSM_DEBUG( \
 		_global_runtime.debugindent--; \
@@ -476,6 +492,7 @@
 		CSM_FMTOUT("store pid=%i - begin",(int)pid_self_); \
 		cchr_store(pid_self_); \
 		cchr_index_##CON(pid_self_); \
+		ADD_##CON(self_); \
 		doadd=0; \
 		CSM_FMTOUT("store pid=%i - end",(int)pid_self_); \
 	} \
@@ -493,6 +510,8 @@
 	CODE \
 }
 
+#define CSM_PID(PID) (pid_##PID)
+
 #define CSM_HISTCHECK(RULE,CODE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HC,__VA_ARGS__,RULE,CODE)) CSM_NOPROP({CODE})
 #define CSM_CB_HC_I(HOOK,RULE,CODE,COND) { \
 	int ok_=1; \
@@ -503,7 +522,6 @@
 		CSM_FMTOUT("histfail %s (on %s:%i)",#RULE,#HOOK,dcls_get(_global_runtime.store,pid_##HOOK).id); \
 		ok_=0; \
 	} else {\
-	/*CSM_FMTOUT("histchk %s on id=%i%s",#RULE,dcls_get(_global_runtime.store,pid_##HOOK).id,ok_ ? ": ok" : "");*/ \
 		CODE \
 	} \
 }
@@ -532,12 +550,14 @@
 #define alt(expr,...) (expr)
 #define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
 
-/***** helper for logicals ******/
+/****** real declarations *****/
 
-#define CSM_LOGICAL
-/***** actual CSM code ****/
+typedef struct {
+  int id;
+  dcls_pid_t pid;
+} cchr_idxlist_t;
 
-CSM_START
+ht_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF)
 
 #endif
 

@@ -66,7 +66,8 @@ struct _sem_expr_t_struct {
 /* a (variable) type definition */
 typedef struct {
   char *name;
-  char *logcb; /* non-NULL for logical variables */
+  char *log_cb; /* non-NULL for logical variables */
+  char *log_prefix; /* currently always "" */
 } sem_vartype_t;
 
 /* a constraint, having a name, a list of types, and a list of rule occurences */
@@ -76,7 +77,7 @@ typedef struct {
   alist_declare(int,hooked);
   alist_declare(int,related); /* list of constr id's that are related to this one */
   alist_declare(sem_ruleocc_t,occ);
-  sem_expr_t fmt,destr,init; /* format specification, destructor, initializer */
+  sem_expr_t fmt,destr,init,add,kill; /* format specification, destructor, initializer */
   /*alist_declare(sem_expr_t,fmtargs);*/
 } sem_constr_t;
 

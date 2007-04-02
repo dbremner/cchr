@@ -506,8 +506,8 @@
 #define CSM_MESSAGE(...) { \
 	fprintf(stderr,__VA_ARGS__); \
 }
-#define CSM_NATIVE(CODE) { \
-	CODE \
+#define CSM_NATIVE(...) { \
+	 __VA_ARGS__ \
 }
 
 #define CSM_PID(PID) (pid_##PID)

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include "semtree.h"
 #include "alist.h"
@@ -223,23 +224,26 @@ void static csm_destruct_vartable_constr(sem_constr_t *con,csm_varuse_t *tbl) {
 void static csm_generate_expr(sem_expr_t *expr,csm_varuse_t *tbl,output_t *out) {
   int dos=0;
   for (int t=0; t<alist_len(expr->parts); t++) {
-    if (dos) output_fmt(out," ");
-    dos=1;
     sem_exprpart_t *ep=alist_ptr(expr->parts,t);
     char *str=ep->data.lit;
     switch (ep->type) {
-      case SEM_EXPRPART_TYPE_LIT:
       case SEM_EXPRPART_TYPE_FUN: 
       str=ep->data.fun.name; 
+      case SEM_EXPRPART_TYPE_LIT:
       {
-        if (!strcmp(ep->data.lit,"}")) {output_string(out," \\\n"); output_unindent(out);dos=0;}
+        if (!strcmp(str,"}")) {output_string(out," \\\n"); output_unindent(out);dos=0;}
+        if (dos && (isalnum(str[strlen(str)-1]) || str[strlen(str)-1]=='_')) output_fmt(out," ");
+        dos=1;
 	output_fmt(out,"%s",str);
-	if (!strcmp(ep->data.lit,"}")) {output_string(out," \\\n");}
-	if (!strcmp(ep->data.lit,";")) {output_string(out," \\\n");dos=0;}
-	if (!strcmp(ep->data.lit,"{")) {output_indent(out," \\","");dos=0;}
+	if (!strcmp(str,"}")) {output_string(out," \\\n");dos=0;}
+	if (!strcmp(str,";")) {output_string(out," \\\n");dos=0;}
+	if (!strcmp(str,"{")) {output_indent(out," \\","");dos=0;}
+	if (!isalnum(str[strlen(str)-1]) && str[strlen(str)-1]!='_') dos=0;
 	break;
       }
       case SEM_EXPRPART_TYPE_VAR: {
+        if (dos && (isalnum(str[strlen(str)-1]) || str[strlen(str)-1]=='_')) output_fmt(out," ");
+        dos=1;
         output_fmt(out,"%s",tbl[ep->data.var].code);
 	tbl[ep->data.var].use++;
 	break;
@@ -252,6 +256,7 @@ void static csm_generate_expr(sem_expr_t *expr,csm_varuse_t *tbl,output_t *out) 
         csm_generate_expr(alist_ptr(ep->data.fun.args,i),tbl,out);
       }
       output_string(out,")");
+      dos=0;
     }
   }
 }

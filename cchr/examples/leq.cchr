@@ -22,8 +22,8 @@ cchr {
     init({log_int_t_copy($1);log_int_t_copy($2);}) 
     destr({log_int_t_destruct($1);log_int_t_destruct($2);}) 
     fmt("leq(%p,%p)") 
-    add({cchr_idxlist_t nw;nw.pid=CSM_PID($0);nw.id=CSM_IDOFPID($0); cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);})
-    kill({cchr_idxlist_t nw;nw.pid=CSM_PID($0);nw.id=CSM_IDOFPID($0);cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);});
+    add({cchr_idxlist_t nw;nw.pid=CSM_PID($0); nw.id=CSM_IDOFPID($0); cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);})
+    kill({cchr_idxlist_t nw; nw.pid=CSM_PID($0); nw.id=CSM_IDOFPID($0); cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);});
   
   extern eq;
   

@@ -8,6 +8,9 @@
 #define _dcls_h_ 1
 
 #include <stdint.h>
+#ifdef USE_EFENCE
+#include "efence.h"
+#endif
 
 typedef uint32_t dcls_pid_t;
 #define DCLS_EMPTY_PID ((dcls_pid_t)(-1))
@@ -23,19 +26,30 @@ typedef uint32_t dcls_pid_t;
  */
  
 /* declare var to be a DCLS of type type */
-#define dcls_declare(type,var) struct { dcls_pid_t _s,_fe; struct { type _data; dcls_pid_t _prev,_next;  } *_d;} var
+#define dcls_declare(type,var) \
+  struct { \
+    dcls_pid_t _s,_fe,_id; \
+    struct { \
+      type _data; \
+      dcls_pid_t _prev,_next,_id; \
+    } *_d; \
+  } var
 
 /* initialize a DCLS var */
 #define dcls_init(var,types) do {\
   (var)._s=(types); \
   (var)._d=malloc(sizeof((var)._d[0])*(types)); \
+  (var)._id=1; \
   for (int j=0; j<(types); j++) { \
+    memset(&((var)._d[j]._data),0xFF,sizeof((var)._d[j]._data)); \
     (var)._d[j]._next=j; \
     (var)._d[j]._prev=j; \
+    (var)._d[j]._id=((var)._id)++; \
   } \
   (var)._fe=DCLS_EMPTY_PID; \
 } while(0);
 
+#define dcls_id(var,pid) (((var)._d[(pid)])._id)
 #define dcls_get(var,pid) (((var)._d[(pid)])._data)
 #define dcls_ptr(var,pid) (&(dcls_get(var,pid)))
 
@@ -44,31 +58,17 @@ typedef uint32_t dcls_pid_t;
 #define dcls_iter_next(var,pid) ((var)._d[(pid)]._next)
 
 #define dcls_safeiter(var,pid,type,code) { \
-  int _cont; \
-  do { \
-     _cont=0; \
-     dcls_pid_t pid=dcls_iter_first((var),(type)); \
-     while (dcls_iter_hasnext(var,pid,type)) { \
-  	dcls_pid_t _nextpid=dcls_iter_next(var,pid); \
-	if (dcls_used(var,pid)) { \
-  	  code \
-  	} else { \
-	  _cont=1;\
-	  break; \
-	} \
-  	(pid)=_nextpid;\
-     } \
-  } while(_cont); \
-}
-
-#define dcls_unsafeiter(var,pid,type,code) { \
   dcls_pid_t pid=dcls_iter_first((var),(type)); \
    while (dcls_iter_hasnext(var,pid,type)) { \
-     dcls_pid_t _nextpid=dcls_iter_next(var,pid); \
-     if (dcls_used(var,pid)) { \
+     dcls_pid_t _id=dcls_id(var,pid); \
+     { \
        code \
      } \
-     (pid)=_nextpid;\
+     if (dcls_used(var,pid) && dcls_id(var,pid)==_id) { \
+       (pid)=dcls_iter_next(var,pid);\
+     } else { \
+       (pid)=dcls_iter_first((var),(type)); \
+     } \
   } \
 }
 
@@ -85,6 +85,7 @@ typedef uint32_t dcls_pid_t;
     while (_kp-- > (var)._s) { \
       (var)._d[_kp]._prev=DCLS_EMPTY_PID; \
       (var)._d[_kp]._next=(var)._fe; \
+      (var)._d[_kp]._id=0; \
       (var)._fe=_kp; \
     } \
     (var)._s=_ns; \
@@ -98,6 +99,7 @@ typedef uint32_t dcls_pid_t;
   (pid)=(var)._fe; \
   (var)._fe=(var)._d[(pid)]._next; \
   (var)._d[(pid)]._prev=DCLS_EMPTY_PID; \
+  (var)._d[(pid)]._id=((var)._id++); \
 } while(0);
 
 /* get a position out of the filled set (not added to free set, unless already there) */
@@ -116,6 +118,7 @@ typedef uint32_t dcls_pid_t;
   dcls_remove(var,pid); \
   (var)._d[(pid)]._next=(var)._fe;\
   (var)._fe=(pid);\
+  (var)._d[(pid)]._id=0;\
 } while(0);
 
 /* bring a position into the filled set */

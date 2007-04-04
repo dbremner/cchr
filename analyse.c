@@ -62,8 +62,7 @@ void static sem_constr_init(sem_constr_t* con,char *name) {
   alist_init(con->occ);
   alist_init(con->hooked);
   alist_init(con->related);
-  /*alist_init(con->fmtargs);*/
-  sem_expr_init(&(con->fmt));
+  alist_init(con->fmt);
   sem_expr_init(&(con->destr));
   sem_expr_init(&(con->init));
   con->name=name;
@@ -76,11 +75,10 @@ void static sem_constr_destruct(sem_constr_t *con) {
   alist_free(con->hooked);
   alist_free(con->related);
   alist_free(con->types);
-  /*for (int i=0; i<alist_len(con->fmtargs); i++) {
-    sem_expr_destruct(alist_ptr(con->fmtargs,i));
+  for (int i=0; i<alist_len(con->fmt); i++) {
+    sem_expr_destruct(alist_ptr(con->fmt,i));
   }
-  alist_free(con->fmtargs);*/
-  sem_expr_destruct(&(con->fmt));
+  alist_free(con->fmt);
   sem_expr_destruct(&(con->destr));
   sem_expr_destruct(&(con->init));
 }
@@ -876,8 +874,8 @@ void static sem_expr_expand(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *in,se
 	    			int l=0;
 	    			while (l<alist_len(mac->types)) {
 	    				int type=vt ? sem_expr_gettype(chr,vt,alist_ptr(se->data.fun.args,l)) : -1;
-	    				if (alist_get(mac->types,l) && (type<0 || alist_get(mac->types,l)==type)) {
-	    					/*fprintf(stderr,"[expand of %s: arg %i of type %s (macro needs %s)]\n",mac->name,l+1,type,alist_get(mac->types,l));*/
+	    				if (alist_get(mac->types,l)>=0 && (type<0 || alist_get(mac->types,l)!=type)) {
+	    					/*fprintf(stderr,"[expand of %s: arg %i of type %i (macro needs %i)]\n",mac->name,l+1,type,alist_get(mac->types,l));*/
 	    					break;
 	    				}
 	    				l++;
@@ -1024,18 +1022,18 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   for (int i=0; i<alist_len(in->args); i++) {
   	expr_t *e=alist_ptr(in->args,i);
   	token_t *t=alist_ptr(e->list,0);
+	sem_vartable_t svt;
+	sem_vartable_init_constr(&svt,n);
   	int ok=0;
   	if (t->type==TOKEN_TYPE_FUNC) {
   		if (!ok && !strcmp(t->data,"fmt")) {
-  			sem_expr_init(&(n->fmt));
-  			sem_expr_generate(&(n->fmt),NULL,out,alist_ptr(t->args,0),n->name,0,1);
-  			//sem_expr_expand(out,NULL,&(n->fmt),NULL,NULL);
-  			/*for (int j=1; j<alist_len(t->args); j++) {
-  				sem_expr_t ar;
-  				sem_expr_init(&ar);
-  				sem_generate_expr(&ar,&svt,out,alist_ptr(t->args,j),n.name,0,1,-1);
-  				alist_add(n.fmtargs,ar);
-  			}*/
+			for (int l=0; l<alist_len(t->args); l++) {
+			    sem_expr_t fa;
+			    sem_expr_init(&fa);
+  			    sem_expr_generate(&(fa),&svt,out,alist_ptr(t->args,l),n->name,0,1);
+  			    sem_expr_expand(out,&svt,&(fa),NULL,NULL);
+			    alist_add(n->fmt,fa);
+			}
   			ok=1;
   		}
 		int par=0;
@@ -1044,8 +1042,6 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
 		if (!strcmp(t->data,"kill")) par=3;
 		if (!strcmp(t->data,"add")) par=4;
   		if (!ok && par) {
-			sem_vartable_t svt;
-  			sem_vartable_init_constr(&svt,n);
 			sem_expr_t *res=NULL;
 			switch (par) {
 			  case 1: {res=&(n->destr); break; }
@@ -1056,13 +1052,13 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   			sem_expr_init(res);
   			sem_expr_generate(res,&svt,out,alist_ptr(t->args,0),n->name,0,1);
   			sem_expr_expand(out,&svt,res,NULL,NULL);
-  			sem_vartable_destruct(&svt);
   			ok=1;  			
   		}
   		if (!ok) {
   			fprintf(stderr,"warning: unknown constraint attribute '%s' ignored\n",t->data);
   		}
   	}
+	sem_vartable_destruct(&svt);
   }
 }
 

@@ -2,11 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "merge_cchr.h"
+
 typedef int ent_t;
 #define LESS(A,B) ((A)<(B))
 
 cchr {
-  constraint arrow(ent_t,ent_t),merge(int,ent_t);
+  constraint arrow(ent_t,ent_t) fmt("[%i << %i]",$1,$2),merge(int,ent_t) fmt("merge(%i,%i)",$1,$1);
   extern LESS;
   
   arrow(X,A) \ arrow(X,B) <=> LESS(A,B) | arrow(A,B);

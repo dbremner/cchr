@@ -6,7 +6,13 @@
 
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
 
-logical_code(int,log_int_t,logical_nodestr)
+#define log_int_cb_created(val)
+#define log_int_cb_merged(val1,val2)
+#define log_int_cb_destrval(val)
+#define log_int_cb_destrtag(tag)
+#define log_int_cb_gotval(val,tag)
+
+logical_code(int,int,log_int_t,log_int_cb)
 
 void addleq(int size,int a,int b,log_int_t *vars,int *cmp) {
   cmp[size*a+b]++;

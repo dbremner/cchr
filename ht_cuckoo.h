@@ -32,6 +32,12 @@ static void hook_predouble(void) {}
   int static inline hash_t ## _have(hash_t *ht, entry_t *entry) { \
     return ((hash_t ## _find(ht,entry)) != NULL); \
   } \
+  int static inline hash_t ## _size(hash_t *ht) { \
+    return (ht->size); \
+  } \
+  int static inline hash_t ## _mem(hash_t *ht) { \
+    return (ht->size > 0); \
+  } \
   void static inline hash_t ## _double(hash_t *ht) { \
     hook_predouble(); \
     entry_t *nw=malloc(sizeof(entry_t)*(4 << (ht->size))); \

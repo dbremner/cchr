@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "gcd_cchr.h"
+
 cchr {
   constraint gcd(uint64_t) fmt("gcd(%llu)");
 

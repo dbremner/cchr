@@ -65,7 +65,7 @@ typedef enum  {
 			int oid=var->_id; \
 		) \
 		if (var->_type==LOGICAL_NODE_TYPE_NONROOT) { /* only when this is no root */ \
-			out _top=var; /* temporary top variable */ \
+			out _top=var->_data.nonroot.par; /* temporary top variable */ \
 			while (_top->_type==LOGICAL_NODE_TYPE_NONROOT) { /* first search the top */ \
 				_top=_top->_data.nonroot.par; /* by recursively going up */ \
 			} \
@@ -132,9 +132,10 @@ typedef enum  {
 				(var1)->_type=LOGICAL_NODE_TYPE_VAL; \
 				(var1)->_data.root.val=(var2)->_data.root.val; /* this value is moved to parent */ \
 			} \
+			cb##_merged((&((var1)->_data.root.extra)),((var2)->_data.root.extra)); \
+			cb##_destrtag((var2)->_data.root.extra); \
 			(var2)->_type=LOGICAL_NODE_TYPE_NONROOT; /* child becomes type NONROOT */ \
 			(var2)->_data.nonroot.par=var1; /* its parent is set */ \
-			cb##_merged((&((var1)->_data.root.extra)),((var2)->_data.root.extra)); \
 			(var1)->_refcount++; /* its parent's refcount increased */ \
 			LOG_DEBUG(fprintf(stderr,"[seteq refc: (%s) #%i=%i #%i=%i]\n",#out,var1->_id,var1->_refcount,var2->_id,var2->_refcount);) \
 			if ((var1)->_data.root.rank==(var2)->_data.root.rank) (var1)->_data.root.rank++; /* rank increase if necessary */ \
@@ -144,7 +145,6 @@ typedef enum  {
 		int remtop=1; \
 		LOG_DEBUG(fprintf(stderr,"[destruct logical (%s) #%i]\n",#out,var->_id);) \
 		out top=out##_normalize(var); \
-		LOG_DEBUG(fprintf(stderr,"[destruct root:   (%s) #%i]\n",#out,var->_id);) \
 		if (top != var) { \
 			var->_refcount--; \
 			if (var->_refcount==0) { \
@@ -156,8 +156,9 @@ typedef enum  {
 		if (remtop) { \
 			top->_refcount--; \
 			if (top->_refcount==0) { \
-				LOG_DEBUG(fprintf(stderr,"[destruct free:    (%s) #%i]\n",#out,var->_id);) \
-				{ cb##_destr((top->_data.root.val),(top->_data.root.extra)); } \
+				LOG_DEBUG(fprintf(stderr,"[destruct free:    (%s) #%i]\n",#out,top->_id);) \
+				if (top->_type==LOGICAL_NODE_TYPE_VAL) { cb##_destrval(top->_data.root.val); } \
+				cb##_destrtag(top->_data.root.extra); \
 				free(top); \
 			} \
 		} \

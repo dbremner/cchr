@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "primes_cchr.h"
+
 #ifdef USE_EFENCE
 #include <efence.h>
 #endif

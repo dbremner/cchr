@@ -14,7 +14,9 @@
 #include "analyse.h"
 #include "alist.h"
 
-//#define NO_IDX
+#ifndef NO_IDX
+#define NO_IDX 0
+#endif
 
 /* do something sprintf-like, but put the output in a malloc'ed block */
 char static *make_message(const char *fmt, ...) {
@@ -124,7 +126,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
       alist_ensure(entry.data.idxiter.args,alist_len(co->args));
       int haveidx=0;
       for (int i=0; i<alist_len(co->args); i++) alist_add(entry.data.idxiter.args,NULL);
-#ifndef NO_IDX
+#if NO_IDX == 0
       for (int g=0; g<nguards; g++) { /* loop over all guards */
         if (gd[g]==0) { /* if this particular guard is still to be checked */
           sem_out_t *sot=alist_ptr(rule->out[0],g);

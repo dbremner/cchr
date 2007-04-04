@@ -2,16 +2,18 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "ram_cchr.h"
+
 typedef enum { ADD,SUB,MULT,DIV,MOVE,I_MOVE,MOVE_I,CONST,JUMP,CJUMP,HALT } instr_t;
 
 cchr {
-	constraint mem(int, int), 
-	prog(int,int,instr_t,int,int), 
-	prog_counter(int);
+	constraint mem(int, int) fmt("mem(%i,%i)",$1,$2), 
+	prog(int,int,instr_t,int,int) fmt("prog(%i,%i,%i,%i,%i)",$1,$2,$3,$4,$5),
+	prog_counter(int) fmt("prog_counter(%i)",$1);
 	
 	extern ADD,SUB,MULT,DIV,MOVE,I_MOVE,MOVE_I,CONST,JUMP,CJUMP,HALT;
 		
-	constraint initmem(int);
+	constraint initmem(int) fmt("initmem(%i)",$1);
 	
 	// add value of register B to register A
 	iAdd @ prog(L,L1,ADD,B,A), mem(B,Y) \ mem(A,X), prog_counter(L) <=> mem(A,X+Y), prog_counter(L1);

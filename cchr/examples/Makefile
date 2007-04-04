@@ -1,18 +1,21 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99 -pedantic
+DEFS :=
 
-#MODE := normal
 MODE := normal
+#MODE := debug
 #MODE := efence
 
 ifeq ($(MODE),debug)
-  CFLAGS := -O0 -ggdb3 lookup3.c
+  DEFS := -DCSM_CONF_DEBUG -DDEBUG
+  CFLAGS := -O0 -ggdb3 $(DEFS) lookup3.c
   LDFLAGS := 
 else
   ifeq ($(MODE),efence)
-    CFLAGS := -O0 -ggdb3 -DUSE_EFENCE lookup3.c
+    DEFS := -DUSE_EFENCE -DCSM_CONF_DEBUG -DDEBUG
+    CFLAGS := -O0 -ggdb3 $(DEFS) lookup3.c
     LDFLAGS := -lefence 
   else
-    CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers lookup3.c
+    CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers $(DEFS) lookup3.c
     LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
   endif
 endif
@@ -51,7 +54,7 @@ fib.c: fib.cchr bin/cchr Makefile
 	bin/cchr fib.cchr
 
 fib.c.debug: fib.c cchr_csm.h Makefile
-	cpp -DCSM_CONF_DEBUG <fib.c | egrep -v '^#' | indent -kr -l1024 >fib.c.c
+	cpp -P $(DEFS)  <fib.c | egrep -v '^#' | indent -kr -l1024 >fib.c.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.c.debug fib.c.c
 
 fib_topdown.c: fib_topdown.cchr bin/cchr Makefile
@@ -67,10 +70,16 @@ leq.c: leq.cchr bin/cchr Makefile
 	bin/cchr leq.cchr
 
 leq.prep.c: leq.c
-	cpp -P -DCSM_CONF_DEBUG <leq.c | egrep -v '^#' | indent -kr -l127 >leq.prep.c
+	cpp -P $(DEFS) <leq.c | indent -kr -l127 >leq.prep.c
+
+tak2.prep.c: tak2.c
+	cpp -P $(DEFS) <tak2.c | indent -kr -l127 >tak2.prep.c
 
 ram.c: ram.cchr bin/cchr Makefile
 	bin/cchr ram.cchr
+
+merge.c: merge.cchr bin/cchr Makefile
+	bin/cchr merge.cchr
 
 acker.c: acker.cchr bin/cchr Makefile
 	bin/cchr acker.cchr
@@ -84,6 +93,9 @@ tak: tak.c ../cchr_csm.h Makefile
 leq: leq.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o leq leq.c
 
+merge: merge.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o merge merge.c
+
 leq.prep: leq.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o leq.prep leq.prep.c
 
@@ -96,26 +108,35 @@ acker: acker.c ../cchr_csm.h Makefile
 tak2: tak2.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2 tak2.c
 
+tak2.prep: tak2.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c
+
 tak.debug: tak.c ../cchr_csm.h Makefile
-	cpp -P -DUSE_EFENCE -DCSM_CONF_DEBUG -DDEBUG <tak.c | indent -kr -l1024 >tak.debug.c
+	cpp -P $(DEFS) <tak.c | indent -kr -l1024 >tak.debug.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak.debug tak.debug.c
 
 fib_topdown.debug: fib_topdown.c ../cchr_csm.h ../logical.h ../dcls.h ../alist.h Makefile
-	cpp -P -DUSE_EFENCE -DCSM_CONF_DEBUG -DDEBUG <fib_topdown.c | indent -kr -l1024 >fib_topdown.debug.c
+	cpp -P $(DEFS) <fib_topdown.c | indent -kr -l1024 >fib_topdown.debug.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown.debug fib_topdown.debug.c
 
 fib_gmp.c: fib_gmp.cchr bin/cchr Makefile
 	bin/cchr fib_gmp.cchr
 
+fib_gmp.prep.c: fib_gmp.c
+	cpp -P $(DEFS) <fib_gmp.c | indent -kr -l127 >fib_gmp.prep.c
+
 fib: fib.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib fib.c
 
 fib_h: fib_h.c cchr_csm.h Makefile
-	cpp -P fib_h.c | indent -kr -l 384 >fib_h.prep.c
+	cpp -P $(DEFS) fib_h.c | indent -kr -l 384 >fib_h.prep.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_h fib_h.prep.c
 
 fib_gmp: fib_gmp.c cchr_csm.h Makefile
 	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp fib_gmp.c
+
+fib_gmp.prep: fib_gmp.prep.c Makefile
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp.prep fib_gmp.prep.c
 
 fib_gmp.p: fib_gmp.c cchr_csm.h Makefile
 	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-generate -o fib_gmp.a fib_gmp.c
@@ -123,11 +144,11 @@ fib_gmp.p: fib_gmp.c cchr_csm.h Makefile
 	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-use -o fib_gmp.p fib_gmp.c
 
 fib.debug: fib.c cchr_csm.h Makefile
-	$(CC) -DCSM_CONF_DEBUG $(CFLAGS) $(LDFLAGS) -o fib.debug fib.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.debug fib.c
 
 logtest: logtest.c ../logical.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o logtest logtest.c
 
 logtest.c.debug: logtest.c ../logical.h
-	cpp -P <logtest.c | indent -kr >logtest.c.c
+	cpp -P $(DEFS) <logtest.c | indent -kr >logtest.c.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o logtest.c.debug logtest.c.c

@@ -15,6 +15,7 @@
 #include "dcls.h" /* for doubly-linked lists (constraint store) */
 #include "alist.h" /* for arraylists */
 #include "lookup3.h" /* for hashing algorithm */
+#include "lookup3.c"
 #include "ht_cuckoo.h" /* for hashtable */
 
 
@@ -224,16 +225,20 @@
 /* callback macro for declaration of fire functions */  
 #define CSM_CB_FFD_S
 #define CSM_CB_FFD_D(NAME) \
-  void static inline cchr_fire_##NAME(dcls_pid_t,  ARGLIST_##NAME(CSM_CB_FFDAR,)); \
-  void static inline cchr_add_##NAME(ARGLIST_##NAME(CSM_CB_FFDAR,)); \
+  void static inline cchr_fire_##NAME(dcls_pid_t  ARGLIST_##NAME(CSM_CB_FFDAR,)); \
+  void static inline cchr_add_##NAME(ARGLIST_##NAME(CSM_CB_FADAR,)); \
   void static inline cchr_reactivate_##NAME(dcls_pid_t); \
   void static inline cchr_index_##NAME(dcls_pid_t); \
   void static inline cchr_unindex_##NAME(dcls_pid_t);
 
 
 /* callback macro for arguments of declaration of fire functions */
-#define CSM_CB_FFDAR_S ,
-#define CSM_CB_FFDAR_D(NAME,TYPE,...) TYPE NAME
+#define CSM_CB_FFDAR_S
+#define CSM_CB_FFDAR_D(NAME,TYPE,...) , TYPE NAME
+
+/* callback macro for arguments of declaration of add functions */
+#define CSM_CB_FADAR_S ,
+#define CSM_CB_FADAR_D(NAME,TYPE,...) TYPE NAME
 
 /* callback macro for code of fire functions */
 #define CSM_CB_FFC_S
@@ -246,7 +251,7 @@
       CONSTRUCT_##NAME; \
     } \
     CSM_DEBUG( \
-      CSM_FMTOUT("fire %s pid=%i",#NAME,pid_self_); \
+      CSM_PRINTF("fire ",NAME); \
       _global_runtime.debugindent++; \
     ) \
     RULELIST_##NAME(CSM_CB_FFCCO) \
@@ -421,7 +426,7 @@
 	} \
 }
 
-#define CSM_UNIEND(CON,VAR) {cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
+#define CSM_UNIEND(CON,VAR) {CSM_FMTOUT("UNIEND con=%s var=%s",#CON,#VAR); cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
 
 #define CSM_LOGLOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
   cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
@@ -429,6 +434,7 @@
   for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(_log_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(_log_##VAR,_idxlst_##VAR) ) { \
     dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
     { \
+      CSM_FMTOUT("in LOGLOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
       CODE \
     } \
   } \
@@ -442,10 +448,11 @@
   for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
     dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
     if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
+      CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
       CODE \
     } \
-    CSM_UNIEND(CON,VAR) \
   } \
+  CSM_UNIEND(CON,VAR) \
 }
 
 #define CSM_END { \
@@ -486,7 +493,7 @@
 	cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); \
 }
 #define CSM_ADDE(CON) { \
-	cchr_fire_##CON(); \
+	cchr_fire_##CON(DCLS_EMPTY_PID); \
 }
 #define CSM_NEEDSELF(CON) { \
 	if (doadd) { \
@@ -501,7 +508,7 @@
 }
 #define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR = EXPR;
 #define CSM_DECLOCAL(TYPE,VAR) TYPE local_##VAR;
-#define CSM_IMMLOCAL(TYPE,VAR,EXPR) const CSM_DEFLOCAL(TYPE,VAR,EXPR)
+#define CSM_IMMLOCAL(TYPE,VAR,EXPR) CSM_DEFLOCAL(TYPE const,VAR,EXPR)
 #define CSM_LOCAL(VAR) (local_##VAR)
 
 
@@ -527,7 +534,7 @@
 		CODE \
 	} \
 }
-#define CSM_CB_HC_D(PID,HOOK,POS,RULE,CODE) ent_.hist[POS]=CSM_IDOFPID(PID);
+#define CSM_CB_HC_D(PID,HOOK,POS,RULE,CODE) ent_.hist[(POS)+1]=CSM_IDOFPID(PID);
 #define CSM_CB_HC_S(RULE,CODE)
 
 #define CSM_HISTADD(RULE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HA,__VA_ARGS__,RULE))
@@ -540,7 +547,7 @@
 	CSM_FMTOUTX(") to %s:%i [pid=%i cnt=%i]",2,#HOOK,CSM_IDOFPID(HOOK),pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._ph_##RULE.used); \
 	cchr_propstr_##RULE##_t_set(&(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE),&ent_); \
 }
-#define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[POS]=CSM_IDOFPID(PID); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,CSM_IDOFPID(PID)); );
+#define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[POS+1]=CSM_IDOFPID(PID); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,CSM_IDOFPID(PID)); );
 #define CSM_CB_HA_S(RULE)
 
 /***** additional helper macro's *****/

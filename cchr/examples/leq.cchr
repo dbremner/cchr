@@ -12,32 +12,60 @@
 typedef struct {
   cchr_htdc_t leq_2_arg1;
   cchr_htdc_t leq_2_arg2;
+  cchr_htdc_t leq_2_ra;
 } log_int_t_tag_t;
 
-#define log_int_cb_created(tag) { \
-  cchr_htdc_t_init(&(tag->leq_2_arg1)); \
-  cchr_htdc_t_init(&(tag->leq_2_arg2)); \
-}
-#define log_int_cb_merged(tag1,tag2) { \
-  cchr_htdc_t_addall(&(tag1->leq_2_arg1),&(tag2.leq_2_arg1)); \
-  cchr_htdc_t_addall(&(tag1->leq_2_arg2),&(tag2.leq_2_arg2)); \
-}
-#define log_int_cb_gotval(val,tag)
-#define log_int_cb_destrval(val)
-#define log_int_cb_destrtag(tag) { \
-  cchr_htdc_t_free(&(tag.leq_2_arg1)); \
-  cchr_htdc_t_free(&(tag.leq_2_arg2)); \
+logical_header(int,log_int_t_tag_t,log_int_t)
+
+#define log_int_t_reactivate(var) { \
+  CSM_LOGUNILOOP(leq_2,RA,leq_2_ra,log_int_t,var,{cchr_reactivate_leq_2(CSM_PID(RA));}) \
 }
 
-logical_code(int,log_int_t_tag_t,log_int_t,log_int_cb)
+#define log_int_cb_created(val) { \
+  cchr_htdc_t_init(&(log_int_t_getextrap(val)->leq_2_arg1)); \
+  cchr_htdc_t_init(&(log_int_t_getextrap(val)->leq_2_arg2)); \
+  cchr_htdc_t_init(&(log_int_t_getextrap(val)->leq_2_ra)); \
+}
+#define log_int_cb_merged(val1,val2) { \
+  cchr_htdc_t_addall(&(log_int_t_getextrap(val1)->leq_2_arg1),&(log_int_t_getextrap(val2)->leq_2_arg1)); \
+  cchr_htdc_t_addall(&(log_int_t_getextrap(val1)->leq_2_arg2),&(log_int_t_getextrap(val2)->leq_2_arg2)); \
+  cchr_htdc_t_addall(&(log_int_t_getextrap(val1)->leq_2_ra),&(log_int_t_getextrap(val2)->leq_2_ra)); \
+}
+#define log_int_cb_changed(val) { \
+  /* log_int_t_reactivate(val); */ \
+}
+#define log_int_cb_destrval(val)
+#define log_int_cb_destrtag(val) { \
+  cchr_htdc_t_free(&(log_int_t_getextrap(val)->leq_2_arg1)); \
+  cchr_htdc_t_free(&(log_int_t_getextrap(val)->leq_2_arg2)); \
+  cchr_htdc_t_free(&(log_int_t_getextrap(val)->leq_2_ra)); \
+}
 
 cchr {
   constraint leq(log_int_t,log_int_t) 
     init({log_int_t_copy($1);log_int_t_copy($2);}) 
     destr({log_int_t_destruct($1);log_int_t_destruct($2);}) 
-    fmt("leq(%p,%p)")
-    add({cchr_idxlist_t nw;nw.pid=CSM_PID($0); nw.id=CSM_IDOFPID($0); cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);})
-    kill({cchr_idxlist_t nw; nw.pid=CSM_PID($0); nw.id=CSM_IDOFPID($0); cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);})
+    fmt("leq"/*"(#i,#%i)"*/"[%p,%p]" /*,log_int_t_normalize($1)->_id,log_int_t_normalize($2)->_id*/ ,$1,$2)
+    add({
+      cchr_idxlist_t nw;nw.pid=CSM_PID($0); 
+      nw.id=CSM_IDOFPID($0); 
+      cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);
+      nw.id=CSM_IDOFPID($0); 
+      cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);
+      nw.id=CSM_IDOFPID($0); 
+      cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_ra),&nw);
+      nw.id=CSM_IDOFPID($0); 
+      cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_ra),&nw);
+    })
+    kill({
+      cchr_idxlist_t nw; 
+      nw.pid=CSM_PID($0); 
+      nw.id=CSM_IDOFPID($0); 
+      cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);
+      cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);
+      cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_ra),&nw);
+      cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_ra),&nw);
+    })
     ;
   
   extern eq;
@@ -67,7 +95,9 @@ void test(int size) {
   free(vars);
 }
 
+logical_code(int,log_int_t_tag_t,log_int_t,log_int_cb)
+
 int main(void) {
-  test(100);
+  test(10);
   return 0;
 }

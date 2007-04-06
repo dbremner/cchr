@@ -1,22 +1,30 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99 -pedantic
 DEFS :=
 
-MODE := normal
-#MODE := debug
+#MODE := normal
+MODE := debug
+#MODE := debugopt
 #MODE := efence
 
-ifeq ($(MODE),debug)
+ifeq ($(MODE),debugopt)
   DEFS := -DCSM_CONF_DEBUG -DDEBUG
-  CFLAGS := -O0 -ggdb3 $(DEFS) lookup3.c
+  CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers $(DEFS)
   LDFLAGS := 
 else
-  ifeq ($(MODE),efence)
-    DEFS := -DUSE_EFENCE -DCSM_CONF_DEBUG -DDEBUG
-    CFLAGS := -O0 -ggdb3 $(DEFS) lookup3.c
-    LDFLAGS := -lefence 
+  ifeq ($(MODE),debug)
+    DEFS := -DCSM_CONF_DEBUG -DDEBUG
+    CFLAGS := -O0 -ggdb3 $(DEFS)
+    LDFLAGS := 
   else
-    CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers $(DEFS) lookup3.c
-    LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
+    ifeq ($(MODE),efence)
+      DEFS := -DUSE_EFENCE
+      CFLAGS := -O0 -ggdb3 $(DEFS)
+      LDFLAGS := -lefence 
+    else
+      DEFS :=
+      CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers $(DEFS)
+      LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
+    endif
   endif
 endif
 
@@ -66,17 +74,23 @@ fib_topdown: fib_topdown.c ../cchr_csm.h Makefile
 tak.c: tak.cchr bin/cchr Makefile
 	bin/cchr tak.cchr
 
-leq.c: leq.cchr bin/cchr Makefile
+leq.c: leq.cchr cchr_csm.h bin/cchr Makefile
 	bin/cchr leq.cchr
 
-leq.prep.c: leq.c
+leq.prep.c: leq.c Makefile
 	cpp -P $(DEFS) <leq.c | indent -kr -l127 >leq.prep.c
 
-tak2.prep.c: tak2.c
+tak2.prep.c: tak2.c Makefile
 	cpp -P $(DEFS) <tak2.c | indent -kr -l127 >tak2.prep.c
+
+dijkstra.prep.c: dijkstra.c ../cchr_csm.h Makefile
+	cpp -P $(DEFS) <dijkstra.c | indent -kr -l127 >dijkstra.prep.c
 
 ram.c: ram.cchr bin/cchr Makefile
 	bin/cchr ram.cchr
+
+dijkstra.c: dijkstra.cchr bin/cchr Makefile
+	bin/cchr dijkstra.cchr
 
 merge.c: merge.cchr bin/cchr Makefile
 	bin/cchr merge.cchr
@@ -107,6 +121,12 @@ acker: acker.c ../cchr_csm.h Makefile
 
 tak2: tak2.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2 tak2.c
+
+dijkstra: dijkstra.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o dijkstra dijkstra.c
+
+dijkstra.prep: dijkstra.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o dijkstra.prep dijkstra.prep.c
 
 tak2.prep: tak2.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c

@@ -1,3 +1,6 @@
+#ifndef _lookup3_c_
+#define _lookup3_c_
+
 /*
 -------------------------------------------------------------------------------
 lookup3.c, by Bob Jenkins, May 2006, Public Domain.
@@ -911,3 +914,5 @@ int main()
 }
 
 #endif  /* SELF_TEST */
+
+#endif

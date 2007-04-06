@@ -41,7 +41,6 @@ typedef uint32_t dcls_pid_t;
   (var)._d=malloc(sizeof((var)._d[0])*(types)); \
   (var)._id=1; \
   for (int j=0; j<(types); j++) { \
-    memset(&((var)._d[j]._data),0xFF,sizeof((var)._d[j]._data)); \
     (var)._d[j]._next=j; \
     (var)._d[j]._prev=j; \
     (var)._d[j]._id=((var)._id)++; \

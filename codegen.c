@@ -614,19 +614,21 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		}
 		output_char(out,'\n');
 		csm_varuse_t *vt=csm_generate_vartable_constr(in,i);
+		output_fmt(out,"#undef FORMAT_%s\n",conn);
+		output_fmt(out,"#define FORMAT_%s ",conn);
 		if (alist_len(con->fmt)>0) {
-			output_fmt(out,"#undef FORMAT_%s\n",conn);
-			output_fmt(out,"#define FORMAT_%s ",conn);
 			csm_generate_expr(&(alist_get(con->fmt,0)),vt,out);
-			output_string(out,"\n");
-			output_fmt(out,"#undef FORMATARGS_%s\n",conn);
-			output_fmt(out,"#define FORMATARGS_%s ",conn);
-			for (int k=1; k<alist_len(con->fmt); k++) {
-			  output_string(out,",");
-			  csm_generate_expr(&(alist_get(con->fmt,k)),vt,out);
-			}
-			output_string(out,"\n");
+		} else {
+		        output_fmt(out,"\"%s()\"",conn);
 		}
+		output_string(out,"\n");
+		output_fmt(out,"#undef FORMATARGS_%s\n",conn);
+		output_fmt(out,"#define FORMATARGS_%s ",conn);
+		for (int k=1; k<alist_len(con->fmt); k++) {
+		  output_string(out,",");
+		  csm_generate_expr(&(alist_get(con->fmt,k)),vt,out);
+		}
+		output_string(out,"\n");
 		output_char(out,'\n');
 		output_fmt(out,"#undef DESTRUCT_%s\n",conn);
 		output_fmt(out,"#define DESTRUCT_%s(",conn);

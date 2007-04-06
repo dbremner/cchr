@@ -53,9 +53,10 @@ typedef enum  {
 	int static INLINE out##_testeq(out var1, out var2); \
 	int static INLINE out##_hasval(out var); \
 	in static INLINE out##_getval(out var); \
+	in static INLINE *out##_getvalp(out var); \
+	tag static INLINE *out##_getextrap(out var); \
 	
 #define logical_code(in,tag,out,cb) \
-	logical_header(in,tag,out) \
 	out static out##_normalize(out var) { \
 		LOG_DEBUG( \
 			if (var->_refcount<=0) { \
@@ -81,16 +82,16 @@ typedef enum  {
 				} \
 				var=_next; /* move to the next node */ \
 			} \
-			LOG_DEBUG(fprintf(stderr,"[normalized logical (%s) #%i => #%i]\n",#out,oid,_top->_id);) \
+			LOG_DEBUG(fprintf(stderr,"[normalized logical (%s) #%i => #%i(rc:%i)]\n",#out,oid,_top->_id,_top->_refcount);) \
 			return _top; \
 		} \
 		return var; \
 	} \
 	out static INLINE out##_copy(out var) { \
-		out ret=out##_normalize(var); \
-		ret->_refcount++; \
-		LOG_DEBUG(fprintf(stderr,"[copy logical (%s) #%i => refcount=%i]\n",#out,ret->_id,ret->_refcount);) \
-		return ret; \
+		/*out var=out##_normalize(var);*/ \
+		var->_refcount++; \
+		LOG_DEBUG(fprintf(stderr,"[copy logical (%s) #%i => refcount=%i]\n",#out,var->_id,var->_refcount);) \
+		return var; \
 	} \
 	out static INLINE out##_create() { \
 		out ret; \
@@ -98,7 +99,7 @@ typedef enum  {
 		ret->_type=LOGICAL_NODE_TYPE_ROOT; \
 		ret->_refcount=1; \
 		ret->_data.root.rank=0; \
-		cb##_created((&(ret->_data.root.extra))); \
+		cb##_created(ret); \
 		LOG_DEBUG(ret->_id=_##out##_nextid++;) \
 		LOG_DEBUG(fprintf(stderr,"[created logical (%s) #%i]\n",#out,ret->_id);) \
 		return ret; \
@@ -107,14 +108,14 @@ typedef enum  {
 		var=out##_normalize(var); \
 		(var)->_type=LOGICAL_NODE_TYPE_VAL; \
 		(var)->_data.root.val=value; \
-		cb##_gotval(((var)->_data.root.val),((var)->_data.root.extra)); \
-		LOG_DEBUG(fprintf(stderr,"[setval logical (%s #%i]\n",#out,var->_id);) \
+		cb##_changed(var); \
+		LOG_DEBUG(fprintf(stderr,"[setval logical (%s #%i)]\n",#out,var->_id);) \
 	} \
 	void static INLINE out##_setvalp(out var,in *value) { \
 		var=out##_normalize(var); \
 		(var)->_type=LOGICAL_NODE_TYPE_VAL; \
 		(var)->_data.root.val=(*value); \
-		cb##_gotval(((var)->_data.root.val),((var)->_data.root.extra)); \
+		cb##_changed(var); \
 		LOG_DEBUG(fprintf(stderr,"[setvalp logical (%s #%i]\n",#out,var->_id);) \
 	} \
 	void static out##_seteq(out var1, out var2) { \
@@ -128,17 +129,18 @@ typedef enum  {
 				(var1)=(var2); /* swap var1 and var2 */ \
 				(var2)=_tmp; \
 			} \
+			cb##_merged(var1,var2); \
 			if ((var2)->_type==LOGICAL_NODE_TYPE_VAL) { /* if to-be-child had a value */ \
 				(var1)->_type=LOGICAL_NODE_TYPE_VAL; \
 				(var1)->_data.root.val=(var2)->_data.root.val; /* this value is moved to parent */ \
 			} \
-			cb##_merged((&((var1)->_data.root.extra)),((var2)->_data.root.extra)); \
-			cb##_destrtag((var2)->_data.root.extra); \
+			cb##_destrtag(var2); \
+			(var1)->_refcount++; /* its parent's refcount increased */ \
 			(var2)->_type=LOGICAL_NODE_TYPE_NONROOT; /* child becomes type NONROOT */ \
 			(var2)->_data.nonroot.par=var1; /* its parent is set */ \
-			(var1)->_refcount++; /* its parent's refcount increased */ \
 			LOG_DEBUG(fprintf(stderr,"[seteq refc: (%s) #%i=%i #%i=%i]\n",#out,var1->_id,var1->_refcount,var2->_id,var2->_refcount);) \
 			if ((var1)->_data.root.rank==(var2)->_data.root.rank) (var1)->_data.root.rank++; /* rank increase if necessary */ \
+			cb##_changed(var1); \
 		} \
 	} \
 	void static INLINE out##_destruct(out var) { \
@@ -157,8 +159,8 @@ typedef enum  {
 			top->_refcount--; \
 			if (top->_refcount==0) { \
 				LOG_DEBUG(fprintf(stderr,"[destruct free:    (%s) #%i]\n",#out,top->_id);) \
-				if (top->_type==LOGICAL_NODE_TYPE_VAL) { cb##_destrval(top->_data.root.val); } \
-				cb##_destrtag(top->_data.root.extra); \
+				if (top->_type==LOGICAL_NODE_TYPE_VAL) { cb##_destrval(top); } \
+				cb##_destrtag(top); \
 				free(top); \
 			} \
 		} \

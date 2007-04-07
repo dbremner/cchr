@@ -79,7 +79,7 @@ $(OUTDIR)/parsestr.o: parsestr.c parsestr.h alist.h Makefile
 	$(CC) $(CFLAGS) parsestr.c -c -o $(OUTDIR)/parsestr.o
 
 $(OUTDIR)/gio.o: gio.c gio.h semtree.h alist.h Makefile
-	$(CC) $(CFLAGS) -DNO_IDX=0 gio.c -c -o $(OUTDIR)/gio.o
+	$(CC) $(CFLAGS) -DNO_IDX=1 gio.c -c -o $(OUTDIR)/gio.o
 
 $(OUTDIR)/output.o: output.c output.h Makefile
 	$(CC) $(CFLAGS) output.c -c -o $(OUTDIR)/output.o

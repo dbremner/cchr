@@ -32,7 +32,7 @@ logical_header(int,log_int_t_tag_t,log_int_t)
   cchr_htdc_t_addall(&(log_int_t_getextrap(val1)->leq_2_ra),&(log_int_t_getextrap(val2)->leq_2_ra)); \
 }
 #define log_int_cb_changed(val) { \
-  /* log_int_t_reactivate(val); */ \
+  log_int_t_reactivate(val); \
 }
 #define log_int_cb_destrval(val)
 #define log_int_cb_destrtag(val) { \
@@ -45,7 +45,7 @@ cchr {
   constraint leq(log_int_t,log_int_t) 
     init({log_int_t_copy($1);log_int_t_copy($2);}) 
     destr({log_int_t_destruct($1);log_int_t_destruct($2);}) 
-    fmt("leq"/*"(#i,#%i)"*/"[%p,%p]" /*,log_int_t_normalize($1)->_id,log_int_t_normalize($2)->_id*/ ,$1,$2)
+    fmt("leq""(#%i,#%i)""[%p,%p]" ,log_int_t_normalize($1)->_id,log_int_t_normalize($2)->_id ,$1,$2)
     add({
       cchr_idxlist_t nw;nw.pid=CSM_PID($0); 
       nw.id=CSM_IDOFPID($0); 
@@ -74,7 +74,7 @@ cchr {
   macro eq(log_int_t,log_int_t) log_int_t_testeq($1,$2);
   
   reflexivity @ leq(X,Y) <=> eq(X,Y) | true;
-  antisymmetry @ leq(X1,Y1), leq(Y2,X2) <=> eq(X1,X2),eq(Y1,Y2) | {log_int_t_seteq(X1,Y1);cchr_reactivate_all(NULL);};
+  antisymmetry @ leq(X1,Y1), leq(Y2,X2) <=> eq(X1,X2),eq(Y1,Y2) | {log_int_t_seteq(X1,Y1);};
   idempotence @ leq(X1,Y1) \ leq(X2,Y2) <=> eq(X1,X2),eq(Y1,Y2) | true;
   transitivity @ leq(X,Y1), leq(Y2,Z) ==> eq(Y1,Y2) | leq(X,Z);
 }
@@ -82,11 +82,12 @@ cchr {
 void test(int size) {
   cchr_runtime_init();
   log_int_t *vars=malloc(sizeof(log_int_t)*size);
-  for (int j=0; j<size; j++) vars[j]=log_int_t_create();
+  for (int j=0; j<size; j++) {vars[j]=log_int_t_create(); log_int_t_setval(vars[j],j+1);}
   for (int j=0; j<size; j++) cchr_add_leq_2(vars[j],vars[(j+1)%size]);
   fprintf(stderr,"done!\n");
   int aj=0;
-  cchr_consloop(j,leq_2,{fprintf(stderr,"outch %i (%p,%p)!\n",aj++,cchr_consarg(j,leq_2,1),cchr_consarg(j,leq_2,2));});
+  /* following line still causes some problems ... not all constraints get removed */
+  /* cchr_consloop(j,leq_2,{fprintf(stderr,"outch %i (%i,%i)!\n",aj++,log_int_t_getval(cchr_consarg(j,leq_2,1)),log_int_t_getval(cchr_consarg(j,leq_2,2)));}); */
   for (int j=0; j<size; j++) {
     if (!log_int_t_testeq(vars[j],vars[(j+1)%size])) fprintf(stderr,"noteq %i %i\n",j,j+1);
   }
@@ -97,7 +98,8 @@ void test(int size) {
 
 logical_code(int,log_int_t_tag_t,log_int_t,log_int_cb)
 
-int main(void) {
-  test(10);
+int main(int argc, char** argv) {
+  int n=argc>1 ? strtol(argv[1],NULL,0) : 100;
+  test(n);
   return 0;
 }

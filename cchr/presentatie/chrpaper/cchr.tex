@@ -1,0 +1,83 @@
+\documentclass{llncs}
+%
+\title{CCHR: an Efficient CHR Implementation in C}
+\author{Pieter Wuille \and Tom Schrijvers \and Bart Demoen}
+\institute{Department of Computer Science, K.U.Leuven, Belgium}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+An integration of CHR with the C programming language is presented: CCHR.
+It was designed to be efficient, and provide close integration with C.
+It allows a variant of CHR (compliant to the refined operational semantics)
+to be used inside C code, which allows all C datatypes as arguments, arbitrary
+C expressions as guards, and arbitary C statements as body.
+The efficiency is achieved by generating low-level C code by a compiler, 
+which performs some optimalisations. In some examples the resulting program
+runs nearly as fast as a native C implementation.
+The design and implementation of this system are presented, and its performance
+compared to existing Prolog and Java implementations of CHR, and native C
+implementations of examples.
+\end{abstract}
+
+\section{Introduction}
+
+[following piece copied from Peter's paper] Constraint Handling Rules (CHR) is a
+high-level, declarative language, originally designed for the introduction of
+user-defined, application-tailored, constraint solvers in a given host language.
+Nowadays CHR is increasingly being used as a general programming language in a
+wide range of applications - multi-agent systems, type systems and natural
+language processing, to name some - and for the efficient implementation of
+classical algorithms.
+
+Since its conception in 1991, CHR systems have been developed for several host
+languages, with the main emphasis being placed on Prolog implementations.
+The first full CHR System was developed by Christian Holzbaur in co-operation
+with Thom Fr\"uhwirth. This system is included in SICstus Prolog and Yap and is
+considered the reference implementation. In the past five years CHR systems have
+been written for HAL and Haskell. The most recent and advanced CHR system for
+Prolog is the K.U.Leuven CHR System, originally hosted by hProlog, but
+meanwhile ported to two major open-source Prolog systems: SWI-Prolog and XSB.
+[end copy]
+
+Today there also exist CHR systems for imperative programming
+languages, among them for the very popular Java language. Because of the imperative
+nature, this allows the generated code (which is also Java) to have much more
+control over the execution flow, allowing higher performance. Java however lacks
+the possibility to control the low-level data structures used, and precisely these
+allow for a lot of optimisation.
+
+The C language was designed in 1972 as an imperative procedural language that
+could easily be translated into machine code. After many standardizations (K\&R C,
+ANSI C, ISO C, C99), it is still heavily used, mainly for operating systems,
+system software and some applications. Through the use of a standardized preprocessor
+and usage of (platform specific) system headers, C source code can be portable,
+while heaving features like pointers (providing direct memory access).
+C is normally translated to machine code before being executed, and many compilers
+have been developed during the past years (some of which are freely available) for
+many platforms. Recent C compilers allow heavy optimizations to be performed (some
+general, some very platform specific).
+
+To the best of our knowledge, there didn't exist a CHR system for usage within C
+yet. Since the main reason one would want to embed CHR code inside C, would either
+be for efficiency or just the abilty of using CHR inside an existing C program,
+these would be the primary design goals. To easy portability of existing CHR
+code, the syntax and semantics should be close to the original CHR language, but
+allow arbitrary C code to be used in it.
+
+\section{CHR Implementation}
+
+\subsection{General Principles}
+
+Traditionally, CHR implementations consisted of two parts: \begin{itemize}
+  \item A compiler, that translates the CHR rules and related statements into
+        the host language.
+  \item A runtime, containing some or all code for implementing the CHR semantics.
+        This may consist of a complete virtual machine, executing CHR rules, 
+	or as little as a few helper routines in a library that are common for
+	all compiled CHR programs (such as maintenance of the constraint store).
+\end{itemize}
+	
+\end{document}

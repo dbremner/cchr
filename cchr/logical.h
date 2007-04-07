@@ -46,6 +46,7 @@ typedef enum  {
 		LOG_DEBUG(int _id;) \
 	}; \
 	out static INLINE out##_copy(out var); \
+	out static INLINE out##_normalize(out var); \
 	out static INLINE out##_create(); \
 	void static INLINE out##_setval(out var,in value); \
 	void static out##_seteq(out var1, out var2); \
@@ -70,11 +71,10 @@ typedef enum  {
 			while (_top->_type==LOGICAL_NODE_TYPE_NONROOT) { /* first search the top */ \
 				_top=_top->_data.nonroot.par; /* by recursively going up */ \
 			} \
-			var=var->_data.nonroot.par; \
 			while (var->_type==LOGICAL_NODE_TYPE_NONROOT) { /* then do this again (in var itself) */ \
-				var->_refcount--; /* this node will lose a reference */ \
 				out _next=var->_data.nonroot.par; /* find who our former parent was */ \
 				if (var->_refcount>0) { /* if this node should remain alive */ \
+					var->_data.nonroot.par->_refcount--; /* decrease refcount of former parent */  \
 					var->_data.nonroot.par=_top; /* make it point to the top */ \
 					_top->_refcount++; /* and increase refcount of top */ \
 				} else { /* otherwise */ \
@@ -156,12 +156,14 @@ typedef enum  {
 			} \
 		} \
 		if (remtop) { \
-			top->_refcount--; \
-			if (top->_refcount==0) { \
+			if (top->_refcount==1) { \
 				LOG_DEBUG(fprintf(stderr,"[destruct free:    (%s) #%i]\n",#out,top->_id);) \
 				if (top->_type==LOGICAL_NODE_TYPE_VAL) { cb##_destrval(top); } \
 				cb##_destrtag(top); \
+				top->_refcount--; \
 				free(top); \
+			} else { \
+				top->_refcount--; \
 			} \
 		} \
 	} \

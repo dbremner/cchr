@@ -18,7 +18,7 @@ It allows a variant of CHR (compliant to the refined operational semantics)
 to be used inside C code, which supports all C datatypes as arguments, arbitrary
 C expressions as guards, and arbitary C statements as body.
 The efficiency is achieved by generating low-level C code by a compiler, 
-which performs some optimalisations. In some examples the resulting program
+which performs some optimalizations. In some examples the resulting program
 runs nearly as fast as a native C implementation.
 The design and implementation of this system are presented, and its performance
 compared to existing Prolog and Java implementations of CHR, and native C
@@ -72,7 +72,7 @@ allow arbitrary C code to be used in it.
 
 For the rest of this text, we will assume the reader is familiar with CHR and C.
 
-\section{CHR Implementation}
+\section{CHR Implementations}
 
 \subsection{General Principles}
 
@@ -83,14 +83,15 @@ understands (in CHR terminology referred to as ``built-in constraints'').
 
 Therefore, implementing CHR for a specific host language, involves several things: \begin{itemize}
 \item Define a syntax that allows CHR to be encapsulated in the source code of the host language.
-\item Provide a way for the rules in the CHR to access entities in the host language.
+\item Provide a way for the rules in CHR to access entities in the host language.
 \item Find a way to make the CHR solver and the host language interact, eg. running both under an interpreter
       or converting both to one common language (possibly the host language itself).
 \end{itemize}
 
 Eventually, every implementation of CHR has a part does some processing before the execution starts,
-(the compiler) and some part that is used during the execution (the runtime). When more is done in the compiler,
-resulting in more specific code for the given problem, more optimizations are possible. 
+(the compiler) and some part that is used during the execution (the runtime).
+It is more straightforward to do as much as possible in a general manner, and keep
+the compiler small, this does however result in more runtime-overhead.
 
 \subsection{SWI-Prolog}
 
@@ -100,9 +101,9 @@ It is written in Prolog itself, and allows CHR rules and constraints to be trans
 to native Prolog predicates. It also contains a runtime with some helper routines,
 providing support for common functionality such as hashtables. However, since a lot of
 optimizations were added to it, more and more general routines in the runtime were
-replaced by more specifically generated code by the compiler.
+replaced by more specifically generated code.
 
-Because CHR is here embedded inside a logical programming language, a lot of features of
+Because CHR is here embedded inside a logical programming language, a lot of features from
 the host language can be reused. For example, all variables are logical variables in Prolog, and constraint
 suspensions correspond to Prolog facts. Also, it is possible to write partial solvers in
 CHR, which still use Prolog's backtracking features.
@@ -119,11 +120,11 @@ systems have been developed for imperative languages as well. Java is often used
 host language, being a popular modern object-oriented language. We will here mainly focus
 on the K.U.Leuven JCHR system, as it is probably the most complete implementation.
 
-The compiler is written in Java, and produces template-generated Java source files. It contains
-a runtime library containing support for logical variables in Java (since these aren't provided
-by the language here). It uses fully typed Java variables (in contrast to Prolog, where all variables
-are untyped) as arguments. It does, however support generic types, so no separate class needs to
-be created for each type of logical variable.
+The compiler is written in Java, and produces template-generated Java source files for (J)CHR handlers.
+It contains a runtime library containing support for logical variables in Java (since these aren't
+provided by the language here). It uses fully typed Java variables (in contrast to Prolog, where
+all variables are untyped) as arguments. It does, however support generic types, so no separate
+class needs to be created for each type of logical variable.
 
 \section{CHR in C}
 
@@ -255,12 +256,13 @@ operational semantics, which describe the rule's behaviour as procedure calls th
 of constraint suspensions on which any series of rules in any order can be applied.
 
 To increase the compatibility with original CHR systems, logical variables have been implemented for C (which can also be
-used outside of CHR), and special support for them has been integrated into CCHR [TODO: not completely finished yet].
-It uses the union-find algorithm, optimized with union-by-rank and path compression (which causes the
+used outside of CHR), and special support for them has been integrated into the CCHR compiler [TODO: not completely finished yet].
+Inspired by the JCHR version, it uses the union-find algorithm, optimized with union-by-rank and path compression (which causes the
 amortized time complexity of a single union or find operation to be almost constant).
 Note however that when logical variables are simply used to pass a variable in which a result should be placed (like in 
 the CHR implementation of the Fibonacci heap), this can be done more efficiently in C(CHR) by using a pointer to the result
-type as argument.
+type as argument. Since C doesn't have anything like generic data types, it is implemented as a macro that exapnds to all
+necessary declarations and definitions, given a certain ``ground'' data type.
 
 Here is a simple example, another way to calculate the fibonacci numbers: \begin{Verbatim}[numbers=left]
 logical_header(int,CCHR_TAG_log_int_t,log_int_t)
@@ -292,7 +294,7 @@ An overview: \begin{itemize}
 
 All code for the compiler, and the generated code (and the macro definitions for expanding it to full C code) should be conforming to the C99 standard,
 and should thus be able to be compiled on all standard-compliant C compilers. However, no C compilers exist yet that accept
-all C99 features. In practice, all examples have been tested on GCC (The Gnu Compiler Collection) versions 3.3 and later.
+the C99 feature set. In practice, all examples have been tested on GCC (The Gnu Compiler Collection) versions 3.3 and later.
 
 \subsection{Performance}
 
@@ -326,5 +328,4 @@ An overview of the used data structures: \begin{itemize}
 
 \section{Benchmarks}
 
-  
 \end{document}

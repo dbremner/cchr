@@ -1,0 +1,53 @@
+\chapter{De Taal}
+
+In dit hoofdstuk wordt ingegaan op de taal ontwikkeld om CHR in C mogelijk te maken: CCHR.
+
+Het doel van deze thesis was nagaan hoeveel effici\"enter dan bestaande CHR systemen een implementatie
+in C kon zijn. De doelstellingen waar de taal aan moet voldoen zijn dan ook: \begin{itemize}
+  \item We willen een taal ontwerpen die mogelijk maakt CHR en C te integreren: de CHR code moet C
+        als host language kunnen gebruiken (C constructies als ``built-in constraints'' kunnen
+	behandelen), en de C code moet bijvoorbeeld omgekeerd ook CHR constraints kunnen laten toevoegen.
+  \item De taal moet het mogelijk maken heel efficiente code te genereren.
+\end{itemize}
+
+\section{Algemeen}
+
+Om de integratie van C en CHR mogelijk te maken, zullen we een "cchr" blok toelaten binnenin een stuk normale
+C code, wat vervangen zal worden door een cchr-compiler door een stuk equivalente pure C code. In die zin moet
+CCHR dan ook eerder als een taal-uitbreiding van C beschouwd worden, en niet als aparte taal. Alle C taal-elementen
+die de omgeving wijzigen in de ``omhullende'' C code zijn automatisch ook van toepassing op CHR (bv. \#include directives).
+
+\section{Syntax}
+
+Om de syntax in te leiden, is het interessant te beginnen met een eenvoudig voorbeeld (zie~\ref{fib:exCode}).
+
+\begin{exCode}
+\begin{Verbatim}[frame=single,numbers=left]
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "fib_cchr.h"
+
+cchr {
+  constraint fib(int,long long),init(int);
+
+  begin @ init(_) ==> fib(0,1LL), fib(1,1LL);
+  calc @  init(Max), fib(N2,M2) \ fib(N1,M1) <=>
+    alt(N2==N1+1,N2-1==N1), N2<Max |
+    fib(N2+1, M1+M2);
+}
+
+int main(int argc, char **argv) {
+  cchr_runtime_init();
+  cchr_add_init_1(90);
+  cchr_consloop(j,fib_2,{
+    printf("fib(%i,%lli)\n", 
+      cchr_consarg(j,fib_2,1),
+      (long long)cchr_consarg(j,fib_2,2));
+  });
+  cchr_runtime_free();
+  return 0;
+}
+\end{Verbatim}
+\caption{\label{fib:exCode} Fibonacci-voorbeeld}
+\end{exCode}

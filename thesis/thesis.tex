@@ -1,0 +1,128 @@
+% Document class and font size report, article, book,..
+\documentclass[dutch,12pt,oneside,a4paper]{book}
+
+% Make sure you can process texts with accents
+\usepackage[dutch]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{THcover}
+
+% Handle differences between PdfLaTeX/LaTeX
+\ifx\pdftexversion\undefined
+\usepackage{url}
+\usepackage[dvips]{geometry}
+\usepackage[dvips]{graphics}
+\newcommand{\phantomsection}{}
+\newcommand{\includepdf}[1]{}
+\newcommand{\texorpdfstring}[2]{#1}
+% In LaTeX, include a converted .eps
+\newcommand{\includebitmap}[1]{\includegraphics{#1}}
+\else
+\usepackage[pdftex]{geometry}
+\usepackage[pdftex]{graphics}
+\usepackage{pdfpages}
+\usepackage[
+	pdftex,
+	pdfpagelabels=true,
+	plainpages=false,
+	colorlinks=true,
+	breaklinks=true,
+	linktocpage=true,
+	pdfstartview=FitV,
+	linkcolor=black,
+	citecolor=black,
+	urlcolor=black
+]{hyperref}
+% In PdfLaTeX, include a .png directly
+\newcommand{\includebitmap}[1]{\includegraphics{#1.png}}
+\fi
+
+\geometry{%
+	a4paper,
+	top=2cm,
+	left=2cm,
+	textwidth=17cm,
+	textheight=25cm,
+}
+
+% Use special math symbols
+\usepackage{amsmath}
+
+% Set paragraph layout
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{3mm}
+
+% Define symbols for natural, integer, real,.. numbers
+\DeclareSymbolFont{AMSb}{U}{msb}{m}{n}
+\DeclareMathSymbol{\N}{\mathbin}{AMSb}{"4E}
+\DeclareMathSymbol{\Z}{\mathbin}{AMSb}{"5A}
+\DeclareMathSymbol{\R}{\mathbin}{AMSb}{"52}
+\DeclareMathSymbol{\Q}{\mathbin}{AMSb}{"51}
+\DeclareMathSymbol{\I}{\mathbin}{AMSb}{"49}
+\DeclareMathSymbol{\C}{\mathbin}{AMSb}{"43}
+
+% Unit length for pictures
+\setlength{\unitlength}{1cm}
+\renewcommand{\thepage}{\arabic{page}.}
+
+\begin{document}
+\input{THcover}
+
+\cleardoublepage
+\section*{Dankwoord}
+
+Hier komt mijn dankwoord.
+
+\newpage
+\tableofcontents
+
+\newpage
+\mainmatter
+\chapter{Inleiding}
+\label{inleiding:chap}
+\begin{quote}
+{{\small\it Het is altijd leuk om je thesis met een quote te beginnen.}}
+
+{{\small\sc - Jan Struyf}}
+\end{quote}
+\medskip
+
+Een goed boek over automatisch leren is \cite{mitchell:book}.
+
+\chapter {Mijn eerste echte hoofdstuk}
+
+\section{Mijn sectie}
+
+Blabla, zoals uitgelegd in Hoofdstuk~\ref{inleiding:chap}.
+
+\subsection{Nog een kleinere sectie}
+
+Blabla
+
+\begin{figure}
+\framebox{\resizebox{\textwidth}{!}{\includebitmap{fig/dectree}}}
+\caption{\label{dectree:fig}A screenshot of our Decision Tree visualisation program.}
+\end{figure}
+
+\begin{figure}
+\framebox{\resizebox{\textwidth}{!}{\includegraphics{fig/bar}}}
+\caption{\label{bar:fig}An example of a bar graph.}
+\end{figure}
+
+\cleardoublepage{}\phantomsection{}
+\addcontentsline{toc}{chapter}{Appendices}
+\appendix
+\chapter{Installatie en gebruik van het programma}
+
+Blabla
+
+\backmatter
+\addcontentsline{toc}{chapter}{Bibliografie}
+\bibliography{thesis}
+\bibliographystyle{alpha}
+
+\addcontentsline{toc}{chapter}{Lijst van figuren}
+\listoffigures
+\addcontentsline{toc}{chapter}{Lijst van tabellen}
+\listoftables
+
+\end{document}

@@ -418,28 +418,23 @@ int static sem_expr_generate(sem_expr_t *expr,sem_vartable_t *vt,sem_cchr_t *cch
 					}
 				}
 				if (ie) break;
-				if (stmt) { /* statement, unknown things are translated literally */
+				if (stmt || !isupper(tok->data[0])) { /* statement: unknown things translated literally */
 					sem_exprpart_init_lit(&se,copy_string(tok->data));
 					alist_add(expr->parts,se);
 					ie=1;
 					break;
 				} else {
-					if (!isupper(tok->data[0])) {
-						fprintf(stderr,"error: in %s: variable names must start with uppercase letter in '%s'\n",desc ? desc : "<anonymus>",tok->data);
-						ok=0;
-					} else {
-						if (vt) {
-							int nvp=alist_len(vt->vars);
-							sem_var_t nv;
-							sem_var_init(&nv,copy_string(tok->data),-1,0);
-							alist_add(vt->vars,nv);
-							sem_exprpart_init_var(&se,nvp);
-							alist_add(expr->parts,se);
-							ie=1;
-						}
+					if (vt) {
+						int nvp=alist_len(vt->vars);
+						sem_var_t nv;
+						sem_var_init(&nv,copy_string(tok->data),-1,0);
+						alist_add(vt->vars,nv);
+						sem_exprpart_init_var(&se,nvp);
+						alist_add(expr->parts,se);
+						ie=1;
 					}
-					break;
 				}
+				break;
 			}
 		}
 		if (pa && ok) {
@@ -1025,9 +1020,16 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
 	sem_vartable_t svt;
 	sem_vartable_init_constr(&svt,n);
   	int ok=0;
-  	if (t->type==TOKEN_TYPE_FUNC) {
-  		if (!ok && !strcmp(t->data,"fmt")) {
-			for (int l=0; l<alist_len(t->args); l++) {
+  	if (t->type==TOKEN_TYPE_FUNC && !strcmp(t->data,"option")) {
+		char *optname=NULL;
+		if (alist_len(t->args)>1 && alist_len(alist_get(t->args,0).list)==1 && alist_get(alist_get(t->args,0).list,0).type==SEM_EXPRPART_TYPE_LIT) {
+		  optname=alist_get(alist_get(t->args,0).list,0).data;
+		} else {
+			fprintf(stderr,"warning: name of option should be literal\n");
+			ok=1;
+		}
+  		if (!ok && !strcmp(optname,"fmt")) {
+			for (int l=1; l<alist_len(t->args); l++) {
 			    sem_expr_t fa;
 			    sem_expr_init(&fa);
   			    sem_expr_generate(&(fa),&svt,out,alist_ptr(t->args,l),n->name,0,1);
@@ -1037,10 +1039,10 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   			ok=1;
   		}
 		int par=0;
-		if (!strcmp(t->data,"destr")) par=1;
-		if (!strcmp(t->data,"init")) par=2;
-		if (!strcmp(t->data,"kill")) par=3;
-		if (!strcmp(t->data,"add")) par=4;
+		if (!strcmp(optname,"destr")) par=1;
+		if (!strcmp(optname,"init")) par=2;
+		if (!strcmp(optname,"kill")) par=3;
+		if (!strcmp(optname,"add")) par=4;
   		if (!ok && par) {
 			sem_expr_t *res=NULL;
 			switch (par) {
@@ -1050,12 +1052,12 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
 			  case 4: {res=&(n->add); break; }
 			}
   			sem_expr_init(res);
-  			sem_expr_generate(res,&svt,out,alist_ptr(t->args,0),n->name,0,1);
+  			sem_expr_generate(res,&svt,out,alist_ptr(t->args,1),n->name,0,1);
   			sem_expr_expand(out,&svt,res,NULL,NULL);
   			ok=1;  			
   		}
   		if (!ok) {
-  			fprintf(stderr,"warning: unknown constraint attribute '%s' ignored\n",t->data);
+  			fprintf(stderr,"warning: unknown constraint option '%s' ignored\n",optname);
   		}
   	}
 	sem_vartable_destruct(&svt);

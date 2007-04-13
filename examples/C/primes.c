@@ -23,11 +23,9 @@ int genPrimes(int upto) {
   return ret;
 }
 
-int main(void) {
-  int r;
-  for (int k=0; k<1000; k++) {
-    r=genPrimes(7500);
-  }
+int main(int argc, char** argv) {
+  int n=argc>1 ? strtol(argv[1],NULL,0) : 7500;
+  int r=genPrimes(n);
   printf("%i\n",r);
   return 0;
 }

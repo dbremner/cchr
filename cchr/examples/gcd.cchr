@@ -12,8 +12,8 @@ cchr {
 }
 
 int main(int argc, char **argv) {
-  uint64_t a1 = (uint64_t)(argc>1 ? strtoull(argv[1],NULL,0) : 993);
-  uint64_t a2 = (uint64_t)(argc>2 ? strtoull(argv[2],NULL,0) : 37);
+  uint64_t a1 = (uint64_t)(argc>1 ? strtoull(argv[1],NULL,0) : 100000000);
+  uint64_t a2 = (uint64_t)(argc>2 ? strtoull(argv[2],NULL,0) : 5);
   cchr_runtime_init();
   cchr_add_gcd_1(a1);
   cchr_add_gcd_1(a2);

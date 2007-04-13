@@ -16,13 +16,11 @@ uint64_t gcd(uint64_t a,uint64_t b) {
   goto begin;
 }
 
-int main(void) {
-  uint64_t a=100000000ULL;
-  uint64_t b=5ULL;
+int main(int argc, char **argv) {
+  uint64_t a = (uint64_t)(argc>1 ? strtoull(argv[1],NULL,0) : 100000000);
+  uint64_t b = (uint64_t)(argc>2 ? strtoull(argv[2],NULL,0) : 5);
   uint64_t r;
-  for (int i=0; i<1000; i++) {
-    r=gcd(a,b);
-  }
-  printf("gcd(%llu)\n",(unsigned long long)r);
+  r=gcd(a,b);
+//  printf("gcd(%llu)\n",(unsigned long long)r);
   return 0;
 }

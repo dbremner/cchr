@@ -10,8 +10,9 @@
 #define log_int_cb_merged(val1,val2)
 #define log_int_cb_destrval(val)
 #define log_int_cb_destrtag(tag)
-#define log_int_cb_gotval(val,tag)
+#define log_int_cb_changed(val)
 
+logical_header(int,int,log_int_t)
 logical_code(int,int,log_int_t,log_int_cb)
 
 void addleq(int size,int a,int b,log_int_t *vars,int *cmp) {
@@ -64,9 +65,8 @@ void test(int size) {
   free(cmp);
 }
 
-int main(void) {
-  for (int j=0; j<50; j++) {
-    test(100);
-  }
+int main(int argc, char** argv) {
+  int n = argc>1 ? strtol(argv[0],NULL,0) : 100;
+  test(n);
   return 0;
 }

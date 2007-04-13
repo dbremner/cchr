@@ -1,24 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef USE_EFENCE
-#include <efence.h>
-#endif
-
 #include "fib_cchr.h"
 
 cchr {
-  constraint fib(int,uint64_t) fmt("fib(%i,%llu)"),init(int) fmt("init(%i)");
-  extern alt;
-  
-  begin @ init(_) ==> fib(0,1ULL), fib(1,1ULL);
-  calc @  init(Max), fib(N2,M2) \ fib(N1,M1) <=> alt(N2==N1+1,N2-1==N1), N2<Max | fib(N2+1, M1+M2);
+  constraint fib(int,long long),init(int);
+
+  begin @ init(_) ==> fib(0,1LL), fib(1,1LL);
+  calc @  init(Max), fib(N2,M2) \ fib(N1,M1) <=>
+    alt(N2==N1+1,N2-1==N1), N2<Max |
+    fib(N2+1, M1+M2);
 }
 
 int main(int argc, char **argv) {
   cchr_runtime_init();
-  int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
-  cchr_add_init_1(a);
-  cchr_consloop(j,fib_2,{printf("fib(%i,%lu)\n",cchr_consarg(j,fib_2,1),(unsigned long)cchr_consarg(j,fib_2,2));});
+  cchr_add_init_1(90);
+  cchr_consloop(j,fib_2,{
+    printf("fib(%i,%lli)\n", 
+      cchr_consarg(j,fib_2,1),
+      (long long)cchr_consarg(j,fib_2,2));
+  });
+  cchr_runtime_free();
   return 0;
 }

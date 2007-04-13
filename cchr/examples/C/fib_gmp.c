@@ -22,9 +22,8 @@ void fib_gmp(int upto) {
   free(nums);
 }
 
-int main(void) {
-  for (int j=0; j<1000; j++) {
-    fib_gmp(7499);
-  }
+int main(int argc,char **argv) {
+  int a=(argc>1 ? (int)strtol(argv[1],NULL,0) : 92);
+  fib_gmp(a);
   return 0;
 }

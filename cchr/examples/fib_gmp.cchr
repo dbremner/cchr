@@ -33,12 +33,12 @@ cchr {
 	  alt(N1+1==N,N1==N-1),
   	  N<Max
   	| 
-  	  bigint_t Sum=,
+  	  bigint_t sum=,
   	  {
-  	  	mpz_init(Sum.v);
-  	  	mpz_add(Sum.v,M1.v,M2.v);
+  	  	mpz_init(sum.v);
+  	  	mpz_add(sum.v,M1.v,M2.v);
   	  },
-  	  fib(N+1, Sum);
+  	  fib(N+1, sum);
 
 }
 

@@ -44,6 +44,24 @@ typedef struct {
   alist_declare(csm_hashdef_t,defs);
 } csm_hashdefs_t;
 
+typedef struct {
+  int con;
+  int arg;
+} csm_logidxa_t;
+
+typedef struct {
+  int type;
+  alist_declare(csm_logidxa_t,args); /* which args need a logindex */
+} csm_logidx_t;
+
+typedef struct {
+  alist_declare(csm_logidx_t,list);
+} csm_logidxs_t;
+
+void static csm_logidxs_init(csm_logidxs_t *li) {
+  alist_init(li->list);
+}
+
 void static csm_hashdefs_init(csm_hashdefs_t *hd) {
   alist_init(hd->defs);
 }
@@ -114,6 +132,31 @@ char static *make_message(const char *fmt, ...) {
     }
   }
 }
+
+void static csm_logidxs_add(csm_logidxs_t *li, int type, int con, int arg) {
+  csm_logidx_t *lix=NULL;
+  csm_logidx_t lin;
+  for (int j=0; j<alist_len(li->list); j++) {
+    csm_logidx_t *lx=alist_ptr(li->list,j);
+    if (lix->type==type) {
+      lix=lx;
+      break;
+    }
+  }
+  if (lix==NULL) {
+    alist_init(lin.args);
+    lin.type=type;
+    alist_add(li->list,lin);
+    lix=alist_ptr(li->list,alist_len(li->list)-1);
+  }
+  for (int k=0; k<alist_len(lix->args); k++) {
+    csm_logidxa_t *la=alist_ptr(lix->args,k);
+    if (la->arg==arg && la->con==con) return;
+  }
+  csm_logidxa_t laa={.con=con,.arg=arg};
+  alist_add(lix->args,laa);
+}
+
 
 /* get output name for a constraint (put it in 'out' buffer) */
 int static csm_constr_getname(sem_cchr_t *cchr,int cons,char *out,int size) {
@@ -344,7 +387,7 @@ typedef struct {
 } csm_idxclean_t;
 
 /* generate codelist for a constraint occurence, using GIO */
-void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *out,csm_hashdefs_t *hd) {
+void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *out,csm_hashdefs_t *hd,csm_logidxs_t *ld) {
   char buf[256];
   csm_conocc_getname(cchr,cons,occ,buf,256);
   char buf2[256];
@@ -465,6 +508,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	csm_constr_getname(cchr,cicon,cicon_name,256);
 	char *idxname=make_message("%s_arg%i",cicon_name,entry->data.logiter.pos+1);
 	int vartype=alist_get(alist_get(cchr->cons,cicon).types,entry->data.logiter.pos);
+	csm_logidxs_add(ld,vartype,cicon,entry->data.logiter.pos);
 	sem_vartype_t *vt=alist_ptr(cchr->types,vartype);
 	output_fmt(out,"%s(%s,%s%i,%s%s,%s,",(!rem) ? "CSM_LOGUNILOOP" : "CSM_LOGLOOP",cicon_name,ci_rem ? "R" : "K",cid+1,vt->log_prefix,idxname,vt->name);
 	csm_generate_expr(&(entry->data.logiter.arg),tbl_c,out);
@@ -578,6 +622,8 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		}
 	}
 	csm_hashdefs_t *hd=malloc(sizeof(csm_hashdefs_t)*alist_len(in->cons));
+	csm_logidxs_t ld;
+	csm_logidxs_init(&ld);
 	for (int i=0; i<alist_len(in->cons); i++) {
 	  csm_hashdefs_init(&(hd[i]));
 	}
@@ -589,6 +635,11 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		output_fmt(out,"#define ARGLIST_%s(CB,...) ",conn);
 		for (int j=0; j<alist_len(con->types); j++) {
 			if (j) output_fmt(out," CB##_S ");
+			int type=alist_get(con->types,j);
+			sem_vartype_t *vt=alist_ptr(in->types,type);
+			if (vt->log_cb) {
+			  /* csm_logidxs_add(ld,type,i,-1); */
+			}
 			output_fmt(out,"CB##_D(arg%i,%s,__VA_ARGS__)",j+1,csm_get_type(in,alist_get(con->types,j)));
 		}
 		output_fmt(out,"\n");
@@ -681,7 +732,7 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
 			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
 				/*csm_generate_code(in,i,j,out);*/
-				csm_generate_code_gio(in,i,j,out,hd);
+				csm_generate_code_gio(in,i,j,out,hd,&ld);
 			}
 		}
 		output_string(out,"\n");
@@ -720,6 +771,16 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		}
 		output_fmt(out,"\n");
 		csm_hashdefs_destroy(&(hd[i]));
+	}
+	for (int i=0; i<alist_len(ld.list); i++) {
+	  csm_logidx_t *li=alist_ptr(ld.list,i);
+	  sem_vartype_t *vt=alist_ptr(in->types,li->type);
+	  output_fmt(out,"#undef LOGLIST_%s\n",vt->name);
+	  output_fmt(out,"#define LOGLIST_%s(CB,...) ",vt->name);
+	  for (int m=0; m<alist_len(li->args); m++) {
+	    if (m) output_fmt(out,"CB##_S ");
+	  }
+	  alist_free(li->args);
 	}
 	output_fmt(out,"CSM_START\n");
 	free(hd);

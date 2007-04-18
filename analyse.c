@@ -567,7 +567,7 @@ int static sem_localvar_generate(sem_cchr_t *cchr,sem_rule_t *rule,expr_t *expr,
 		if (ep->type==TOKEN_TYPE_LIT && !strcmp(ep->data,"=")) {
 			if (j<2) return 0;
 			token_t *pep=alist_ptr(expr->list,j-1);
-			if (pep->type==TOKEN_TYPE_SYMB && isupper(pep->data[0])) {
+			if (pep->type==TOKEN_TYPE_SYMB) {
 				char *type=malloc(pl+1);
 				type[0]=0;
 				for (int t=0; t<j-1; t++) {

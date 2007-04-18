@@ -24,7 +24,6 @@ Q: leq(F,R), leq(R,U), leq(U,E), leq(E,H), leq(H,W), leq(W,I), leq(I,R),
     leq(R,T), leq(T,H).
 A: H = E, I = E, R = E, T = E, U = E, W = E, leq(F,E).
 */
-
 :- module(leq, [leq/2]).
 :- use_module(library(chr)).
 
@@ -40,3 +39,14 @@ reflexivity  @ leq(X,X) <=> true.
 antisymmetry @ leq(X,Y), leq(Y,X) <=> X = Y.
 idempotence  @ leq(X,Y) \ leq(X,Y) <=> true.
 transitivity @ leq(X,Y), leq(Y,Z) ==> leq(X,Z).
+
+
+testcycle(F,P,[E|R]) :- leq(P,E), testcycle(F,E,R).
+testcycle(F,P,[E]) :- leq(P,E), leq(E,F).
+testcycle([F|R]) :- testcycle(F,F,R).
+
+buildlist(A,1) :- A=[_].
+buildlist(A,L) :- A=[_|B], L1 is L-1, buildlist(B,L1).
+
+test(N) :- buildlist(A,N), testcycle(A).
+

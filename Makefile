@@ -4,7 +4,7 @@ LDFLAGS := -lm
 
 INTDIR := intermediate
 
-MODE := normal
+MODE := debug
 
 ifeq ($(MODE),debug)
   CFLAGS := $(CFLAGS) -O0 -ggdb3 -fomit-frame-pointer

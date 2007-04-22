@@ -22,7 +22,7 @@ Q: sort(1.4), sort(-3), sort(3.3), sort(3.3), sort(0).
 A: -3 <<< 0, 0 <<< 1.4, 1.4 <<< 3.3,  merge(2,-3),merge(0,3.3).
 */
 
-:- module(mergesort, [(<<<)/2, merge/2, sort/1]).
+:- module(mergesort, [(<<<)/2, merge/2, sort/1, test/0]).
 :- use_module(library(chr)).
 :- chr_option(debug,off).
 :- chr_option(optimize,full).

@@ -24,7 +24,7 @@ Q: leq(F,R), leq(R,U), leq(U,E), leq(E,H), leq(H,W), leq(W,I), leq(I,R),
     leq(R,T), leq(T,H).
 A: H = E, I = E, R = E, T = E, U = E, W = E, leq(F,E).
 */
-:- module(leq, [leq/2]).
+:- module(leq, [test/1]).
 :- use_module(library(chr)).
 
 %% Deprecated syntax used for SICStus 3.x

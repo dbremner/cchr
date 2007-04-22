@@ -26,7 +26,7 @@ Q: upto(-1).
 A: upto(-1).
 */
 
-:- module(primes2, [upto/1, prime/1]).
+:- module(primes2, [upto/1, prime/1, test/1]).
 :- use_module(library(chr)).
 :- chr_option(debug,off).                                                                                            
 :- chr_option(optimize,full).                                                                                        

@@ -18,6 +18,7 @@
 #include "lookup3.c"
 #include "ht_cuckoo.h" /* for hashtable */
 
+#define cchr_id_t dcls_pid_t
 
 /* some debug output macro's */
 #define CSM_STRINGIFY_(X) #X
@@ -192,15 +193,15 @@
     CONSLIST(CSM_CB_IdxInit) \
     CSM_DEBUG( _global_runtime.debugindent=0; ) \
   } \
-  dcls_pid_t static inline cchr_make_entry(enum cchr_cons_type type) { \
-    dcls_pid_t ret; \
+  cchr_id_t static inline cchr_make_entry(enum cchr_cons_type type) { \
+    cchr_id_t ret; \
     dcls_alloc(_global_runtime.store,ret); \
     dcls_get(_global_runtime.store,ret).gen_num=0; \
     dcls_get(_global_runtime.store,ret).type=type; \
     return ret; \
   } \
   void static cchr_reactivate_all(void *); \
-  void static inline cchr_store(dcls_pid_t pid_self_) { \
+  void static inline cchr_store(cchr_id_t pid_self_) { \
     dcls_add_begin(_global_runtime.store,pid_self_,dcls_get(_global_runtime.store,pid_self_).type); \
   } \
   CONSLIST(CSM_CB_FFD) \
@@ -225,11 +226,11 @@
 /* callback macro for declaration of fire functions */  
 #define CSM_CB_FFD_S
 #define CSM_CB_FFD_D(NAME) \
-  void static inline cchr_fire_##NAME(dcls_pid_t  ARGLIST_##NAME(CSM_CB_FFDAR,)); \
+  void static inline cchr_fire_##NAME(cchr_id_t  ARGLIST_##NAME(CSM_CB_FFDAR,)); \
   void static inline cchr_add_##NAME(ARGLIST_##NAME(CSM_CB_FADAR,)); \
-  void static inline cchr_reactivate_##NAME(dcls_pid_t); \
-  void static inline cchr_index_##NAME(dcls_pid_t); \
-  void static inline cchr_unindex_##NAME(dcls_pid_t);
+  void static inline cchr_reactivate_##NAME(cchr_id_t); \
+  void static inline cchr_index_##NAME(cchr_id_t); \
+  void static inline cchr_unindex_##NAME(cchr_id_t);
 
 
 /* callback macro for arguments of declaration of fire functions */
@@ -243,7 +244,7 @@
 /* callback macro for code of fire functions */
 #define CSM_CB_FFC_S
 #define CSM_CB_FFC_D(NAME) \
-  void static inline cchr_fire_##NAME(dcls_pid_t pid_self_ ARGLIST_##NAME(CSM_CB_FFCAR,)) { \
+  void static inline cchr_fire_##NAME(cchr_id_t pid_self_ ARGLIST_##NAME(CSM_CB_FFCAR,)) { \
     int doadd=(pid_self_==DCLS_EMPTY_PID); \
     int oldid; \
     int oldgen; \
@@ -262,26 +263,26 @@
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA,)) { \
     cchr_fire_##NAME(DCLS_EMPTY_PID ARGLIST_##NAME(CSM_CB_FFCFC,)); \
   } \
-  void cchr_reactivate_##NAME(dcls_pid_t pid_self_) { \
+  void cchr_reactivate_##NAME(cchr_id_t pid_self_) { \
     CSM_FMTOUT("reactiv: pid=%i",pid_self_); \
     CSM_GENOFPID(self_)++; \
     cchr_fire_##NAME(pid_self_ ARGLIST_##NAME(CSM_CB_FFCRA,NAME)); \
   } \
-  void cchr_reactivate_all_##NAME() { \
+  void cchr_reactivate_all_##NAME(void) { \
   	CSM_LOOP(NAME,C, \
   	  cchr_reactivate_##NAME(pid_C); \
   	) \
   } \
-  void cchr_free_all_##NAME() { \
+  void cchr_free_all_##NAME(void) { \
   	CSM_LOOP(NAME,C, \
 	  CSM_DESTRUCT_PID(NAME,C); \
   	  CSM_KILL(C,NAME); \
   	) \
   } \
-  void cchr_index_##NAME(dcls_pid_t pid_self_) { \
+  void cchr_index_##NAME(cchr_id_t pid_self_) { \
     HASHLIST_##NAME(CSM_CB_IdxSet,NAME) \
   } \
-  void cchr_unindex_##NAME(dcls_pid_t pid_self_) { \
+  void cchr_unindex_##NAME(cchr_id_t pid_self_) { \
     HASHLIST_##NAME(CSM_CB_IdxUnset,NAME) \
   }
   
@@ -402,7 +403,7 @@
 	if (_idx_##VAR) { \
 	  CSM_FMTOUT("in idxloop (%s.%s var=%s)",#CON,#HASH,#VAR); \
 	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val)); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxlst_##VAR) ) { \
-            dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+            cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
             { \
 	      CODE \
             } \
@@ -417,7 +418,7 @@
 	  cchr_htdc_t _idxcopy_##VAR; \
 	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
 	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
-            dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+            cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
             if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
 	      CODE \
             } \
@@ -432,7 +433,7 @@
   cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
   CSM_FMTOUT("in LOGLOOP (%s;%s var=%s)",#CON,#ENT,#VAR); \
   for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(_log_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(_log_##VAR,_idxlst_##VAR) ) { \
-    dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+    cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
     { \
       CSM_FMTOUT("in LOGLOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
       CODE \
@@ -446,7 +447,7 @@
   cchr_htdc_t _idxcopy_##VAR; \
   cchr_htdc_t_copy(_log_##VAR,&_idxcopy_##VAR); \
   for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
-    dcls_pid_t pid_##VAR = _idxlst_##VAR->pid; \
+    cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
     if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
       CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
       CODE \
@@ -563,7 +564,7 @@
 
 typedef struct {
   int id;
-  dcls_pid_t pid;
+  cchr_id_t pid;
 } cchr_idxlist_t;
 
 ht_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF)

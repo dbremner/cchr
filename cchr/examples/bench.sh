@@ -22,7 +22,7 @@ function doBench {
       echo -n "$NUM "
     ) 2>&1
   ) | while read N T; do
-    echo "$T/$N" | bc -ql
+    echo "print $T/$N,\" \",$N,\"\\n\"" | bc -ql
   done
 }
 

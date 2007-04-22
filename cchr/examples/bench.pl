@@ -4,11 +4,11 @@ use strict;
 
 my $BENCHER="./bench.sh";
 
-my $FACTOR=1.008;
-my $EFACTOR=1.32;
-my $MINTIME=0.3;
-my $MAXTIME=5;
-my $RUNTIME=30;
+my $FACTOR=1.013;
+my $EFACTOR=1.35;
+my $MINTIME=0.45;
+my $MAXTIME=4.5;
+my $RUNTIME=20;
 
 my $AVGTIME=($MINTIME+$MAXTIME)/2;
 
@@ -47,10 +47,10 @@ sub execBench {
   my ($bench,$sys,$num)=@_;
   my @nums=$BENCHERS{$bench}->($num);
   my $tbl=$SYSTBL{$sys}->{$bench};
-  return undef if (!defined $tbl);
+  return (undef,undef) if (!defined $tbl);
   my @cmd=$SYSTEMS{$sys}->($tbl,@nums);
-  my $val=qx($BENCHER $RUNTIME @cmd)+0.0;
-  return $val;
+  my @val=split(/\s+/,qx($BENCHER $RUNTIME @cmd));
+  return @val;
 }
 
 for my $bench (keys %BENCHERS) {
@@ -59,19 +59,19 @@ for my $bench (keys %BENCHERS) {
     print "### sys=$sys\n";
     my $lim=$MAX{$sys}->{$bench};
     my $low=30500000; # a year should do as maximal 'low'
-    my ($num,$val)=(0,0);
+    my ($num,$val,$run)=(0,0,0);
     my ($min,$minv,$max,$maxv)=(1,0,0,0); 
     do {
       $num=int($num*$EFACTOR)+1 if ($val<=$AVGTIME);
       $num=$lim if ((defined $lim) && $num>$lim);
-      $val=execBench($bench,$sys,$num);
+      ($val,$run)=execBench($bench,$sys,$num);
       next SYS if (!defined($val));
       $val-=$low;
       if ($val<0) {
         $low+=$val;
-	print "#### lower $low\n";
+	print "#### lower ${low}*${run}\n";
       } else {
-        print "$sys $bench $num $val $low exp\n";
+        print "$sys/$bench:$num (${val},${low})*${run} exp\n";
       }
       if ($val>$minv && $val<$AVGTIME) {$min=$num; $minv=$val;};
       if ($val<$maxv && $val>$AVGTIME) {$max=$num; $maxv=$val;};
@@ -83,12 +83,13 @@ for my $bench (keys %BENCHERS) {
     } else {
       do {
         $avg=int($max-($max-$min)/($maxv-$minv)*($maxv-$AVGTIME)+0.5);
-	$avgv=execBench($bench,$sys,$avg)-$low;
+	($avgv,$run)=execBench($bench,$sys,$avg);
+	$avgv-=$low;
         if ($avgv<0) {
           $low+=$avgv;
-	  print "#### lower $low\n";
+	  print "#### lower ${low}*${run}\n";
         } else {
-          print "$sys $bench $num $avgv $low rf\n";
+          print "$sys/$bench:$num (${avgv},${low})*${run} rf\n";
 	}
 	if ($avgv>$AVGTIME) {
 	  $max=$avg;
@@ -104,15 +105,17 @@ for my $bench (keys %BENCHERS) {
     while ($val<$MAXTIME && (!defined($lim) || $num < $lim)) {
       $num=int($num*$FACTOR+1);
       $num=$lim if ((defined $lim) && $num>$lim);
-      $val=execBench($bench,$sys,$num)-$low;
-      print "$sys $bench $num $val $low up\n";
+      ($val,$run)=execBench($bench,$sys,$num);
+      $val-=$low;
+      print "$sys/$bench:$num (${avgv},${low})*${run} up\n";
     }
     $num=$avg;
     $val=$avgv;
     while ($val>$MINTIME) {
       $num=int($num/$FACTOR);
-      $val=execBench($bench,$sys,$num)-$low;
-      print "$sys $bench $num $val $low dn\n";
+      ($val,$run)=execBench($bench,$sys,$num);
+      $val-=$low;
+      print "$sys/$bench:$num (${avgv},${low})*${run} dn\n";
     }
   }
 }

@@ -16,9 +16,9 @@ function doBench {
 	kill -SIGALRM $PID
       ) &
       while [[ $SIG -gt 0 ]]; do
-        "$@" >/dev/null 2>&1
+        "$@" 
         NUM=$(($NUM+1))
-      done
+      done >/dev/null 2>&1
       echo -n "$NUM "
     ) 2>&1
   ) | while read N T; do

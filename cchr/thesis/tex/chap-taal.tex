@@ -124,6 +124,19 @@ Lokale variabelen binnen een guard of body gebruiken kennen een eigen syntax, di
   calc @ init(Max), fib(N,A) \ fib(N+1,B) <=> int sum=A+B, fib(N+2,sum):
 \end{Verbatim}
 
+\subsubsection{Macros}
+
+Het is mogelijk om binnen het CCHR blok zelf verkorte notaties in te voeren voor gebruik binnen de body van CHR rules. Een voorbeeldje: \begin{Verbatim}
+  macro eq(bigint_t,bigint_t) bigint_cmp($1,$2);
+  macro eq(_,_) ($1==$2);
+\end{Verbatim}
+
+Dit zal het mogelijk maken om 2 \code{bigint\_t} variabelen met elkaar te vergelijken mbv. \code{eq(a,b)}, maar ook 2 andere variabelen mbv. de C operator \code{==}. (het dattype \code{bigint\_t} zou elders gedefinieerd moeten zijn).
+
+Zoals te zien is laat deze techniek toe dat verschillende data-types als parameters gebruikt worden (een soort polymorfisme), of dat \code{\_} als joker voor elk willekeurig type kan dienen. Indien er meerdere macrodefinities van toepassing zijn, wordt de eerste gebruikt. De datatypes zijn echter enkel bekend voor pure variabelen, gedefini\"eerd in de head van een regel, of als lokale variabele. Ingewikkeldere expressies die geen variabele voorstellen, kunnen enkel overeenkomen met het jokertype \code{\_}.
+
+Het nut van deze macros is een equivalent voorzien voor de {\em built-in constraints} van JCHR. In een latere uitbreiding zouden deze macros automatisch gegenereerd kunnen worden door het inladen van een extra module.
+
 \section{Variabelen}
 
 \subsection{Waarde en Betekenis}

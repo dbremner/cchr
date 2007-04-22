@@ -1,1 +1,97 @@
-\chapter{De implementatie}
+\chapter{Ontwerp en implementatie}
+
+In dit hoofdstuk gaan we in de op hoe ons CCHR systeem ontworpen en ge\"implementeerd is.
+
+\section{Algemeen}
+
+Zoals reeds aangehaald bestaat de implementatie van een CHR systeem normaal uit twee delen: de {\em compiler} en de {\em runtime}. De compiler zorgt voor een vertaling van de CHR-syntax naar code die uitvoerbaar is op het host-platform, en de runtime bevat alles wat noodzakelijk is om de vertaalde code te kunnen uitvoeren (algemene routines, onderhouden van de constraint store, \ldots).
+
+Onze compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot normale C code, die dan verder door een standaard C compiler vertaald kan worden tot uitvoerbare code (machinetaal voor een specifiek platform). In tegenstelling tot Prolog en Java wordt het programma bij compilatie volledig tot machinetaal herleid, en is er dus geen {\em interpretatie} of {Just-in-time compilatie} meer nodig bij de uitvoering.
+
+\section{De Compiler}
+
+De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: we vertalen CHR broncode naar de host-language zelf, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt
+uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren, en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke hosttaal. De precieze implementatie verschilt wel danig: \begin{itemize}
+  \item De CCHR compiler vertaalt logischerwijs naar C en niet naar Java
+  \item De CCHR compiler is zelf ook in C geschreven (de JCHR compiler was zelf ook in Java gemaakt)
+  \item De gebruikte lexer en parser zijn gegenereerd met {\em Flex} en {\em Bison}, in plaats van {\em ANTLR}.
+  \item In plaats van een extern pakket voor de templates te gebruiken, gebruiken we standaard C macro's.
+ \end{itemize}
+ 
+De grote fases zijn min of meer gescheiden van elkaar in de code. Ze zijn elk gedefinieerd in 1 of meerdere aparte bronbestanden, en de datastructuren die gebruikt worden voor de communicatie tussen de verschillende modules zijn op zich weer apart gedefinieerd. Zo zal de parser een {\em Abstract Syntax Tree} als resultaat geven, die enkel door de vertaal/analyse-module gebruikt wordt voor een omzetting naar een tussenvorm, waarop enkele statische analyses uitgevoerd kunnen worden, en die dan eenvoudig te gebruiken is door de codegeneratie om tot C macro's te vertalen.
+
+\subsection{Algemeen}
+
+De algemene werking van de CCHR compiler is als volgt: \begin{itemize}
+  \item Alle op de commandolijn opgegeven bestanden worden doorlopen, en letterlijk gekopi\"eerd naar de uitvoer (C).
+  \item Als in een van de bestanden een {\em cchr-blok} gevonden wordt: \begin{itemize}
+    \item De {\em parser} wordt aangeroepen met dat cchr-blok als invoer.
+    \item De {\em parser} roept zelf de {\em lexer} aan om syntactische elementen te herkennen.
+    \item De {\em parser} bouwt een {\em abstract syntax tree} (AST).
+    \item De AST wordt geanalyseerd, en een tussenvorm wordt opgebouwd.
+    \item Op de tussenvorm worden optimalisaties doorgevoerd.
+    \item Uiteindelijk wordt de tussenvorm opgezet naar een sequentie van C macro's.
+    \item Deze C macro's worden in het uitvoerbestand (C) op de plaats gezet waar het {\em cchr-blok} stond.
+  \end{itemize}
+\end{itemize}
+
+\subsection{De lexer}
+
+De lexer is geschreven met behulp van Flex. Op de website van Flex vinden we: \begin{quote}
+  Flex is a fast lexical analyser generator. It is a tool for generating programs that perform pattern-matching on text.
+\end{quote}
+
+Op basis van een bestand met definities van patronen, in de vorm van {\em regular expressions}, kan Flex een C bronbestand genereren dat heel snel een stuk input kan splitsen in de opgegeven patronen. 
+
+Deze op deze wijze bekomen {\em lexer} vormt de eerste fase van het compilatie-proces. Ze herkent de opeenvolgende sleutelwoorden, operatoren, symbolen (kortweg {\em tokens}) van de brontaal, en geeft ze door aan de {\em parser}.
+
+\subsection{De parser}
+
+De parser is geschreven met behulp van Bison. Op de website van Bison vinden we: \begin{quote}
+  Bison is a general-purpose parser generator that converts an annotated context-free grammar into an LALR(1) or GLR parser for that grammar.
+\end{quote}
+
+Er kan opgemerkt worden dat de werkwijze van Bison sterk lijkt op de CCHR compiler zelf. Er wordt ook uitgegaan van een andere taal die in C ingebed kan worden, en met behulp van een template-gebaseerde methode wordt pure C code gegenereerd.
+
+Hiervoor is de grammaticale structuur van CCHR beschreven als een Bison {\em Context-Free Grammar}, met semantische acties erbij die een AST genereren. Er moet wel opgemerkt worden dat hoewel CCHR toelaat arbitraire C code op te nemen, de CCHR grammatica geen volledige C grammatica bevat. Ingebedde C code wordt namelijk niet volledig geparset, slechts tot op de hoogte dat noodzakelijk is
+om het begin en het einde ervan te herkennen. Dat wil bijvoorbeeld zeggen dat \code{1+2*(3-4)} gewoonweg als \code{1 + 2 + ( 3 - 4 )} beschouwd wordt, en niet als \code{+(1,*(2,-(3,4)))}. Het letterlijk doorgeven van C expressies volstaat, aangezien alles toch nog
+door de C compiler zelf moet.
+
+Voor de {\em tokens} die de grammatica als basisblokken gebruikt, wordt beroep gedaan op de {\em lexer}.
+
+Het resultaat hiervan is dus een AST, die echter helemaal niet geschikt is om converties en analyses op uit te voeren. Alle variabelen, constraints, \ldots zijn nog steeds beschreven als een hoop tekenreeksen. In de volgende stap wordt dit omgezet naar een werkbaar formaat. 
+
+\subsection{De tussenvorm}
+
+In deze stap wordt de AST omgezet naar een nieuwe datastructuur, waarbij constraints, variabelen, regels, \ldots als aparte datastructuren in plaats van als tekenreeksen beschreven worden. Dit kan niet echt object-geori\"enteerd gebeuren, aangezien C dat niet ondersteunt.
+
+De reden om de parser niet onmiddellijk via semantische acties deze tussenvorm te laten genereren is meer vrijheid in de taal te kunnen toelaten. Zo is het nu bijvoorbeeld mogelijk om een constraint pas te defini\"eren nadat die in een CHR regel gebruikt is.
+
+Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties doorgevoerd: \begin{itemize}
+\item Alle verwijzingen naar constraints, variabelen, opties, \ldots worden herkend.
+\item Alle regels worden omgezet naar HNF (Head Normal Form), waarbij alle expressies als parameters van contraints in de head die geen unieke variabelen zijn door een nieuwe variabele + een extra guard vervangen worden.
+\item Macros worden vervangen door hun definitie.
+\item Constraint occurrences worden bepaald (in welke rules en op welke plaats daarin elke constraint voorkomt).
+\item Variabele occurrences worden bepaald (in welke constraint occurrence en op welke plaats daarin elke variabele voorkomt).
+\item Afhankelijkheden tussen variabelen en statements worden bepaald (voor de {\em join ordering} later).
+\end{itemize}
+
+\subsection{Code generatie}
+
+In de laatste fase van het vertalingsproces wordt de tussenvorm omgezet naar C code. Bij JCHR wordt van de template engine FreeMarker gebruik gemaakt. Het voordeel van templates gebruiken is duidelijk: de code die door de compiler zelf gegenereerd moet worden is algemener en beschrijft het proces op hoger niveau. Implementatie details zoals datastructuren kunnen dan onafhankelijk van de compiler uitgewerkt worden, wat het geheel flexibeler maakt en de kans op fouter beperkt.
+
+In C bestaat echter reeds een gestandaardiseerd macros-systeem. We hebben er dan ook voor gekozen om deze C macros te gebruiken in plaats van een apart template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
+
+Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler is een sequentie van C macros in plaats van echte C code.
+
+Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat.
+
+\TODO{heel stuk over code-generatie}
+
+Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
+
+In het kader van effici\"entie, wat de belangrijkste doelstelling was, is de eigenlijke runtime beperkt. Enkel de code voor het
+bepalen van hashfuncties en de definitie van enkele fundamentele datatypes- en structuren kan echt als runtime beschouwd worden.
+Alle andere dingen worden (indirect) door de compiler gegenereerd. De eigenlijke output van de compiler is nog geen definitieve
+uitvoerbare C code, maar slechts C macro's die 
+

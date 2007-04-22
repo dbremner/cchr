@@ -74,10 +74,10 @@ void ram(prog_t *prog, int *mem, int pos) {
   } while(1);
 }
 
-int main(void) {
-  int size=1000000000;
+int main(int argc, char **argv) {
+  long l=argc > 1 ? strtol(argv[1],NULL,0) : 10000;
   prog_t progke[]={{0,HALT,0,0},{2,ADD,1,3},{3,SUB,1,2},{1,CJUMP,2,4},{0,HALT,0,0}};
-  int mem[]={0,1,size,0};
+  int mem[]={0,1,l,0};
   ram(progke,mem,1);
   printf("%i\n",mem[3]);
   return 0;

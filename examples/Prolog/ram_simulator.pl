@@ -64,7 +64,7 @@ A: mem(a,0), mem(b,3), mem(r,5),
     mem(c1,1), mem(t,0), ...
 */
 
-:- module(ram_simulator, [mem/2, prog/4, prog_counter/1]).
+:- module(ram_simulator, [mem/2, prog/4, prog_counter/1, test/1]).
 :- use_module(library(chr)).
 :- chr_option(debug,off).                                                                                            
 :- chr_option(optimize,full).                                                                                        
@@ -126,3 +126,5 @@ prog(L,L1,cjump(R),_), mem(R,X) \ prog_counter(L) <=> X =\= 0 |
 
 % halt
 prog(L,_,halt,_) \ prog_counter(L) <=> true.
+
+test(N) :- mem(1,1), mem(2,N), mem(3,0), prog(1,2, add(1), 3), prog(2,3, sub(1), 2), prog(3,1, cjump(2), 4), prog(4,0, halt, 0), prog_counter(1).

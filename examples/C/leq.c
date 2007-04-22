@@ -66,7 +66,7 @@ void test(int size) {
 }
 
 int main(int argc, char** argv) {
-  int n = argc>1 ? strtol(argv[0],NULL,0) : 100;
+  int n = argc>1 ? strtol(argv[1],NULL,0) : 100;
   test(n);
   return 0;
 }

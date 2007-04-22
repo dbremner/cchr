@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export BENCHTIME=7
+export BENCHTIME="$1"
+shift
 
 function doBench {
   TIMEFORMAT="%3U"

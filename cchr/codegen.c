@@ -138,7 +138,7 @@ void static csm_logidxs_add(csm_logidxs_t *li, int type, int con, int arg) {
   csm_logidx_t lin;
   for (int j=0; j<alist_len(li->list); j++) {
     csm_logidx_t *lx=alist_ptr(li->list,j);
-    if (lix->type==type) {
+    if (lx->type==type) {
       lix=lx;
       break;
     }
@@ -781,6 +781,7 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 	    if (m) output_fmt(out,"CB##_S ");
 	  }
 	  alist_free(li->args);
+	  output_fmt(out,"\n");
 	}
 	output_fmt(out,"CSM_START\n");
 	free(hd);

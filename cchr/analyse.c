@@ -1058,8 +1058,12 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
   		}
   		if (!ok) {
   			fprintf(stderr,"warning: unknown constraint option '%s' ignored\n",optname);
+			ok=1;
   		}
   	}
+	if (!ok) {
+	  fprintf(stderr,"warning: ignoring '%s' after constraint definition\n",t->data);
+	}
 	sem_vartable_destruct(&svt);
   }
 }

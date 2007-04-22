@@ -107,7 +107,7 @@ for my $bench (keys %BENCHERS) {
       $num=$lim if ((defined $lim) && $num>$lim);
       ($val,$run)=execBench($bench,$sys,$num);
       $val-=$low;
-      print "$sys/$bench:$num (${avgv},${low})*${run} up\n";
+      print "$sys/$bench:$num (${val},${low})*${run} up\n";
     }
     $num=$avg;
     $val=$avgv;
@@ -115,7 +115,7 @@ for my $bench (keys %BENCHERS) {
       $num=int($num/$FACTOR);
       ($val,$run)=execBench($bench,$sys,$num);
       $val-=$low;
-      print "$sys/$bench:$num (${avgv},${low})*${run} dn\n";
+      print "$sys/$bench:$num (${val},${low})*${run} dn\n";
     }
   }
 }

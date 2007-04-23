@@ -30,13 +30,13 @@ for my $file (@ARGV) {
   close FILE;
 }
 
-print PIPE "set terminal postscript enhanced color\n";
 print PIPE "set xlabel \"problem size\"\n";
 print PIPE "set ylabel \"time\"\n";
+print PIPE "set logscale xy\n";
+print PIPE "set key bot right\n";
 
 for my $bench (keys %DATA) {
   my $benchdata=$DATA{$bench};
-  print PIPE "set output \"bench-$bench.ps\"\n";
   print PIPE "set title \"Benchmark $bench\"\n";
   my @plots;
   for my $sys (keys %{$benchdata}) {
@@ -44,11 +44,16 @@ for my $bench (keys %DATA) {
     my $low=$data->{low};
     open FILE,">bench-$bench-$sys.dat";
     for my $num (sort { $a <=> $b } (grep {/^\d/} (keys %{$data}))) {
-      printf FILE ("%i %.16f %i\n",$num,$data->{$num}->[0]/$data->{$num}->[1],$data->{$num}->[1]);
+      printf FILE ("%i %.16f %i\n",$num,($data->{$num}->[0]/$data->{$num}->[1])-$low,$data->{$num}->[1]);
     }
     close FILE;
-    push @plots,"\"bench-$bench-$sys.dat\" using 1:2 title \"$sys\"";
+    push @plots,"\"bench-$bench-$sys.dat\" using 1:2 title \"$sys\" with line";
   }
+  print PIPE "set terminal postscript enhanced color\n";
+  print PIPE "set output \"bench-$bench.ps\"\n";
   print PIPE "plot ".join(', ',@plots)."\n";
+  print PIPE "set terminal png medium\n";
+  print PIPE "set output \"bench-$bench.png\"\n";
+  print PIPE "replot\n";
 }
 close PIPE;

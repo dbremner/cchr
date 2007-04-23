@@ -29,11 +29,15 @@ my %SYSTEMS=(
   swi => sub {  my ($prog,@args)=@_; return ('./benchswi.sh',$prog,join(',',@args)); } 
 );
 
+#my %SYSTBL=(
+#  cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
+#  jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
+#  c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" },
+#  swi =>  {gcd => "gcd", fib => "fib", leq => "leq", primes => "primes2", ram => "ram_simulator", tak => "tak" }
+#);
+
 my %SYSTBL=(
-  cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
-  jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
-  c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" },
-  swi =>  {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes2", ram => "ram_simulator", tak => "tak" }
+  swi =>  {fib => "fib"}
 );
 
 my %MAX=(

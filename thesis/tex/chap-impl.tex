@@ -63,7 +63,7 @@ Het resultaat hiervan is dus een AST, die echter helemaal niet geschikt is om co
 
 \subsection{De tussenvorm}
 
-In deze stap wordt de AST omgezet naar een nieuwe datastructuur, waarbij constraints, variabelen, regels, \ldots als aparte datastructuren in plaats van als tekenreeksen beschreven worden. Dit kan niet echt object-geori\"enteerd gebeuren, aangezien C dat niet ondersteunt.
+Na deze stap wordt de AST omgezet naar een nieuwe datastructuur, waarbij constraints, variabelen, regels, \ldots als aparte datastructuren in plaats van als tekenreeksen beschreven worden. Dit kan echter niet echt object-geori\"enteerd gebeuren, aangezien C dat niet ondersteunt.
 
 De reden om de parser niet onmiddellijk via semantische acties deze tussenvorm te laten genereren is meer vrijheid in de taal te kunnen toelaten. Zo is het nu bijvoorbeeld mogelijk om een constraint pas te defini\"eren nadat die in een CHR regel gebruikt is.
 
@@ -80,11 +80,11 @@ Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties
 
 In de laatste fase van het vertalingsproces wordt de tussenvorm omgezet naar C code. Bij JCHR wordt van de template engine FreeMarker gebruik gemaakt. Het voordeel van templates gebruiken is duidelijk: de code die door de compiler zelf gegenereerd moet worden is algemener en beschrijft het proces op hoger niveau. Implementatie details zoals datastructuren kunnen dan onafhankelijk van de compiler uitgewerkt worden, wat het geheel flexibeler maakt en de kans op fouter beperkt.
 
-In C bestaat echter reeds een gestandaardiseerd macros-systeem. We hebben er dan ook voor gekozen om deze C macros te gebruiken in plaats van een apart template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
+In C bestaat echter reeds een gestandaardiseerd macro-systeem. We hebben er dan ook voor gekozen om deze C macros te gebruiken in plaats van een apart template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
 
 Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler is een sequentie van C macros in plaats van echte C code.
 
-Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat.
+Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen. Hier komen we op terug in het hoofdstuk over debuggen.
 
 \TODO{heel stuk over code-generatie}
 

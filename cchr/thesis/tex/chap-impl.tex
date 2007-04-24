@@ -89,6 +89,7 @@ Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft
 \section{Gegenereerde code}
 
 Zoals gezegd bestaat de gegenereerde code uit C macros. In dit stuk gaan we in op de structuur van die gegenereerde code.
+Eerst geven we een inleiding op de C voorvertaler, en dan werken we een voorbeeld stap voor stap uit, om te eindigen bij de effectieve gegenereerde code die in de appendix te vinden is.
 
 \subsection{C voorvertaler}
 
@@ -120,9 +121,38 @@ De \code{\#\#} zorgt hier dat 2 tokens aan elkaar geplakt worden, en onderwerpt 
 
 \subsection{Algemeen}
 
-De algemene structuur van de code die gegenereerd wordt is: \begin{itemize}
-\item 
-\TODO{heel stuk over code-generatie}
+Met het oog de gegenereerde macro-code niet te overladen met informatie die over heel het programma hetzelfde is, zoals de lijst van alle chr-constraints, is gekozen zoveel mogelijk op een algemene manier op te slagen. Dit vraagt een woordje uitleg.
+
+Stel dat we dit CCHR blok zouden willen vertalen: \begin{Verbatim}
+cchr {
+  constraint fib(int,long long),init(int);
+
+  begin @ init(_) ==> fib(0,1LL), fib(1,1LL);
+  calc @  init(Max), fib(N2,M2) \ fib(N1,M1) <=>
+    alt(N2==N1+1,N2-1==N1), N2<Max |
+    fib(N2+1, M1+M2);
+}
+\end{Verbatim}
+
+De eerste belangrijke lijn die gegenereerd wordt is deze: 
+\begin{Verbatim}
+  #define CONSLIST(CB) CB##_D(fib_2) CB##_S CB##_D(init_1)
+\end{Verbatim}
+Deze lijn defini\"eert welke chr constraints allemaal bestaan. Ze is heel flexibel in gebruik, de aanroeper moet zelf 2 macros of functies voorzien: een voor het definieren van een constraint, en een voor wat er tussen 2 constraints moet gebeuren. Zo is het mogelijk om code te laten genereren voor elke constraint, gescheiden met comma's, mits: \begin{Verbatim}
+  #define CB_D(con) CODE_VOOR_CONSTRAINT(con)
+  #define CB_S ,
+  CONSLIST(CB)
+\end{Verbatim}
+
+Deze techniek wordt echter voor een stuk meer gebruikt dan enkel het aanduiden van de bestaande chr constraints. Er worden zulke index-macros gedefinieerd voor: \begin{itemize}
+\item Welke chr constraints bestaan.
+\item De occurrences van elke constraint.
+\item Aantal kept/removed constraints in elke rule
+\item Wat in propagation history bij te houden
+\item Welke indexen nodig zijn, en waarover
+\end{itemize}
+Verder worden er nog gelijkaardige, maar eenvoudigere constructies gegenereerd voor constructor-, destructor-, add en kill routines per chr constraint.
+
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

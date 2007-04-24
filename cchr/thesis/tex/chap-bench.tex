@@ -1,0 +1,17 @@
+\chapter{Benchmarks}
+
+\newcommand{\benchfig}[2]{
+\begin{figure}[htbp]
+\begin{center}
+\includevector{1}{fig/bench-#1}
+\caption{\label{benchgcd:fig}#2 benchmark}
+\end{center}
+\end{figure}
+}
+
+\benchfig{gcd}{GCD}
+\benchfig{fib}{Fib}
+\benchfig{primes}{Primes}
+\benchfig{tak}{Tak}
+\benchfig{leq}{LEQ}
+\benchfig{ram}{RAM}

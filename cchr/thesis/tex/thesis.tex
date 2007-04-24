@@ -15,7 +15,8 @@
 \newcommand{\includepdf}[1]{}
 \newcommand{\texorpdfstring}[2]{#1}
 % In LaTeX, include a converted .eps
-\newcommand{\includebitmap}[1]{\includegraphics{#1}}
+\newcommand{\includebitmap}[2]{\includegraphics[width=#1\textwidth]{#2}}
+\newcommand{\includevector}[2]{\includegraphics[width=#1\textwidth]{#2}}
 \else
 \usepackage[pdftex]{geometry}
 \usepackage[pdftex]{graphics}
@@ -33,7 +34,8 @@
         urlcolor=black
 ]{hyperref}
 % In PdfLaTeX, include a .png directly
-\newcommand{\includebitmap}[1]{\includegraphics{#1.png}}
+\newcommand{\includebitmap}[2]{\includegraphics[width=#1\textwidth]{#2.png}}
+\newcommand{\includevector}[2]{\includegraphics[width=#1\textwidth]{#2.pdf}}
 \fi
 
 \geometry{%
@@ -81,7 +83,7 @@
 \cleardoublepage
 \section*{Dankwoord}
 
-Hier komt mijn dankwoord.
+Hier komt mijn dankwoord. 
 
 \newpage
 \tableofcontents
@@ -91,13 +93,13 @@ Hier komt mijn dankwoord.
 \chapter{Inleiding}
 \label{inleiding:chap}
 \begin{quote}
-{{\small\it Om niet te vergeten hier later iets te zetten, zet ik hier iets.}}
+{{\small\it Hier nog een citaat zetten.}}
 
-{{\small\sc - Pieter Wuille}}
+{{\small\sc - Belangrijk individu}}
 \end{quote}
 \medskip
 
-Een goed boek over automatisch leren is \cite{mitchell:book}.
+%Een goed boek over automatisch leren is \cite{mitchell:book}.
 
 \input{part-cchr}
 
@@ -112,9 +114,9 @@ Een goed boek over automatisch leren is \cite{mitchell:book}.
 \cleardoublepage{}\phantomsection{}
 \addcontentsline{toc}{chapter}{Appendices}
 \appendix
-\chapter{Installatie en gebruik van het programma}
+%\chapter{Installatie en gebruik van het programma}
 
-Blabla
+%Blabla
 
 \backmatter
 \addcontentsline{toc}{chapter}{Bibliografie}

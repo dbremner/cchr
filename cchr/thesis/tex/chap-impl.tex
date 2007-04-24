@@ -54,7 +54,7 @@ De parser is geschreven met behulp van Bison. Op de website van Bison vinden we:
 Er kan opgemerkt worden dat de werkwijze van Bison sterk lijkt op de CCHR compiler zelf. Er wordt ook uitgegaan van een andere taal die in C ingebed kan worden, en met behulp van een template-gebaseerde methode wordt pure C code gegenereerd.
 
 Hiervoor is de grammaticale structuur van CCHR beschreven als een Bison {\em Context-Free Grammar}, met semantische acties erbij die een AST genereren. Er moet wel opgemerkt worden dat hoewel CCHR toelaat arbitraire C code op te nemen, de CCHR grammatica geen volledige C grammatica bevat. Ingebedde C code wordt namelijk niet volledig geparset, slechts tot op de hoogte dat noodzakelijk is
-om het begin en het einde ervan te herkennen. Dat wil bijvoorbeeld zeggen dat \code{1+2*(3-4)} gewoonweg als \code{1 + 2 + ( 3 - 4 )} beschouwd wordt, en niet als \code{+(1,*(2,-(3,4)))}. Het letterlijk doorgeven van C expressies volstaat, aangezien alles toch nog
+om het begin en het einde ervan te herkennen. Dat wil bijvoorbeeld zeggen dat \code{1+2*(3-4)} gewoonweg als \code{1 + 2 * ( 3 - 4 )} beschouwd wordt, en niet als \code{+(1,*(2,-(3,4)))}. Het letterlijk doorgeven van C expressies volstaat, aangezien alles toch nog
 door de C compiler zelf moet.
 
 Voor de {\em tokens} die de grammatica als basisblokken gebruikt, wordt beroep gedaan op de {\em lexer}.
@@ -84,14 +84,50 @@ In C bestaat echter reeds een gestandaardiseerd macro-systeem. We hebben er dan 
 
 Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler is een sequentie van C macros in plaats van echte C code.
 
-Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen. Hier komen we op terug in het hoofdstuk over debuggen.
+Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen. 
 
+\section{Gegenereerde code}
+
+Zoals gezegd bestaat de gegenereerde code uit C macros. In dit stuk gaan we in op de structuur van die gegenereerde code.
+
+\subsection{C voorvertaler}
+
+Eerst een korte inleiding over de C voorvertaler (``{\em preprocessor}'').
+
+Het is een component die deel is van het standaard C compilatieproces (preprocessor, compiler, assembler, linker), die vooral gebruikt om platform-afhankelijke definites in te voegen in C programma. Zo bijvoorbeeld kan met het preprocessor {\em directive} \begin{Verbatim}
+  #include <stdio.h>
+\end{Verbatim}
+Het {\em headerbestand} \code{stdio.h} ingeladen worden. Volgens de standaard zal dit bestand definities opnemen voor een aantal datatypes en functies nodig voor invoer/uitvoerroutines. 
+
+Alle ``instructies'' die deze preprocessor kent heten {\em directives} (directieven), en moeten op een aparte lijn in het bronbestand staan, te beginnen met een hekje (\code{\#}). De belangrijkste directives die wij gebruiken zijn \code{\#include}, en \code{\#define}. Dat laatste dient om een macro te defini\"eren.
+
+Macros zijn {\em tokens} die gedefinieerd worden als te substitueren door een reeks andere tokens. De eenvoudigste vorm is: \begin{Verbatim}
+  #define FOO bar(1);
+\end{Verbatim}
+wat aangeeft dat vanaf hier in de code ``\code{FOO}'' vervangen zal worden door ``\code{bar(1);}''. Macros kunnen echter ook parameters aannemen: \begin{Verbatim}
+  #define FOO(par) bar(par1,par1+1);
+\end{Verbatim}
+waarbij bij voorbeeld de code ``\code{FOO(7)}'' vervangen zal worden door ``\code{bar(7,7+1);}''. Zulke macros hebben ook ondersteuning voor {\em variable arguments}: \begin{Verbatim}
+  #define FOO(par,...) bar(par,__VA_ARGS__)
+\end{Verbatim}
+Hier zal ``\code{\_\_VA\_ARGS\_\_}'' de plaats innemen van alle argumenten die na par komen bij de vermelding van \code{FOO}. Zo zal bijvoorbeeld ``\code{FOO(sys,1,2)}'' vervangen worden door ``\code{bar(sys,1,2)}''.
+De laatste mogelijkheid die we gebruiken is {\em token pasting}: \begin{Verbatim}
+  #define FOO_1(arg) run(arg)
+  #define FOO_2(arg) test(arg)
+  #define BAR(par,sys) FOO_##par(sys)
+\end{Verbatim}
+De \code{\#\#} zorgt hier dat 2 tokens aan elkaar geplakt worden, en onderwerpt het resultaat terug aan macro-expansie. Zo zal in bovenstaand voorbeeld ``\code{BAR(1,2)}'' vervangen worden door ``\code{run(2)}'', maar ``\code{BAR(2,1)}'' door ``\code{test(1)}''.
+
+\subsection{Algemeen}
+
+De algemene structuur van de code die gegenereerd wordt is: \begin{itemize}
+\item 
 \TODO{heel stuk over code-generatie}
 
-Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
-
-In het kader van effici\"entie, wat de belangrijkste doelstelling was, is de eigenlijke runtime beperkt. Enkel de code voor het
-bepalen van hashfuncties en de definitie van enkele fundamentele datatypes- en structuren kan echt als runtime beschouwd worden.
-Alle andere dingen worden (indirect) door de compiler gegenereerd. De eigenlijke output van de compiler is nog geen definitieve
-uitvoerbare C code, maar slechts C macro's die 
+% Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
+% 
+% In het kader van effici\"entie, wat de belangrijkste doelstelling was, is de eigenlijke runtime beperkt. Enkel de code voor het
+% bepalen van hashfuncties en de definitie van enkele fundamentele datatypes- en structuren kan echt als runtime beschouwd worden.
+% Alle andere dingen worden (indirect) door de compiler gegenereerd. De eigenlijke output van de compiler is nog geen definitieve
+% uitvoerbare C code, maar slechts C macro's die 
 

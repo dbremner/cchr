@@ -153,6 +153,16 @@ Deze techniek wordt echter voor een stuk meer gebruikt dan enkel het aanduiden v
 \end{itemize}
 Verder worden er nog gelijkaardige, maar eenvoudigere constructies gegenereerd voor constructor-, destructor-, add en kill routines per chr constraint.
 
+Dan volgen nog enkele macros die de het mechanisme op hoog niveau beschrijven wat er voor elke constraint occurrence moet gebeuren. Hier gaan we zodadelijk op in.
+
+Als afsluiter van de gegenereerde code staat een ``\code{CSM\_START}'', deze macro is gedefinieerd in het algemene macro-definitie bestand (zie runtime), en zal gebruikmakende van alle voorgaang gegenereerde macrodefinities expanderen tot de uiteindelijke C code. Daaruit volgt dat alle echte CCHR-code schijnbaar op de lijn van deze \code{CSM\_START} komt te staan.
+
+\subsection{Constraint occurrences}
+
+Voor elke constraint occurrence wordt een stuk code gegenereerd in de vorm van een aparte macro definitie. We zullen hier de basisopbouw geven, en later optimalisaties doorvoeren.
+
+
+
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

@@ -52,6 +52,9 @@ for my $bench (keys %DATA) {
   print PIPE "set terminal postscript enhanced color\n";
   print PIPE "set output \"bench-$bench.ps\"\n";
   print PIPE "plot ".join(', ',@plots)."\n";
+  print PIPE "set terminal pdf\n";
+  print PIPE "set output \"bench-$bench.pdf\"\n";
+  print PIPE "replot\n";
   print PIPE "set terminal png small\n";
   print PIPE "set output \"bench-$bench.png\"\n";
   print PIPE "replot\n";

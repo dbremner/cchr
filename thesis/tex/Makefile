@@ -15,4 +15,10 @@ $(TEXOUT)/thesis.pdf: $(TEXOUT)/thesis.proc
 view: $(TEXOUT)/thesis.pdf
 	kpdf $(TEXOUT)/thesis.pdf &
 
-.PHONY: view
+upload: ~/mnt/ulyssis/www/thesis.pdf
+
+~/mnt/ulyssis/www/thesis.pdf: $(TEXOUT)/thesis.pdf
+	if [ -d ~/mnt/ulyssis/www ]; then cp -f $(TEXOUT)/thesis.pdf ~/mnt/ulyssis/www; fi
+
+.PHONY: view upload
+

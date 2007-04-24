@@ -92,7 +92,7 @@ originele CHR syntax). Ze bestaat uit \begin{enumerate}
   \item Een of meerdere head-constraints, met argumenten (CHR variabelen of C expressies, zie verder), gescheiden door komma's.
   \item Eventueel een backslash (\code{$\backslash$}) gevolgd door nog een of meer head-constraints (removed constraints, in geval van simpagation rule)
   \item Een regel-type aanduider (\code{==>} voor propagation of \code{<=>} voor simplification of simpagation).
-  \item Eventueel een guard, gevolgd door een pijp-symbool (\code{|}).
+  \item Eventueel een guard, gevolgd door een vertikaal streepje (\code{|}).
   \item De body van de CHR regel.
   \item Afgesloten mbv. een puntkomma (\code{;}).
 \end{enumerate}
@@ -121,7 +121,7 @@ Er is grote vrijheid aan wat als guard of body bruikbaar is in CCHR: \begin{enum
 Binnen een guard is er een speciaal sleutelwoord mogelijk: \code{alt}: het dient om 2 of meer logisch equivalente expressies te geven. Dit kan optimalisaties helpen, die steunen op een bepaalde betrekking die uit een guard afgeleid kan worden.
 
 Lokale variabelen binnen een guard of body gebruiken kennen een eigen syntax, die verschilt van die van JCHR. Het volstaat om een datatype, gevolgd door een variabelenaam (die niet eens met een hoofdletter moet beginnen), een gelijkheidsteken, en eventueel een expressie voor initializatie te noteren. Een voorbeeldje: \begin{Verbatim}
-  calc @ init(Max), fib(N,A) \ fib(N+1,B) <=> int sum=A+B, fib(N+2,sum):
+  calc @ init(Max), fib(N,A) \ fib(N+1,B) <=> int sum=A+B, fib(N+2,sum);
 \end{Verbatim}
 
 \subsubsection{Macros}

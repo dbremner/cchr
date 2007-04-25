@@ -1,4 +1,4 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99 -pedantic
+CC := gcc -Wall -Wno-unused -pipe -std=c99
 DEFS :=
 
 MODE := normal
@@ -80,6 +80,9 @@ leq.c: leq.cchr cchr_csm.h bin/cchr Makefile
 leq.prep.c: leq.c Makefile
 	cpp -P $(DEFS) <leq.c | indent -kr -l127 >leq.prep.c
 
+gcd.prep.c: gcd.c Makefile
+	cpp -P $(DEFS) <gcd.c | indent -kr -l127 >gcd.prep.c
+
 tak2.prep.c: tak2.c Makefile
 	cpp -P $(DEFS) <tak2.c | indent -kr -l127 >tak2.prep.c
 
@@ -130,6 +133,9 @@ dijkstra.prep: dijkstra.prep.c Makefile
 
 tak2.prep: tak2.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c
+
+gcd.prep: gcd.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o gcd.prep gcd.prep.c
 
 tak.debug: tak.c ../cchr_csm.h Makefile
 	cpp -P $(DEFS) <tak.c | indent -kr -l1024 >tak.debug.c

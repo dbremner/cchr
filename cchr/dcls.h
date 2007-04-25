@@ -58,17 +58,19 @@ typedef uint32_t dcls_pid_t;
 
 #define dcls_safeiter(var,pid,type,code) { \
   dcls_pid_t pid=dcls_iter_first((var),(type)); \
-   while (dcls_iter_hasnext(var,pid,type)) { \
-     dcls_pid_t _id=dcls_id(var,pid); \
+  if (dcls_iter_hasnext((var),(pid),(type))) do { \
+     dcls_pid_t _npid=dcls_iter_next(var,pid); \
+     dcls_pid_t _nid=dcls_id(var,_npid); \
      { \
        code \
      } \
-     if (dcls_used(var,pid) && dcls_id(var,pid)==_id) { \
-       (pid)=dcls_iter_next(var,pid);\
+     if (!dcls_iter_hasnext((var),_npid,(type))) break; \
+     if (dcls_used(var,_npid) && dcls_id(var,_npid)==_nid) { \
+       (pid)=_npid;\
      } else { \
        (pid)=dcls_iter_first((var),(type)); \
      } \
-  } \
+  } while(1); \
 }
 
 #define dcls_iter dcls_safeiter
@@ -86,7 +88,7 @@ typedef uint32_t dcls_pid_t;
       (var)._d[_kp]._next=(var)._fe; \
       (var)._d[_kp]._id=0; \
       (var)._fe=_kp; \
-    } \
+    }; \
     (var)._s=_ns; \
   } \
 } while(0);

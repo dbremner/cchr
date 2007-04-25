@@ -1,0 +1,34 @@
+\chapter{CSM - De Constraint Solver Macros} \label{chap:csm}
+
+In dit hoofdstuk wordt een overzicht gegeven van alle macros die gedefinieerd zijn in CSM. 
+
+\begin{tabularx}{\textwidth}{|l|l|X|}
+\hline
+{\bf Macro} & {\bf argumenten} & {\bf Betekenis} \\
+\hline
+\code{CSM\_ADD} & {\em constr}, {\em args\ldots} & Cre\"eer nieuwe constraint van type {\em constr}, met argumenten {\em args\ldots} \\
+\code{CSM\_ADDE} & {\em constr} & Cre\"eer nieuwe constraint van type {\em constr}, zonder argumenten. \\
+\code{CSM\_ARG} & {\em constr}, {\em naam} & Argument {\em naam} van de actieve constraint (type {\em constr}) opvragen \\
+\code{CSM\_ALIVESELF} & & Controleer of de actieve constraint zich in de constraint store bevindt \\
+\code{CSM\_DECLOCAL} & {\em type}, {\em naam} & Definieer een (wijzigbare) lokale variabele \\
+\code{CSM\_DEFLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (wijzigbare) lokale variabele \\
+\code{CSM\_DESTRUCT} & {\em constr}, {\em args\ldots} & Roep de destructor aan voor constraint type {\em constr}, met argumenten {\em args\ldots}. \\
+\code{CSM\_DIFF} & {\em var1}, {\em var2} & Controleer of {\em var1} en {\em var2} verschillende constraint suspensions zijn. \\
+\code{CSM\_DIFFSELF} & {\em var} & Controleer of {\em var} een andere constraint suspension is dan de actieve constraint. \\
+\code{CSM\_END} & & Be\"eindig afhandeling actieve constraint \\
+\code{CSM\_HISTADD} & {\em rule}, {\em susps\ldots} & Voeg {\em susps\ldots} toe aan propagation history voor rule {\em rule}, zodat \code{CSM\_HISTCHECK} vanaf nu deze combinatie niet meer toelaat. \\
+\code{CSM\_HISTCHECK} & {\em rule}, {\em code}, {\em susps\ldots} & Voer {\em code} enkel uit wanneer {\em rule} nog niet uitgevoerd is met {\em susps\ldots}. \\
+\code{CSM\_IF} & {\em expr}, {\em code} & Voer {\em code} enkel uit wanneer aan {\em expr} voldaan is. \\
+\code{CSM\_IMMLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (onwijzigbare) lokale variabele \\
+\code{CSM\_KILL} & {\em var}, {\em constr} & Verwijder de niet-actieve constraint {\em var} (van type {\em constr}) uit de constraint store. \\
+\code{CSM\_KILLSELF} & {\em constr} & Verwijder de actieve constraint (van type {\em constr} uit constraint store). \\
+\code{CSM\_LARG} & {\em constr}, {\em var}, {\em naam} & Argument {\em naam} van niet-actieve constraint {\em var} (type {\em constr}) opvragen. \\
+\code{CSM\_LOCAL} & {\em var} & Verwijs naar lokale variabele {\em var}). \\
+\code{CSM\_LOOP} & {\em constr}, {\em var}, {\em code} & Voer {\em code} uit voor alle constraint suspensions van type {\em constr} waarbij variabele {\em var} zal verwijzen naar de betrokken constraint suspension. \\
+\code{CSM\_MAKE} & {\em constr} & Maak actieve constraint suspension aan, van type {\em constr} (indien nog niet gebeurd) \\
+\code{CSM\_NATIVE} & {\em code} & Een stuk C code uitvoeren \\
+\code{CSM\_NEEDSELF} & {\em constr} & Zorg ervoor dat de huidige constraint (van type {\em constr}) in de constraint store zit (=erover ge\"itereerd kan worden). \\
+\code{CSM\_REGENSELF} & & Controleer of de actieve constraint reeds gereactiveerd werd. \\
+\code{CSM\_START} & & Het genereren van de eigenlijke code \\
+\hline
+\end{tabularx}

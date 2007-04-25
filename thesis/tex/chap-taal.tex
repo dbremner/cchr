@@ -1,4 +1,4 @@
-\chapter{De Taal}
+\chapter{De Taal} \label{chap:taal}
 
 In dit hoofdstuk wordt ingegaan op de taal ontwikkeld om CHR in C mogelijk te maken: CCHR.
 
@@ -10,11 +10,11 @@ in C kon zijn. De doelstellingen waar de taal aan moet voldoen zijn dan ook: \be
   \item De taal moet het mogelijk maken heel efficiente code te genereren.
 \end{itemize}
 
-\section{Algemeen}
+\section{Algemeen} \label{sec:taal-gen}
 
 Om de integratie van C en CHR mogelijk te maken, zullen we een ``cchr'' blok toelaten binnenin een stuk normale C code, wat vervangen zal worden door een cchr-compiler door een stuk equivalente pure C code. In die zin moet CCHR dan ook eerder als een taal-uitbreiding van C beschouwd worden, en niet als aparte taal. Alle C taal-elementen die de omgeving wijzigen in de ``omhullende'' C code zijn automatisch ook van toepassing op CHR (bv. \#include directives). 
 
-\section{Syntax}
+\section{Syntax} \label{sec:taal-syn}
 
 De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR, waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zullen we echter niet eisen dat de CHR handler code zich in een apart bestand bevindt, om de mogelijke interacties tussen C en CHR niet te beperken. C verschilt hierin van Java, aangezien in C niet enkel functie-aanroepen zinvolle interacties zijn (zoals methode-aanroepen in Java), maar ook macro-definities, inline-functies, \ldots, die enkel mogelijk zijn of betekenis hebben binnen hetzelfde bronbestand.
 
@@ -137,7 +137,7 @@ Zoals te zien is laat deze techniek toe dat verschillende data-types als paramet
 
 Het nut van deze macros is een equivalent voorzien voor de {\em built-in constraints} van JCHR. In een latere uitbreiding zouden deze macros automatisch gegenereerd kunnen worden door het inladen van een extra module.
 
-\section{Variabelen}
+\section{Variabelen} \label{sec:taal-var}
 
 \subsection{Waarde en Betekenis}
 
@@ -192,7 +192,7 @@ Logische variabelen hebben ook de mogelijkheid om door de programmeur gespecifie
 
 \TODO{Logische variabelen syntax}
 
-\section{C routines}
+\section{C routines} \label{taal:impl-crout}
 
 Tot hiertoe hebben we de mogelijkheden beschreven die CCHR code biedt. Het is echter ook noodzakelijk te specifi\"eren hoe C code kan interageren met de CCHR constraints. We gaan even in op alle C routines die ter beschikking gesteld worden. Deze routines zullen in praktijk C functies of macros zijn. Sommigen zijn algemeen voor een cchr-blok, en andere zijn specifiek voor bepaalde constraints.
 

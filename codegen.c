@@ -384,7 +384,8 @@ typedef struct {
   int constr;
   int rem;
   int pos;
-} csm_idxclean_t;
+  int clean;
+} csm_loop_t;
 
 /* generate codelist for a constraint occurence, using GIO */
 void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *out,csm_hashdefs_t *hd,csm_logidxs_t *ld) {
@@ -411,7 +412,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
   }
   csm_varuse_t *tbl=csm_generate_vartable_rule(cchr,ru,rem,ro->pos);
   csm_varuse_t *tbl_c=csm_generate_vartable_rule_cached(cchr,ru,rem,ro->pos);
-  alist_declare(csm_idxclean_t,clean);
+  alist_declare(csm_loop_t,clean);
   alist_init(clean);
   for (int i=0; i<alist_len(co->args); i++) {
     int vid=alist_get(co->args,i);
@@ -431,6 +432,12 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	csm_constr_getname(cchr,cicon,cicon_name,256);
 	output_fmt(out,"CSM_LOOP(%s,%s%i,",cicon_name,ci_rem ? "R" : "K",cid+1);
 	output_indent(out," \\",") \\");
+	csm_loop_t cl;
+	cl.constr=cicon;
+	cl.rem=ci_rem;
+	cl.pos=cid;
+	cl.clean=0;
+	alist_add(clean,cl);
 	break;
       }
       case GIO_TYPE_DIFF: {
@@ -490,13 +497,12 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	output_fmt(out,"%s(%s,%s,%s%i,",(!rem) ? "CSM_IDXUNILOOP" : "CSM_IDXLOOP",cicon_name,idxname,ci_rem ? "R" : "K",cid+1);
 	free(idxname);
 	output_indent(out," \\",") \\");
-	if (!rem) {
-	  csm_idxclean_t cl;
-	  cl.constr=cicon;
-	  cl.rem=ci_rem;
-	  cl.pos=cid;
-	  alist_add(clean,cl);
-	}
+	csm_loop_t cl;
+	cl.constr=cicon;
+	cl.rem=ci_rem;
+	cl.pos=cid;
+	cl.clean=1;
+	alist_add(clean,cl);
 	csm_hashdefs_add(&(hd[cicon]),&def);
 	break;
       }
@@ -514,13 +520,12 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	csm_generate_expr(&(entry->data.logiter.arg),tbl_c,out);
 	free(idxname);
 	output_indent(out,", \\",") \\");
-	if (!rem) {
-	  csm_idxclean_t cl;
-	  cl.constr=cicon;
-	  cl.rem=ci_rem;
-	  cl.pos=cid;
-	  alist_add(clean,cl);
-	}
+	csm_loop_t cl;
+	cl.constr=cicon;
+	cl.rem=ci_rem;
+	cl.pos=cid;
+	cl.clean=1;
+	alist_add(clean,cl);
 	break;
       }
     }
@@ -562,15 +567,33 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
   if (rem) {
     output_fmt(out,"CSM_END \\\n");
   } else {
-    output_indent(out,"CSM_IF(!CSM_ALIVESELF || CSM_REGENSELF, \\",") \\");
+    output_indent(out,"CSM_DEADSELF( \\",") \\\n");
     for (int k=0; k<alist_len(clean); k++) {
-      csm_idxclean_t *cl=alist_ptr(clean,k);
-      char chc[256];
-      csm_constr_getname(cchr,cl->constr,chc,256);
-      output_fmt(out,"CSM_UNIEND(%s,%s%i) \\\n",chc,cl->rem ? "R" : "K",cl->pos+1);
+      csm_loop_t *cl=alist_ptr(clean,k);
+      if (cl->clean) {
+        char chc[256];
+        csm_constr_getname(cchr,cl->constr,chc,256);
+        output_fmt(out,"CSM_UNIEND(%s,%s%i) \\\n",chc,cl->rem ? "R" : "K",cl->pos+1);
+      }
     }
     output_fmt(out,"CSM_END \\\n");
     output_unindent(out);
+    /*backjumping */
+    for (int k=0; k<alist_len(clean)-1; k++) {
+      csm_loop_t *cl=alist_ptr(clean,k);
+      output_fmt(out,"CSM_DEAD(%s%i",cl->rem ? "R" : "K",cl->pos+1);
+      output_indent(out,", \\",") \\\n");
+      for (int k2=k+1; k2<alist_len(clean); k2++) {
+        csm_loop_t *cl2=alist_ptr(clean,k2);
+	if (cl2->clean) {
+	  char chc[256];
+          csm_constr_getname(cchr,cl2->constr,chc,256);
+          output_fmt(out,"CSM_UNIEND(%s,%s%i) \\\n",chc,cl2->rem ? "R" : "K",cl2->pos+1);
+	}
+      }
+      output_fmt(out,"CSM_LOOPNEXT(%s%i) \\\n",cl->rem ? "R" : "K",cl->pos+1);
+      output_unindent(out);
+    }
   }
   csm_destruct_vartable_rule(ru,tbl);
   csm_destruct_vartable_rule(ru,tbl_c);

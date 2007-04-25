@@ -390,11 +390,17 @@
 #define CSM_LOOP(TYPE,VAR,CODE) { \
 	CSM_FMTOUT("loop over %s in %s:",#TYPE,#VAR); \
 	dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{ \
+	        __label__ csm_loop_##VAR; \
+		cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
 		CSM_FMTOUT("inside loop (over %s in %s): pid=%i",#TYPE,#VAR,pid_##VAR); \
-		CODE \
+		{ \
+		  CODE \
+		} \
+	        csm_loop_##VAR: {} \
 	}) \
 }
 
+#define CSM_LOOPNEXT(VAR) goto csm_loop_##VAR;
 #define CSM_DEFIDXVAR(CON,HASH,VAR) cchr_contbl_##CON##_##HASH##_t _idxvar_##VAR;
 #define CSM_SETIDXVAR(CON,HASH,VAR,NAM,ARG) { _idxvar_##VAR.key.NAM = (ARG); CSM_FMTOUT("in setIDXVAR: VAR=%s NAM=%s ARG=%i",#VAR,#NAM,ARG);}
 
@@ -403,10 +409,13 @@
 	if (_idx_##VAR) { \
 	  CSM_FMTOUT("in idxloop (%s.%s var=%s)",#CON,#HASH,#VAR); \
 	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val)); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxlst_##VAR) ) { \
+	    __label__ csm_loop_##VAR; \
             cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
+	    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
             { \
 	      CODE \
             } \
+	    csm_loop_##VAR: {} \
 	  } \
 	} \
 }
@@ -418,10 +427,13 @@
 	  cchr_htdc_t _idxcopy_##VAR; \
 	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
 	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
+	    __label__ csm_loop_##VAR; \
             cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
+	    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
             if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
 	      CODE \
             } \
+	    csm_loop_##VAR: {} \
 	  } \
           CSM_UNIEND(CON,VAR) \
 	} \
@@ -433,11 +445,14 @@
   cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
   CSM_FMTOUT("in LOGLOOP (%s;%s var=%s)",#CON,#ENT,#VAR); \
   for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(_log_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(_log_##VAR,_idxlst_##VAR) ) { \
+    __label__ csm_loop_##VAR; \
     cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
+    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
     { \
       CSM_FMTOUT("in LOGLOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
       CODE \
     } \
+    csm_loop_##VAR: {} \
   } \
 }
 
@@ -447,11 +462,14 @@
   cchr_htdc_t _idxcopy_##VAR; \
   cchr_htdc_t_copy(_log_##VAR,&_idxcopy_##VAR); \
   for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
+    __label__ csm_loop_##VAR; \
     cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
+    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
     if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
       CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
       CODE \
     } \
+    csm_loop_##VAR: {} \
   } \
   CSM_UNIEND(CON,VAR) \
 }
@@ -488,8 +506,9 @@
 #define CSM_GENOFPID(PID) (dcls_get(_global_runtime.store,pid_##PID).gen_num)
 #define CSM_ALIVEPID(PID) (dcls_used(_global_runtime.store,pid_##PID))
 
-#define CSM_ALIVESELF (CSM_ALIVEPID(self_) && CSM_IDOFPID(self_) == oldid)
-#define CSM_REGENSELF (CSM_GENOFPID(self_) != oldgen)
+#define CSM_DEADSELF(CODE) CSM_IF((!CSM_ALIVEPID(self_) || CSM_IDOFPID(self_)!=oldid || CSM_GENOFPID(self_)!=oldgen),CODE)
+#define CSM_DEAD(PID,CODE) CSM_IF((!CSM_ALIVEPID(PID) || CSM_IDOFPID(PID)!=id_##PID),CODE)
+
 #define CSM_ADD(CON,...) { \
 	cchr_fire_##CON(DCLS_EMPTY_PID,__VA_ARGS__); \
 }

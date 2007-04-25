@@ -1,14 +1,14 @@
-\chapter{Ontwerp en implementatie}
+\chapter{Ontwerp en implementatie} \label{chap:impl}
 
 In dit hoofdstuk gaan we in de op hoe ons CCHR systeem ontworpen en ge\"implementeerd is.
 
-\section{Algemeen}
+\section{Algemeen} \label{sec:impl-gen}
 
 Zoals reeds aangehaald bestaat de implementatie van een CHR systeem normaal uit twee delen: de {\em compiler} en de {\em runtime}. De compiler zorgt voor een vertaling van de CHR-syntax naar code die uitvoerbaar is op het host-platform, en de runtime bevat alles wat noodzakelijk is om de vertaalde code te kunnen uitvoeren (algemene routines, onderhouden van de constraint store, \ldots).
 
 Onze compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot normale C code, die dan verder door een standaard C compiler vertaald kan worden tot uitvoerbare code (machinetaal voor een specifiek platform). In tegenstelling tot Prolog en Java wordt het programma bij compilatie volledig tot machinetaal herleid, en is er dus geen {\em interpretatie} of {Just-in-time compilatie} meer nodig bij de uitvoering.
 
-\section{De Compiler}
+\section{De Compiler} \label{sec:impl-comp}
 
 De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: we vertalen CHR broncode naar de host-language zelf, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt
 uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren, en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke hosttaal. De precieze implementatie verschilt wel danig: \begin{itemize}
@@ -86,7 +86,7 @@ Het resultaat is dat het volledige template-vertaalproces verschoven wordt van d
 
 Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen. 
 
-\section{Gegenereerde code}
+\section{Gegenereerde code} \label{sec:impl-code}
 
 Zoals gezegd bestaat de gegenereerde code uit C macros. In dit stuk gaan we in op de structuur van die gegenereerde code.
 Eerst geven we een inleiding op de C voorvertaler, en dan werken we een voorbeeld stap voor stap uit, om te eindigen bij de effectieve gegenereerde code die in de appendix te vinden is.
@@ -102,10 +102,10 @@ Het {\em headerbestand} \code{stdio.h} ingeladen worden. Volgens de standaard za
 
 Alle ``instructies'' die deze preprocessor kent heten {\em directives} (directieven), en moeten op een aparte lijn in het bronbestand staan, te beginnen met een hekje (\code{\#}). De belangrijkste directives die wij gebruiken zijn \code{\#include}, en \code{\#define}. Dat laatste dient om een macro te defini\"eren.
 
-Macros zijn {\em tokens} die gedefinieerd worden als te substitueren door een reeks andere tokens. De eenvoudigste vorm is: \begin{Verbatim}
+Macros zijn {\em tokens} die gedefinieerd worden als te substitueren door een reeks andere tokens. De eenvoudigste vorm, ook objectvorm genaamd, is: \begin{Verbatim}
   #define FOO bar(1);
 \end{Verbatim}
-wat aangeeft dat vanaf hier in de code ``\code{FOO}'' vervangen zal worden door ``\code{bar(1);}''. Macros kunnen echter ook parameters aannemen: \begin{Verbatim}
+wat aangeeft dat vanaf hier in de code ``\code{FOO}'' vervangen zal worden door ``\code{bar(1);}''. Macros kunnen echter ook parameters aannemen, de functionele vorm: \begin{Verbatim}
   #define FOO(par) bar(par1,par1+1);
 \end{Verbatim}
 waarbij bij voorbeeld de code ``\code{FOO(7)}'' vervangen zal worden door ``\code{bar(7,7+1);}''. Zulke macros hebben ook ondersteuning voor {\em variable arguments}: \begin{Verbatim}
@@ -118,6 +118,8 @@ De laatste mogelijkheid die we gebruiken is {\em token pasting}: \begin{Verbatim
   #define BAR(par,sys) FOO_##par(sys)
 \end{Verbatim}
 De \code{\#\#} zorgt hier dat 2 tokens aan elkaar geplakt worden, en onderwerpt het resultaat terug aan macro-expansie. Zo zal in bovenstaand voorbeeld ``\code{BAR(1,2)}'' vervangen worden door ``\code{run(2)}'', maar ``\code{BAR(2,1)}'' door ``\code{test(1)}''.
+
+In de komende tekst zal vaak verwezen worden naar macros, sommigen daarvan staan in het macro-definitie bestand, anderen worden door de compiler gegenereerd. Gegenereerde macros zullen we daarom ook steeds ``gegenereerde macros'' noemen, om verwarring te vermijden.
 
 \subsection{Algemeen}
 
@@ -133,6 +135,7 @@ cchr {
     fib(N2+1, M1+M2);
 }
 \end{Verbatim}
+De volledige compiler uitvoer kan u vinden in sectie~\ref{sec:out-fib}.
 
 De eerste belangrijke lijn die gegenereerd wordt is deze: 
 \begin{Verbatim}
@@ -161,6 +164,18 @@ Als afsluiter van de gegenereerde code staat een ``\code{CSM\_START}'', deze mac
 
 Voor elke constraint occurrence wordt een stuk code gegenereerd in de vorm van een aparte macro definitie. We zullen hier de basisopbouw geven, en later optimalisaties doorvoeren.
 
+De naam die aan de gegenereerde macro voor een constraint occurrence moet van de vorm ``\code{CODE\_\argu{occurrence-naam}}'' zijn, en geen parameters hebben. De benaming voor de occurrence moet gewoon overal dezelfde zijn in de gegenereerde code. In praktijk gebruikt de compiler benamingen als ``\code{\argu{constraint}\_\argu{ariteit}\_\argu{rule}\_\argu{positie}}''. Positie is hierbij de letter \code{K} voor kept constraints, of de letter \code{R} voor removed constraints, gevolgd door een getal dat aanduidt de hoeveelste occurrence van dat type (removed of kept) het is binnen de gegeven rule, te beginnen bij 1.
+
+Dan komen we bij de inhoud van deze macros. Het is hier dat het voordeel van een template-gebaseerde code generatie tot uiting komt: het algorithme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst kan u vinden in appendix~\ref{chap:csm}.
+
+Als eerste versie vertrekken we van een imperatieve versie van de basisuitvoering beschreven in \cite{tomsphdthesis}:
+\begin{itemize}
+  \item Eerst ervoor zorgen dat de actieve constraint bestaat (\code{CSM\_MAKE})
+  \item We itereren over alle partner constraints (de constraint occurrences in de huidige rule behalve de actieve), mbv. \code{CSM\_LOOP}.
+  \item We controleren of er geen dubbels zijn in de verschillende partner constraints (mbv.  \code{CSM\_DIFF} en \code{CSM\_DIFFSELF} binnen een \code{CSM\_IF}).
+  \item We controleren of de gevonden combinatie nog niet reeds geprobeerd is (mbv. \code{CSM\_CHECKHIST}).
+  \item We controleren of aan alle guards voldaan is (mbv. \code{CSM\_IF en de constraint argumenten met \code{CSM\_ARG} en \code{CSM\_LARG} geschreven).
+  \item We voeren 
 
 
 

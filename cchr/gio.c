@@ -100,6 +100,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
   int nguards=alist_len(rule->out[0]);
   int *gd=malloc(sizeof(int)*nguards); /* 0=todo, 1=done, -1=doing */
   for (int i=0; i<nguards; i++) gd[i]=0;
+  int uni=!(order[0] & (1<<31));
   do {
     for (int p=0; p<nguards; p++) {
       if (gd[p]==0) {
@@ -108,6 +109,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
 	  gio_entry_t entry;
 	  gio_entry_init(&entry,GIO_TYPE_OUT);
 	  entry.data.out=p;
+	  entry.uni=uni;
 	  alist_add(out->order,entry);
 	}
       }
@@ -155,6 +157,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
 	gio_entry_init(&entry,GIO_TYPE_ITER);
 	entry.data.iter.cot=order[n];
       }
+      entry.uni=uni;
       alist_add(out->order,entry);
       for (int i=0; i<n; i++) { /* loop for DIFF's */
         uint32_t cot2=order[i];
@@ -169,6 +172,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
 	  gio_entry_init(&entry2,GIO_TYPE_DIFF);
 	  entry2.data.diff.cot[0]=order[i];
 	  entry2.data.diff.cot[1]=order[n];
+	  entry2.uni=uni;
 	  alist_add(out->order,entry2);
 	}
       }
@@ -176,8 +180,10 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
         gio_entry_t entry3;
 	gio_entry_init(&entry3,GIO_TYPE_VAR),
 	entry3.data.var=alist_get(co->args,i);
+	entry3.uni=uni;
 	alist_add(out->order,entry3);
       }
+      if (rem) uni=0;
     }
     n++;
   } while(n<=size);
@@ -272,7 +278,11 @@ double static gio_score(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio) {
     switch (entry->type) {
       case GIO_TYPE_ITER: {
         ret += val*0.5;
-	val *= 10;
+	if (entry->uni) {
+	  val *= 10;
+	} else {
+	  val *= 5;
+	}
 	ret += val*0.3;
 	break;
       }
@@ -281,15 +291,27 @@ double static gio_score(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio) {
 	for (int l=0; l<alist_len(entry->data.idxiter.args); l++) {
 	  if (alist_get(entry->data.idxiter.args,l)==NULL) k++;
 	}
-        ret += val*1.5;
-	val *= pow(10.0,(double)k/alist_len(entry->data.idxiter.args));
-	ret += val*0.4;
+	if (entry->uni) {
+          ret += val*5.0; /* universal idx lookups have a terrible constant-time overhead */
+	  val *= pow(10.0,(double)k/alist_len(entry->data.idxiter.args));
+	  ret += val*0.4;
+	} else {
+	  ret += val*1.0;
+	  val *= pow(10.0,(double)k/alist_len(entry->data.idxiter.args))/2;
+	  ret += val*0.4;
+	}
 	break;
       }
       case GIO_TYPE_LOGITER: {
-        ret += val*1.5;
-	val *= 3;
-	ret += val*0.4;
+        if (entry->uni) {
+          ret += val*5.0;
+	  val *= 3;
+	  ret += val*0.4;
+	} else {
+	  ret += val*1.0;
+	  val *= 1.5;
+	  ret += val*0.4;
+	}
 	break;
       }
       case GIO_TYPE_OUT: {

@@ -166,18 +166,35 @@ Voor elke constraint occurrence wordt een stuk code gegenereerd in de vorm van e
 
 De naam die aan de gegenereerde macro voor een constraint occurrence moet van de vorm ``\code{CODE\_\argu{occurrence-naam}}'' zijn, en geen parameters hebben. De benaming voor de occurrence moet gewoon overal dezelfde zijn in de gegenereerde code. In praktijk gebruikt de compiler benamingen als ``\code{\argu{constraint}\_\argu{ariteit}\_\argu{rule}\_\argu{positie}}''. Positie is hierbij de letter \code{K} voor kept constraints, of de letter \code{R} voor removed constraints, gevolgd door een getal dat aanduidt de hoeveelste occurrence van dat type (removed of kept) het is binnen de gegeven rule, te beginnen bij 1.
 
-Dan komen we bij de inhoud van deze macros. Het is hier dat het voordeel van een template-gebaseerde code generatie tot uiting komt: het algorithme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst kan u vinden in appendix~\ref{chap:csm}.
+Dan komen we bij de inhoud van deze macros. Het is hier dat het voordeel van een template-gebaseerde code generatie tot uiting komt: het algorithme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst kan u vinden in appendix~\ref{chap:csm}. Het kan nuttig zijn de lijst erbij te nemen bij de komende uitleg, aangezien de precieze betekenis van de CSM macros hier niet meer uitgelegd wordt.
 
 Als eerste versie vertrekken we van een imperatieve versie van de basisuitvoering beschreven in \cite{tomsphdthesis}:
 \begin{itemize}
-  \item Eerst ervoor zorgen dat de actieve constraint bestaat (\code{CSM\_MAKE})
+  \item Eerst ervoor zorgen dat de actieve constraint bestaat (\code{CSM\_MAKE}), en toegevoegd is aan de constraint store (\code{CSM\_NEEDSELF}).
   \item We itereren over alle partner constraints (de constraint occurrences in de huidige rule behalve de actieve), mbv. \code{CSM\_LOOP}.
   \item We controleren of er geen dubbels zijn in de verschillende partner constraints (mbv.  \code{CSM\_DIFF} en \code{CSM\_DIFFSELF} binnen een \code{CSM\_IF}).
   \item We controleren of de gevonden combinatie nog niet reeds geprobeerd is (mbv. \code{CSM\_CHECKHIST}).
-  \item We controleren of aan alle guards voldaan is (mbv. \code{CSM\_IF en de constraint argumenten met \code{CSM\_ARG} en \code{CSM\_LARG} geschreven).
-  \item We voeren 
+  \item We defini\"eren alle lokale variabelen (met \code{CSM\_DECLOCAL} en \code{CSM\_DEFLOCAL}).
+  \item We controleren of aan alle guards voldaan is (mbv. \code{CSM\_IF} en de constraint argumenten met \code{CSM\_ARG} en \code{CSM\_LARG} geschreven).
+  \item We voegen de gevonden combinatie toe aan de propagation history (mbv. \code{CSM\_HISTADD}).
+  \item We verwijderen eventuele removed constraints uit de constraint store (mbv. \code{CSM\_KILL} en \code{CSM\_KILLSELF}).
+  \item We voeren de body van de chr rule uit, met de verwijzingen naar lokale variabelen vervangen door \code{CSM\_LOCAL}-macros en de constraint argument door \code{CSM\_ARG} en \code{CSM\_LARG}.
+  \item Als de actieve constraint uit de constraint store verwijderd is, stop dan met de afhandeling (\code {CSM\_DEADSELF} en \code{CSM\_END}).
+\end{itemize}
 
+Met deze versie zijn enkele problemen, die misschien niet op het eerste zicht duidelijk zijn: \begin{itemize}
+  \item Zodra een \code{CSM\_KILL} gebeurd is, kan \code{CSM\_LARG} niet meer gebruikt worden, omdat naar een onbestaande constraint verwezen kan worden (of erger nog: naar een andere constraint suspension die nu op die plaats staat). Daarom zullen we de constraint argumenten voor de uitvoering van de body opslagen in lokale (onwijzigbare) variabelen, mbv. \code{CSM\_IMMLOCAL}. Als er dan verder naar verwezen wordt in de body, gebruiken we gewoon \code{CSM\_LOCAL} ipv. \code{CSM\_LARG}.
+  \item Het is mogelijk dat een constraint-argument verwijst naar een apart gealloceerd object, dat dmv. een destructor aangegeven is voor vernietiging bij verwijderen van de constraint suspension. Deze destructor kan echter niet aangeroepen worden door \code{CSM\_KILL}, omdat code verder in de body misschien nog naar het apart gealloceerd object kan verwijzen. Daarom voeren we een \code{CSM\_DESTRUCT} in voor elke \code{CSM\_KILL} of \code{CSM\_KILLSELF}, die pas na de body aangeroepen wordt.
+  \item Wanneer de actieve constraint nog niet uit de constraint store verwijderd is, maar een van de voorgaande partner constraints al wel, dan moet onmiddellijk het volgende element van die iterator voor die partner constraint gekozen worden, om te vermijden dat de body toegepast zou worden voor een op dat moment niet meer bestaand constraint suspension. Daarom voeren we na de controle of de actieve constraint nog in de store zit, ook controles in voor alle \code{CSM\_LOOP}s, van buiten naar binnen, dmv. \code{CSM\_DEAD}, met een \code{CSM\_LOOPNEXT} op de betrokken variabele in. Deze controle is echter niet nodig voor de binnenste lus, aangezien daar sowieso onmiddellijk het volgende element gekozen zal worden.
+\end{itemize}
 
+\subsection{Optimalisaties}
+
+Deze eerste versie van het compilatieschema is echter voor verbetering vatbaar. Voor een gedetailleerde uitleg over de optimalisaties en waarom ze toegestaan zijn, verwijzen we opnieuw naar \cite{tomsphdthesis}. 
+
+{\bf Late Storage}: Het is wenselijk om het aanmaken van een constraint suspension, en zeker het eigenlijke toevoegen ervan aan de constraint store, zoveel mogelijk uit te stellen. Dit eerst bespaart geheugen, en dit tweede kan de snelheid ten goede komen, aangezien er ondertussen minder elementen in de store zijn om over te itereren. We zorgen ervoor dat de suspension aangemaakt is juist voor het zoeken naar partner constraints van een propagate-overgang\footnote{Een propagate-overgang komt in onze uitvoer overeen met een occurrence-macro waarbij de actieve constraint geen removed constraint is}, door de \code{CSM\_MAKE} enkel te plaatsen aan het begin van ``kept'' occurrence macros. Verder zorgen we er pas voor dat de constraint suspension in de store zit aan het begin van de uitvoering van de body van zo'n propagate-overgang. De \code{CSM\_NEEDSELF} wordt dus geplaatst voor de body van zo'n occurrence.
+
+{\bf Simplification}: Bij simplificatie-overgangen is er zekerheid dat na uitvoering van de body, de actieve constraint zich niet meer in de store zal bevinden. We hebben dus geen \code{CSM\_DEADSELF} meer nodig om te controleren of een \code{CSM\_END} mag. Dit kan uitgebreid worden tot propagation-overgangen die partner constraints verwijderen. Hierbij kan de \code{CSM\_DEAD} conditie rond de \code{CSM\_LOOPNEXT} weggelaten worden. Hierbij komt nog dat na zo'n \code{CSM\_END} of \code{CSM\_LOOPNEXT} geen verdere checks voor de diepere lussen meer nodig zijn, en dus volledig weggelaten kunnen worden. Het gebruik van deze expliciete \code{CSM\_LOOPNEXT} macros komt overeen met wat in JCHR ``backjumping'' genoemd wordt.
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

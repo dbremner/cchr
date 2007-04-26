@@ -28,7 +28,6 @@ Overige CSM macros: \\
 \code{CSM\_DECLOCAL} & {\em type}, {\em naam} & Definieer een (wijzigbare) lokale variabele \\
 \code{CSM\_DEFLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (wijzigbare) lokale variabele \\
 \code{CSM\_DESTRUCT} & {\em constr}, {\em args\ldots} & Roep de destructor aan voor constraint type {\em constr}, met argumenten {\em args\ldots}. \\
-\hline
 \code{CSM\_END} & & Be\"eindig afhandeling actieve constraint \\
 \code{CSM\_HISTADD} & {\em rule}, {\em susps\ldots} & Voeg {\em susps\ldots} toe aan propagation history voor rule {\em rule}, zodat \code{CSM\_HISTCHECK} vanaf nu deze combinatie niet meer toelaat. \\
 \code{CSM\_IMMLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (onwijzigbare) lokale variabele \\
@@ -40,6 +39,7 @@ Overige CSM macros: \\
 \code{CSM\_NATIVE} & {\em code} & Een stuk C code uitvoeren \\
 \code{CSM\_NEEDSELF} & {\em constr} & Zorg ervoor dat de huidige constraint (van type {\em constr}) in de constraint store zit (=erover ge\"itereerd kan worden). \\
 \code{CSM\_START} & & Het genereren van de eigenlijke code \\
+\hline
 \end{tabularx}
 
 Extra CSM macros voor het gebruik van indexen: \\
@@ -48,7 +48,8 @@ Extra CSM macros voor het gebruik van indexen: \\
 {\bf Macro} & {\bf argumenten} & {\bf Betekenis} \\
 \hline
 \code{CSM\_DEFIDXVAR} & {\em constr}, {\em hash}, {\em var} & Geeft aan dat {\em var} gebruikt zal worden als iterator over hash {\em hash}. Wat in hash {\em hash} bewaard wordt, is met een aparte index-macro aangeduid. \\
-\code{CSM\_SETIDXVAR} & {\em constr}, {\em hash}, {\em var}, {\em arg}, {\em val}} & zoiets. & Geeft aan dat voor de index opzoeking in iterator {\em var} met hash {\em hash}, ge\"eist wordt dat argument {\em arg} van constraint {\em constr} gelijk is aan {\em arg}. \\
+\code{CSM\_SETIDXVAR} & {\em constr}, {\em hash}, {\em var}, {\em arg}, {\em val} & Geeft aan dat voor de index opzoeking in iterator {\em var} met hash {\em hash}, ge\"eist wordt dat argument {\em arg} van constraint {\em constr} gelijk is aan {\em arg}. \\
 \code{CSM\_IDXLOOP} & {\em constr}, {\em hash}, {\em var}, {\em code} & Itereer in {\em var} over de gevraagde elementen, waarbij {\em code} elke keer uitgevoerd wordt. Deze iterator staat niet toe dat er voortge\"itereerd wordt nadat de constraint store aangepast is. \\
 \code{CSM\_IDXUNILOOP} & {\em constr}, {\em hash}, {\em var}, {\em code} & Zelfde als \code{CSM\_IDXLOOP}, maar met ondersteuning voor wijzigen constraint store tijdens itereren. Merk wel op dat constraints die tijdens het itereren toegevoegd werden al dan niet voorkomen. Dit is normaal geen probleem, aangezien deze toch sowieso reeds geactiveerd werden. \\
+\hline
 \end{tabularx}

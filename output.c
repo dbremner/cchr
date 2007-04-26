@@ -58,15 +58,17 @@ void static output_indentation(output_t *output) {
 /* output a number of chars (at most len) pointer to be str to out */
 void output_chars(output_t *output, char *str, int len) {
   char *fs;
-  while ((fs=strchr(str,'\n')) && fs<str+len) {
-  	output_indentation(output);
+  do {
+    fs=memchr(str,'\n',len);
+    if (fs==NULL) break;
+    output_indentation(output);
     fwrite(str,fs-str,1,output->out);
     len -= (fs+1-str);
     str=fs+1;
     putc('\n',output->out);
     output->linenum++;
     output->nl=1;
-  }
+  } while(1);
   if (len) {
   	output_indentation(output);
   	fwrite(str,len,1,output->out);

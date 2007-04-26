@@ -397,5 +397,7 @@ void gio_generate(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio, int activ) {
   double score=0.0;
   gio_init(gio);
   gio_iterate(chr,rule,order,used,1,gio,&score);
+  free(used);
+  free(order);
   return;
 }

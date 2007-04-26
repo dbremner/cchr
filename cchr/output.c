@@ -75,8 +75,8 @@ void output_chars(output_t *output, char *str, int len) {
 
 /* output a single character to out */
 void output_char(output_t *output, int ch) {
-  char ccc=ch;
-  output_chars(output,&ccc,1);
+  char ccc[2]={ch,0};
+  output_chars(output,ccc,1);
 }
 
 /* output a string to output */

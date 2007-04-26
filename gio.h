@@ -40,6 +40,7 @@ typedef struct {
     } diff;
     int var;
   } data;
+  int uni; /* might be universal instead of existential */
 } gio_entry_t;
 
 typedef struct {

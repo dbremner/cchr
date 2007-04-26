@@ -494,14 +494,14 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	    output_fmt(out,") \\\n");
 	  }
 	}
-	output_fmt(out,"%s(%s,%s,%s%i,",(!rem) ? "CSM_IDXUNILOOP" : "CSM_IDXLOOP",cicon_name,idxname,ci_rem ? "R" : "K",cid+1);
+	output_fmt(out,"%s(%s,%s,%s%i,",entry->uni ? "CSM_IDXUNILOOP" : "CSM_IDXLOOP",cicon_name,idxname,ci_rem ? "R" : "K",cid+1);
 	free(idxname);
 	output_indent(out," \\",") \\");
 	csm_loop_t cl;
 	cl.constr=cicon;
 	cl.rem=ci_rem;
 	cl.pos=cid;
-	cl.clean=1;
+	cl.clean=entry->uni;
 	alist_add(clean,cl);
 	csm_hashdefs_add(&(hd[cicon]),&def);
 	break;
@@ -516,7 +516,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	int vartype=alist_get(alist_get(cchr->cons,cicon).types,entry->data.logiter.pos);
 	csm_logidxs_add(ld,vartype,cicon,entry->data.logiter.pos);
 	sem_vartype_t *vt=alist_ptr(cchr->types,vartype);
-	output_fmt(out,"%s(%s,%s%i,%s%s,%s,",(!rem) ? "CSM_LOGUNILOOP" : "CSM_LOGLOOP",cicon_name,ci_rem ? "R" : "K",cid+1,vt->log_prefix,idxname,vt->name);
+	output_fmt(out,"%s(%s,%s%i,%s%s,%s,",entry->uni ? "CSM_LOGUNILOOP" : "CSM_LOGLOOP",cicon_name,ci_rem ? "R" : "K",cid+1,vt->log_prefix,idxname,vt->name);
 	csm_generate_expr(&(entry->data.logiter.arg),tbl_c,out);
 	free(idxname);
 	output_indent(out,", \\",") \\");
@@ -524,7 +524,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	cl.constr=cicon;
 	cl.rem=ci_rem;
 	cl.pos=cid;
-	cl.clean=1;
+	cl.clean=entry->uni;
 	alist_add(clean,cl);
 	break;
       }
@@ -564,26 +564,36 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
   csm_destruct_vartable_rule(ru,tbl_c); /* destruct the vartable and recreate it, so the body generation starts with zeroed varuses */
   tbl_c=csm_generate_vartable_rule_cached(cchr,ru,rem,ro->pos);
   csm_generate_body(cchr,ru,tbl_c,out);
-  if (rem) {
-    output_fmt(out,"CSM_END \\\n");
-  } else {
-    output_indent(out,"CSM_DEADSELF( \\",") \\\n");
-    for (int k=0; k<alist_len(clean); k++) {
-      csm_loop_t *cl=alist_ptr(clean,k);
-      if (cl->clean) {
-        char chc[256];
-        csm_constr_getname(cchr,cl->constr,chc,256);
-        output_fmt(out,"CSM_UNIEND(%s,%s%i) \\\n",chc,cl->rem ? "R" : "K",cl->pos+1);
+  
+  int cond=1;
+  if (cond) { /* check for active constraint to be alive */
+    if (rem) {
+      output_fmt(out,"CSM_END \\\n");
+      cond=0;
+    } else {
+      output_indent(out,"CSM_DEADSELF( \\",") \\\n");
+      for (int k=0; k<alist_len(clean); k++) {
+        csm_loop_t *cl=alist_ptr(clean,k);
+        if (cl->clean) {
+          char chc[256];
+          csm_constr_getname(cchr,cl->constr,chc,256);
+          output_fmt(out,"CSM_UNIEND(%s,%s%i) \\\n",chc,cl->rem ? "R" : "K",cl->pos+1);
+        }
       }
+      output_fmt(out,"CSM_END \\\n");
+      output_unindent(out);
     }
-    output_fmt(out,"CSM_END \\\n");
-    output_unindent(out);
-    /*backjumping */
-    for (int k=0; k<alist_len(clean)-1; k++) {
-      csm_loop_t *cl=alist_ptr(clean,k);
+  }
+  int pp=0;
+  while (cond && pp<alist_len(clean)-1) { /* check for other constraints to be alive */
+    csm_loop_t *cl=alist_ptr(clean,pp);
+    if (cl->rem) {
+      output_fmt(out,"CSM_LOOPNEXT(%s%i) \\\n","R",cl->pos+1);
+      cond=0;
+    } else {
       output_fmt(out,"CSM_DEAD(%s%i",cl->rem ? "R" : "K",cl->pos+1);
       output_indent(out,", \\",") \\\n");
-      for (int k2=k+1; k2<alist_len(clean); k2++) {
+      for (int k2=pp+1; k2<alist_len(clean); k2++) {
         csm_loop_t *cl2=alist_ptr(clean,k2);
 	if (cl2->clean) {
 	  char chc[256];
@@ -594,6 +604,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
       output_fmt(out,"CSM_LOOPNEXT(%s%i) \\\n",cl->rem ? "R" : "K",cl->pos+1);
       output_unindent(out);
     }
+    pp++;
   }
   csm_destruct_vartable_rule(ru,tbl);
   csm_destruct_vartable_rule(ru,tbl_c);

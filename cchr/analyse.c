@@ -860,7 +860,6 @@ void static sem_expr_expand(sem_cchr_t *chr,sem_vartable_t *vt,sem_expr_t *in,se
 		sem_exprpart_t *se=alist_ptr(in->parts,i);
 		switch (se->type) {
 			case SEM_EXPRPART_TYPE_FUN: {
-	    		//assert(fun==NULL); /* allowing functions inside macro definitions is hard, so make sure they are expanded themselves */
 	    		int tr=0;
 	    		if (chr) { for (int k=0; k<alist_len(chr->macros); k++) {
 	    			sem_macro_t *mac=alist_ptr(chr->macros,k);

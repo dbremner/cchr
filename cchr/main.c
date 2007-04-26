@@ -173,7 +173,9 @@ int main(int argc, char *argv[])
 	      output_init(&ooh,outh);
 	      if (!process_file(in,&oo,&ooh,&line,arg,oa)) ok=0;
 	      free(oa);
+	      free(oah);
 	      output_destruct(&oo);
+	      output_destruct(&ooh);
 	      fclose(out);
 	      fclose(in);
 	    } else {

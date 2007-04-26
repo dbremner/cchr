@@ -4,11 +4,11 @@ use strict;
 
 my $BENCHER="./bench.sh";
 
-my $FACTOR=1.013;
-my $EFACTOR=1.35;
-my $MINTIME=0.45;
-my $MAXTIME=4.5;
-my $RUNTIME=20;
+my $FACTOR=1.01;
+my $EFACTOR=1.01;
+my $MINTIME=0;
+my $MAXTIME=0.001;
+my $RUNTIME=100;
 
 my $AVGTIME=($MINTIME+$MAXTIME)/2;
 
@@ -23,22 +23,22 @@ my %BENCHERS=(
 );
 
 my %SYSTEMS=(
-  jchr => sub { my ($prog,@args)=@_; return ('java','-cp','/home/pw/Desktop/KULeuven_JCHR.jar:Java',$prog,@args); },
+#  jchr => sub { my ($prog,@args)=@_; return ('java','-cp','/home/pw/Desktop/KULeuven_JCHR.jar:Java',$prog,@args); },
   cchr => sub { my ($prog,@args)=@_; return ("./$prog",@args); },
   c => sub {    my ($prog,@args)=@_; return ("C/$prog",@args); },
-  swi => sub {  my ($prog,@args)=@_; return ('./benchswi.sh',$prog,join(',',@args)); } 
+#  swi => sub {  my ($prog,@args)=@_; return ('./benchswi.sh',$prog,join(',',@args)); } 
+);
+
+my %SYSTBL=(
+  cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
+  jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
+  c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" },
+  swi =>  {gcd => "gcd", fib => "fib", leq => "leq", primes => "primes2", ram => "ram_simulator", tak => "tak" }
 );
 
 #my %SYSTBL=(
-#  cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
-#  jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
-#  c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" },
-#  swi =>  {gcd => "gcd", fib => "fib", leq => "leq", primes => "primes2", ram => "ram_simulator", tak => "tak" }
+#  swi =>  {fib => "fib"}
 #);
-
-my %SYSTBL=(
-  swi =>  {fib => "fib"}
-);
 
 my %MAX=(
   swi => {gcd => 800, ram => 25000, tak => 500, fib => 750, primes => 14000, leq => 65},
@@ -79,7 +79,7 @@ for my $bench (keys %BENCHERS) {
       }
       if ($val>$minv && $val<$AVGTIME) {$min=$num; $minv=$val;};
       if ($val<$maxv && $val>$AVGTIME) {$max=$num; $maxv=$val;};
-    } while($val<$MINTIME && (!defined($lim) || $num<$lim));
+    } while($val<$MINTIME && (!defined($lim) || $num<$lim) );
     my ($avg,$avgv);
     if ($val>=$MINTIME && $val<=$MAXTIME || (defined($lim) && $num==$lim)) {
       $avg=$min;
@@ -87,6 +87,7 @@ for my $bench (keys %BENCHERS) {
     } else {
       do {
         $avg=int($max-($max-$min)/($maxv-$minv)*($maxv-$AVGTIME)+0.5);
+	last if ($avg==$max || $avg==$num);
 	($avgv,$run)=execBench($bench,$sys,$avg);
 	$avgv-=$low;
         if ($avgv<0) {
@@ -115,7 +116,7 @@ for my $bench (keys %BENCHERS) {
     }
     $num=$avg;
     $val=$avgv;
-    while ($val>$MINTIME) {
+    while ($val>$MINTIME && $num>0) {
       $num=int($num/$FACTOR);
       ($val,$run)=execBench($bench,$sys,$num);
       $val-=$low;

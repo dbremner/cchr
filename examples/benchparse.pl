@@ -12,7 +12,7 @@ for my $file (@ARGV) {
     chomp;
     if ($_ =~ /\A\s*(\w+)\/(\w+):(\d+)\s+\(([^,]+),([^\)]+)\)\*(\d+)\s+/) {
       my ($sys,$bench,$num,$val,$low,$mul)=($1,$2,$3,$4,$5,$6);
-      if (!defined($DATA{$bench}->{$sys}->{0}) || $low<$DATA{$bench}->{$sys}->{low}) {
+      if (!defined($DATA{$bench}->{$sys}->{low}) || $low<$DATA{$bench}->{$sys}->{low}) {
         $DATA{$bench}->{$sys}->{low}=$low;
       }
       my $emul=0;
@@ -52,9 +52,10 @@ for my $bench (keys %DATA) {
   print PIPE "set terminal postscript enhanced color\n";
   print PIPE "set output \"bench-$bench.ps\"\n";
   print PIPE "plot ".join(', ',@plots)."\n";
-  print PIPE "set terminal pdf\n";
-  print PIPE "set output \"bench-$bench.pdf\"\n";
-  print PIPE "replot\n";
+  system("ps2pdf14 bench-$bench.ps bench-$bench.pdf");
+#  print PIPE "set terminal pdf\n";
+#  print PIPE "set output \"bench-$bench.pdf\"\n";
+#  print PIPE "replot\n";
   print PIPE "set terminal png small\n";
   print PIPE "set output \"bench-$bench.png\"\n";
   print PIPE "replot\n";

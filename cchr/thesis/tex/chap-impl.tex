@@ -73,7 +73,8 @@ Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties
 \item Macros worden vervangen door hun definitie.
 \item Constraint occurrences worden bepaald (in welke rules en op welke plaats daarin elke constraint voorkomt).
 \item Variabele occurrences worden bepaald (in welke constraint occurrence en op welke plaats daarin elke variabele voorkomt).
-\item Afhankelijkheden tussen variabelen en statements worden bepaald (voor de {\em join ordering} later).
+\item Afhankelijkheden tussen variabelen en statements worden bepaald.
+\item Met deze afhankelijkheden wordt voor elke constraint occurrence een goede ``join ordering'' bepaald (zie sectie~\ref{ssec:joinorder}).
 \end{itemize}
 
 \subsection{Code generatie}
@@ -85,6 +86,15 @@ In C bestaat echter reeds een gestandaardiseerd macro-systeem. We hebben er dan 
 Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler is een sequentie van C macros in plaats van echte C code.
 
 Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen. 
+
+\subsection{Uitvoer module}
+
+Uiteindelijk roept de codegenerator een uitvoer module aan, die verantwoordelijk is voor de code mooi ge\"indenteerd weg te schrijven naar het uitvoerbestand, en ondertussen informatie bij te houden over het aantal geschreven regels. Dit is nodig omdat er lijnen van de vorm: \begin{Verbatim}
+  #line "source.cchr" 16
+  ...
+  #line "source.c" 214
+\end{Verbatim}
+in de uitvoer gezet worden, die de C compiler hints geven over waar de code in het bestand vandaan kwam, om zinvollere waarschuwingen te kunnen geven. 
 
 \section{Gegenereerde code} \label{sec:impl-code}
 
@@ -192,9 +202,40 @@ Met deze versie zijn enkele problemen, die misschien niet op het eerste zicht du
 
 Deze eerste versie van het compilatieschema is echter voor verbetering vatbaar. Voor een gedetailleerde uitleg over de optimalisaties en waarom ze toegestaan zijn, verwijzen we opnieuw naar \cite{tomsphdthesis}. 
 
+{\bf Dubbels per type}: Het is enkel nodig om te controleren op dubbele constraint suspensions (\code{CSM\_DIFF} en \code{CSM\_DIFFSELF}) tussen suspensions van hetzelfde constraint type.
+
+{\bf Propagation history}: Men hoeft enkel een propagation history bij te houden voor rules die geen removed constraints hebben. Deze laatste kunnen immers sowieso geen 2x uitgevoerd worden.
+
 {\bf Late Storage}: Het is wenselijk om het aanmaken van een constraint suspension, en zeker het eigenlijke toevoegen ervan aan de constraint store, zoveel mogelijk uit te stellen. Dit eerst bespaart geheugen, en dit tweede kan de snelheid ten goede komen, aangezien er ondertussen minder elementen in de store zijn om over te itereren. We zorgen ervoor dat de suspension aangemaakt is juist voor het zoeken naar partner constraints van een propagate-overgang\footnote{Een propagate-overgang komt in onze uitvoer overeen met een occurrence-macro waarbij de actieve constraint geen removed constraint is}, door de \code{CSM\_MAKE} enkel te plaatsen aan het begin van ``kept'' occurrence macros. Verder zorgen we er pas voor dat de constraint suspension in de store zit aan het begin van de uitvoering van de body van zo'n propagate-overgang. De \code{CSM\_NEEDSELF} wordt dus geplaatst voor de body van zo'n occurrence.
 
-{\bf Simplification}: Bij simplificatie-overgangen is er zekerheid dat na uitvoering van de body, de actieve constraint zich niet meer in de store zal bevinden. We hebben dus geen \code{CSM\_DEADSELF} meer nodig om te controleren of een \code{CSM\_END} mag. Dit kan uitgebreid worden tot propagation-overgangen die partner constraints verwijderen. Hierbij kan de \code{CSM\_DEAD} conditie rond de \code{CSM\_LOOPNEXT} weggelaten worden. Hierbij komt nog dat na zo'n \code{CSM\_END} of \code{CSM\_LOOPNEXT} geen verdere checks voor de diepere lussen meer nodig zijn, en dus volledig weggelaten kunnen worden. Het gebruik van deze expliciete \code{CSM\_LOOPNEXT} macros komt overeen met wat in JCHR ``backjumping'' genoemd wordt.
+{\bf Simplification}: Bij simplificatie-overgangen is er zekerheid dat na uitvoering van de body, de actieve constraint zich niet meer in de store zal bevinden. We hebben dus geen \code{CSM\_DEADSELF} meer nodig om te controleren of een \code{CSM\_END} mag. Dit kan uitgebreid worden tot propagation-overgangen die partner constraints verwijderen. Hierbij kan de \code{CSM\_DEAD} conditie rond de \code{CSM\_LOOPNEXT} weggelaten worden. Hierbij komt nog dat na zo'n niet-conditionele \code{CSM\_END} of \code{CSM\_LOOPNEXT} geen verdere checks voor de diepere lussen meer nodig zijn, en dus volledig weggelaten kunnen worden. Het gebruik van deze expliciete \code{CSM\_LOOPNEXT} macros komt overeen met wat in JCHR ``backjumping'' genoemd wordt.
+
+{\bf Generation}: Er kan aangetoond worden, dat indien tijdens de uitvoering van de body met een bepaalde actieve constraint suspension, diezelfde constraint suspension gereactiveerd werd, er geen nood meer is om nog verder te proberen rules erop toe te passen. Alle mogelijke rules zijn immers al toegepast tijdens de reactivatie. Dit wordt geimplementeerd door simpelweg in de definitie van \code{CSM\_DEADSELF} op te nemen, dat deze na reactivatie van zichzelf ook true is.
+
+\subsection{Join ordering} \label{ssec:joinorder}
+
+Een meer algemene verbetering die aangebracht kan worden aan voorgaand compilatieschema, is wat men ``join ordering'' noemt, zoals vermeld in \cite{duck:optimizing}. Tot hiertoe hebben we de volgorde waarin ge\"itereerd wordt over de verschillende partner constraints ongedefinieerd gelaten, maar een juiste keuze kan veel versnelling bij de uitvoering mogelijk maken.
+
+In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor we bij de uitvoering van de eigenlijke body uitkomen zo snel mogelijk te doen -- binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
+  \item Guards (ook impliciete, door HNF convertie)
+  \item Controles op dubbele constraints
+  \item Propagation-history controles
+  \item Definities van lokale variabelen
+  \item Lokale statements in de guard, waar we tot hiertoe over zwegen.
+\end{itemize}
+In bovenstaand compilatieschema gebeuren al deze dingen pas zodra over alle partner constraints gelopen is, terwijl heel wat mogelijkheden al op voorhand uitgesloten zouden kunnen worden. Daarom gaan we proberen zoveel mogelijk van deze dingen reeds tussen de lussen door te controleren. Ze kunnen echter afhankelijk zijn van constraints, of van contraint-argumenten en lokale variabelen, die zelf ook van eerder gedefinieerde dingen afhankelijk kunnen zijn.
+
+Hiervoor gebruiken we volgend algoritme in de compiler: \begin{itemize}
+  \item We itereren over alle mogelijke volgordes van iteratie ($O(N!)$ combinaties, met $N$ het aantal partner constraints).
+  \item Voor elke volgorde proberen we elke controle of statement zo vroeg mogelijk te plaatsen.
+  \item We berekenen een ``score'', die aangeeft hoe snel deze volgorde varwacht wordt te zijn. Deze wordt bepaald door aan alle acties een gewicht toe te kennen, en deze te vermenigvuldigen met een factor voor elke lus waarbinnen ze staat.
+  \item Uiteindelijk de volgorde met de laagste score te kiezen.
+\end{itemize}
+De gewichten die gebruikt worden zijn redelijk eenvoudig, en komen vermoedelijk niet overeen met de de realiteit. De bekomen volgorde zal daardoor vaak niet optimaal zijn, maar het verschil kan al wel aanzienlijk zijn.
+
+\subsection{Indexen}
+
+
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

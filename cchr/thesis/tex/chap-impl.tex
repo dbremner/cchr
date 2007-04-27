@@ -131,7 +131,7 @@ De \code{\#\#} zorgt hier dat 2 tokens aan elkaar geplakt worden, en onderwerpt 
 
 In de komende tekst zal vaak verwezen worden naar macros, sommigen daarvan staan in het macro-definitie bestand, anderen worden door de compiler gegenereerd. Gegenereerde macros zullen we daarom ook steeds ``gegenereerde macros'' noemen, om verwarring te vermijden.
 
-\subsection{Algemeen}
+\subsection{Algemeen} \label{ssec:impl-code-alg}
 
 Met het oog de gegenereerde macro-code niet te overladen met informatie die over heel het programma hetzelfde is, zoals de lijst van alle chr-constraints, is gekozen zoveel mogelijk op een algemene manier op te slagen. Dit vraagt een woordje uitleg.
 
@@ -168,7 +168,7 @@ Verder worden er nog gelijkaardige, maar eenvoudigere constructies gegenereerd v
 
 Dan volgen nog enkele macros die de het mechanisme op hoog niveau beschrijven wat er voor elke constraint occurrence moet gebeuren. Hier gaan we zodadelijk op in.
 
-Als afsluiter van de gegenereerde code staat een ``\code{CSM\_START}'', deze macro is gedefinieerd in het algemene macro-definitie bestand (zie runtime), en zal gebruikmakende van alle voorgaang gegenereerde macrodefinities expanderen tot de uiteindelijke C code. Daaruit volgt dat alle echte CCHR-code schijnbaar op de lijn van deze \code{CSM\_START} komt te staan.
+Als afsluiter van de gegenereerde code staat een ``\code{CSM\_START}'', deze macro is gedefinieerd in het algemene macro-definitie bestand (zie runtime), en zal gebruikmakende van alle eerder gegenereerde macrodefinities expanderen tot de uiteindelijke C code. Daaruit volgt dat alle echte CCHR-code schijnbaar op de lijn van deze \code{CSM\_START} komt te staan.
 
 \subsection{Constraint occurrences}
 
@@ -206,6 +206,8 @@ Deze eerste versie van het compilatieschema is echter voor verbetering vatbaar. 
 
 {\bf Propagation history}: Men hoeft enkel een propagation history bij te houden voor rules die geen removed constraints hebben. Deze laatste kunnen immers sowieso geen 2x uitgevoerd worden.
 
+{\bf Destruction}: Indien een destructor aangeroepen moet worden voor een bepaalde constraint suspension, is het niet nodig hiermee te wachten tot na de uitvoering van de gehele body. Dit kan (meestal) gedaan worden zodra niet meer naar een variabele van die constraint verwezen wordt in de rule. De CCHR compiler zal de \code{CSM\_DESTRUCT} macro dan ook plaatsen na het laatste stuk body dat naar een variabele ervan verwijst.
+
 {\bf Late Storage}: Het is wenselijk om het aanmaken van een constraint suspension, en zeker het eigenlijke toevoegen ervan aan de constraint store, zoveel mogelijk uit te stellen. Dit eerste bespaart geheugen, en dit tweede kan de snelheid ten goede komen, aangezien er ondertussen minder elementen in de store zijn om over te itereren. We zorgen ervoor dat de suspension aangemaakt is juist voor het zoeken naar partner constraints van een propagate-overgang\footnote{Een propagate-overgang komt in onze uitvoer overeen met een occurrence-macro waarbij de actieve constraint geen removed constraint is}, door de \code{CSM\_MAKE} enkel te plaatsen aan het begin van ``kept'' occurrence macros. Verder zorgen we er pas voor dat de constraint suspension in de store zit aan het begin van de uitvoering van de body van zo'n propagate-overgang. De \code{CSM\_NEEDSELF} wordt dus geplaatst voor de body van zo'n occurrence.
 
 {\bf Simplification}: Bij simplificatie-overgangen is er zekerheid dat na uitvoering van de body, de actieve constraint zich niet meer in de store zal bevinden. We hebben dus geen \code{CSM\_DEADSELF} meer nodig om te controleren of een \code{CSM\_END} mag. Dit kan uitgebreid worden tot propagation-overgangen die partner constraints verwijderen. Hierbij kan de \code{CSM\_DEAD} conditie rond de \code{CSM\_LOOPNEXT} weggelaten worden. Daarbij komt nog dat na zo'n niet-conditionele \code{CSM\_END} of \code{CSM\_LOOPNEXT} geen verdere checks voor de diepere lussen meer nodig zijn, en dus volledig weggelaten kunnen worden. Het gebruik van deze expliciete \code{CSM\_LOOPNEXT} macros komt overeen met wat in JCHR ``backjumping'' genoemd wordt.
@@ -216,7 +218,7 @@ Deze eerste versie van het compilatieschema is echter voor verbetering vatbaar. 
 
 Een meer algemene verbetering die aangebracht kan worden aan voorgaand compilatieschema, is wat men ``join ordering'' noemt, zoals vermeld in \cite{duck:optimizing}. Tot hiertoe hebben we de volgorde waarin ge\"itereerd wordt over de verschillende partner constraints ongedefinieerd gelaten, maar een juiste keuze kan veel versnelling bij de uitvoering mogelijk maken.
 
-In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor we bij de uitvoering van de eigenlijke body uitkomen zo snel mogelijk te doen -- binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
+In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor we bij de uitvoering van de eigenlijke body zo snel mogelijk te doen, dwz. binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
   \item Guards (ook impliciete, door HNF convertie)
   \item Controles op dubbele constraints
   \item Propagation-history controles
@@ -228,14 +230,83 @@ In bovenstaand compilatieschema gebeuren al deze dingen pas zodra over alle part
 Hiervoor gebruiken we volgend algoritme in de compiler: \begin{itemize}
   \item We itereren over alle mogelijke volgordes van iteratie ($O(N!)$ combinaties, met $N$ het aantal partner constraints).
   \item Voor elke volgorde proberen we elke controle of statement zo vroeg mogelijk te plaatsen.
-  \item We berekenen een ``score'', die aangeeft hoe snel deze volgorde varwacht wordt te zijn. Deze wordt bepaald door aan alle acties een gewicht toe te kennen, en deze te vermenigvuldigen met een factor voor elke lus waarbinnen ze staat.
+  \item We berekenen een ``score'', die aangeeft hoe snel deze volgorde verwacht wordt te zijn. Deze wordt bepaald door aan alle acties een gewicht toe te kennen, en deze te vermenigvuldigen met een factor voor elke lus waarbinnen ze staat.
   \item Uiteindelijk de volgorde met de laagste score te kiezen.
 \end{itemize}
 De gewichten die gebruikt worden zijn redelijk eenvoudig, en komen vermoedelijk niet overeen met de de realiteit. De bekomen volgorde zal daardoor vaak niet optimaal zijn, maar het verschil kan al wel aanzienlijk zijn.
 
 \subsection{Indexen}
 
-Na al deze verbeteringen blijft het meeste tijd verloren gaan in het opzoeken van de partner constraints. In sommige gevallen kunnen we echter al weten welke partner constraints nodig zijn
+Na al deze verbeteringen blijft het meeste tijd verloren gaan in het opzoeken van de partner constraints. In sommige gevallen kunnen we echter al weten welke partner constraints nodig zijn, door indexen aan te leggen en te onderhouden die aangeven welke constraint suspensions allemaal een of meerdere waardes als bepaalde argumenten hebben. Hoe dit ge\"implementeerd is wordt uitgelegd in sectie~\ref{sec:impl-runtime}.
+
+Om deze indexen te gebruiken in CSM, is het nodig ze eerst in een index-macro te defini\"eren zoals aangehaald in sectie~\ref{ssec:impl-code-alg}. Daarna is het ook nodig om in plaats van de traditionele \code{CSM\_LOOP} macro enkele andere macros te gebruiken. Eerst en vooral moet gedeclareerd worden dat een bepaalde variabele als index-iterator gebruikt gaat worden (met \code{CSM\_DEFIDXVAR}). Daarna moeten de op te zoeken waardes voor de verschillende argumenten ingevuld worden met \code{CSM\_SETIDXVAR}, en uiteindelijk moet ge\"itereerd worden met \code{CSM\_IDXLOOP} of \code{CSM\_IDXUNILOOP}. Over het verschil tussen beide gaan we dadelijk in.
+
+Deze optimalisatie is degene die de belangrijkste snelheidsverbetering teweegbracht bij de implementatie, wat logisch is, bij sommige problemen maakt het de uitvoering een grootte-orde sneller door onmiddellijk de juiste constraint te vinden, in plaats van mogelijks er duizenden te moeten doorlopen.
+
+Dit is ge\"implementeerd door bepaalde guards als speciaal te herkennen en aanleiding te laten geven tot indexen. Op dit moment gebeurt dit enkel voor logische (\code{==}) of binaire gelijkheden (\code{eq(\ldots)}, een eigen aanvulling). Hierbij komt ook het \code{alt} sleutelwoord kijken, dat zorgt voor verschillende mogelijkheden hoe de guard bekeken wordt. Uiteindelijk wordt tijdens de join ordering elke constraint waarvan 1 of meer argumenten door een simpele gelijkheid aan een expressie (van bekende waardes) bepaald kunnen worden, door een index-iterator beschreven en gezorgd, in plaats van door een normale iterator plus guard.
+
+\subsection{Existenti\"ele en universele iteratoren}
+
+Tijdens het uitvoeren van CCHR code wordt er ge\"itereerd over constraints in verschillende geneste lussen, en middenin die lussen worden er constraints verwijderd, toegevoegd, en gereactiveerd. Dit zorgt ervoor dat de toestand van de constraint store, en indien er indexen gebruikt worden, ook deze indexen tijdens het itereren op allerlei mogelijke manieren kunnen veranderen.
+
+Iteratoren die bestand zijn tegen willekeurige wijzigingen en garanderen dat elk element dat uiteindelijk in de store zit ook effectief doorlopen is, zijn heel moeilijk effici\"ent te schrijven. We eisen dan ook niet dat \code{CSM\_LOOP} en consoorten eze functionaliteit aanbieden. Het is echter wel zo, dat constraint suspensions die tijdens het itereren toegevoegd worden aan de store, niet hoeven te worden gecontroleerd als mogelijke partner constraints, en dus niet noodzakelijk moeten overlopen worden door de iteratoren. Ze zijn immers reeds geactiveerd toen ze zelf toegevoegd werden, en ze zouden dus ondertussen reeds alle mogelijke transities met de huidige actieve constraint als partner constraint reeds moeten hebben doorgaan. Dit vergemakkelijkt de zaak duidelijk.
+
+We zitten echter nog steeds met het probleem dat onze iteratoren wijzigingen in de constraint store moeten aankunnen tijdens het itereren. Blijkt echter dat dit niet altijd nodig is. Indien de simplification optimalisatie en expliciete backjumping ge\"implementeerd zijn, blijkt dat wanneer een rule minstens 1 removed constraint bevat (eventueel de actieve constraint), er na het toepassen van de body van een regel sowieso wordt gesprongen naar de volgende waarde voor de ``meest buitengelegen'' iterator voor een removed constraint, of verder. Hieruit volgt dat de lussen die daarbinnen zitten nooit moeten verderlopen eens de body is uitgevoerd.
+
+Om die reden gaan we voor iteratoren waar het ingewikkeld is, 2 verschillende versies aanbieden: \begin{itemize}
+\item een versie die slechts volgende mogelijkheden geeft totdat de constraint store gewijzigd kan zijn: de {\em existenti\"ele} iterator.
+\item een versie die het algemene geval ook aankan: de {\em universele} iterator
+\end{itemize}
+
+Een universele iterator kan een veel grotere kost hebben om uitgevoerd te worden, wat ook in rekening wordt gebracht bij de kost berekening voor de join ordering.
+
+\section{CSM Definities} \label{sec:impl-csm}
+
+Bij SWI-Prolog en JCHR kon een duidelijk onderscheid gemaakt worden tussen gegenereerde code en runtime. Bij CCHR is het echter de vraag of we de definities van de CSM macros tot runtime kunnen rekenen. Het is namelijk geen code die tijdens de uitvoering nodig is, maar code die nodig is om de gegenereerde code naar een uitvoerbaar bestand te kunnen omzetten. Daarom zullen we de de daarin behandelde problemen hier in een aparte sectie bespreken.
+
+De belangrijkste taak van CSM is de gebruikte datastructuren afschermen van de gegenereerde code, zodat deze beide onafhankelijk gewijzigd kunnen worden. We zullen daarom eerst even ingaan op de gebruikte datastructuren, en dan de implementatie ervan zelf bespreken.
+
+\subsection{Noodzakelijke datastructuren} \label{ssec:impl-csm-ds}
+
+{\bf Constraint store} De belangrijkste datastructuur is uiteraard degene voor de constraint store. Het moet een structuur zijn die toelaat heel snel constraints toe te voegen, te verwijderen en erover te itereren. De volgorde waarin is in principe niet zo van belang, maar het niet-teruggeven van elementen die tijdens het itereren zelf zijn toegevoegd is een pluspunt. Dynamische allocaties tijdens de uitvoering blijven liefst zo veel mogelijk beperkt.
+
+{\bf Propagation history} Er moet ook een propagation history bijgehouden worden. Deze moet toelaten snel een bepaalde combinatie van constraint suspensions op te zoeken en verwijderen wanneer een van de betrokken constraint suspensions uit de store verwijderd wordt.
+
+{\bf Indexen} Er is een datastructuur nodig om de indexen in bij te houden. Deze moet voor 1 of meerdere argumenten van een bepaalde constraint voor elke (combinatie van) waardes voor deze argumenten een lijst kunnen bijhouden van constraint suspensions die deze (combinatie van) waardes als argumenten heeft.
+ 
+\subsection{De constraint store} \label{ssec:impl-csm-cs}
+
+Voor de constraint store is gekozen voor een verzameling doubly-linked lists, die een gemeenschappelijk gealloceerd blok delen te gebruiken. Het gealloceerd blok wordt beschouwd als een array van elk elementen, waarbij elk element: \begin{itemize}
+  \item Een verwijzing naar het volgende element heeft.
+  \item Een verwijzing naar het vorige element heeft.
+  \item Een uniek ID heeft (of $0$ voor ongebruikte elementen).
+  \item Een datablok heeft.
+\end{itemize}
+De eerste elementen van de array worden niet echt gebruikt voor data in op te slagen, maar enkel als aanduidingen voor waar de lijsten voor elk type constraint beginnen. Aan elk contraint type wordt immers een getal van 0 tot N-1 toegekend.
+De ``lege'' plaatsen in de array worden in een aparte (single) linked list bijgehouden, om snel een nieuwe plaats te kunnen innemen. 
+
+\subsection{De propagation history} \label{ssec:impl-csm-ph}
+
+\subsection{De index} \label{ssec:inpl-csm-index}
+
+\section{Runtime} \label{sec:impl-rt}
+
+Als ``runtime'' beschouwen we alle software-componenten die gemeenschappelijk zijn voor alle CCHR programma's, met uitzondering van de CSM definities die reeds behandeld zijn.
+
+Er zijn slechts enkele stukken die nog overblijven om tot deze laag te beschouwen: \begin{itemize}
+  \item De code voor de doubly-linked lists, die voor de constraint store gebruikt werd.
+  \item De code voor de op union-find gebaseerde code om met logische variabelen te werken.
+  \item De code om de hashtables te onderhouden die voor propagation history en indexen gebruikt werd.
+  \item De code voor de hashfunctie voor bovenstaande hashtable.
+\end{itemize}
+
+\subsection{Doubly-linked lists} \label{sec:impl-rt-dll}
+
+\subsection{Logische variabelen} \label{sec:impl-rt-log}
+
+\subsection{De hashtable} \label{sec:impl-rt-ht}
+
+\subsection{De hashfunctie} \label{sec:impl-rt-hf}
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

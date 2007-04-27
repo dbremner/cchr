@@ -51,5 +51,6 @@ Extra CSM macros voor het gebruik van indexen: \\
 \code{CSM\_SETIDXVAR} & {\em constr}, {\em hash}, {\em var}, {\em arg}, {\em val} & Geeft aan dat voor de index opzoeking in iterator {\em var} met hash {\em hash}, ge\"eist wordt dat argument {\em arg} van constraint {\em constr} gelijk is aan {\em arg}. \\
 \code{CSM\_IDXLOOP} & {\em constr}, {\em hash}, {\em var}, {\em code} & Itereer in {\em var} over de gevraagde elementen, waarbij {\em code} elke keer uitgevoerd wordt. Deze iterator staat niet toe dat er voortge\"itereerd wordt nadat de constraint store aangepast is. \\
 \code{CSM\_IDXUNILOOP} & {\em constr}, {\em hash}, {\em var}, {\em code} & Zelfde als \code{CSM\_IDXLOOP}, maar met ondersteuning voor wijzigen constraint store tijdens itereren. Merk wel op dat constraints die tijdens het itereren toegevoegd werden al dan niet voorkomen. Dit is normaal geen probleem, aangezien deze toch sowieso reeds geactiveerd werden. \\
+\code{CSM\_UNIEND} & {\em constr}, {\em var} & Nodig bij het voortijdig be\"eindigen van een ``uni'' lus (juist voor een \code{CSM\_END} of \code{CSM\_LOOPNEXT} van een meer naar buiten gelegen lus.\\
 \hline
 \end{tabularx}

@@ -13,7 +13,6 @@
 
 
 #include "dcls.h" /* for doubly-linked lists (constraint store) */
-#include "alist.h" /* for arraylists */
 #include "lookup3.h" /* for hashing algorithm */
 #include "lookup3.c"
 #include "ht_cuckoo.h" /* for hashtable */
@@ -176,7 +175,7 @@
   CONSLIST(CSM_CB_DTD) \
   CONSLIST(CSM_CB_IdxDef) \
   typedef struct { \
-    enum cchr_cons_type type; \
+    /* enum cchr_cons_type type; */ \
     int gen_num; \
     union { \
       CONSLIST(CSM_CB_DUD) \
@@ -197,12 +196,12 @@
     cchr_id_t ret; \
     dcls_alloc(_global_runtime.store,ret); \
     dcls_get(_global_runtime.store,ret).gen_num=0; \
-    dcls_get(_global_runtime.store,ret).type=type; \
+    /* dcls_get(_global_runtime.store,ret).type=type; */ \
     return ret; \
   } \
   void static cchr_reactivate_all(void *); \
-  void static inline cchr_store(cchr_id_t pid_self_) { \
-    dcls_add_begin(_global_runtime.store,pid_self_,dcls_get(_global_runtime.store,pid_self_).type); \
+  void static inline cchr_store(cchr_id_t pid_self_,enum cchr_cons_type type) { \
+    dcls_add_begin(_global_runtime.store,pid_self_,type); \
   } \
   CONSLIST(CSM_CB_FFD) \
   CONSLIST(CSM_CB_FFC) \
@@ -519,7 +518,7 @@
 	if (doadd) { \
 		CSM_MAKE(CON) \
 		CSM_FMTOUT("store pid=%i - begin",(int)pid_self_); \
-		cchr_store(pid_self_); \
+		cchr_store(pid_self_,CCHR_CONS_TYPE_##CON); \
 		cchr_index_##CON(pid_self_); \
 		ADD_##CON(self_); \
 		doadd=0; \

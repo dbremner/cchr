@@ -198,7 +198,7 @@ Met deze versie zijn enkele problemen, die misschien niet op het eerste zicht du
   \item Wanneer de actieve constraint nog niet uit de constraint store verwijderd is, maar een van de voorgaande partner constraints al wel, dan moet onmiddellijk het volgende element van die iterator voor die partner constraint gekozen worden, om te vermijden dat de body toegepast zou worden voor een op dat moment niet meer bestaande constraint suspension. Daarom voeren we na de controle of de actieve constraint nog in de store zit, ook controles in voor alle \code{CSM\_LOOP}s, van buiten naar binnen, dmv. \code{CSM\_DEAD}, met een \code{CSM\_LOOPNEXT} op de betrokken variabele in. Deze controle is echter niet nodig voor de binnenste lus, aangezien daar sowieso onmiddellijk het volgende element gekozen zal worden.
 \end{itemize}
 
-\subsection{Optimalisaties}
+\subsection{Optimalisaties} \label{ssec:optim}
 
 Deze eerste versie van het compilatieschema is echter voor verbetering vatbaar. Voor een gedetailleerde uitleg over de optimalisaties en waarom ze toegestaan zijn, verwijzen we opnieuw naar \cite{tomsphdthesis}. 
 
@@ -276,6 +276,18 @@ De belangrijkste taak van CSM is de gebruikte datastructuren afschermen van de g
  
 \subsection{De constraint store} \label{ssec:impl-csm-cs}
 
+Voor de constraint store wordt gebruikt gemaakt van een structuur van doubly-linked lists. De juiste implementatie wordt uitgewerkt in sectie~\label{ssec:impl-rt-dll}, en hier is het voldoende te weten dat het de mogelijkheid geeft om geheugenblokken van vaste grootte snel te alloceren en vrij te geven. Er kan een op voorhand bepaald aantal lijsten aan gekoppeld zijn, en elk blok kan in maximaal 1 zulke lijst geplaatst worden. Er wordt naar een blok verwezen dmv. een {\em PID} (positie ID), maar dit kan herbruikt worden nadat een blok vrijgegeven is. Verder krijgt elk blok een uniek {\em ID}, dat nooit herbruikt wordt.
+
+Als datablok worden de constraint suspensions gebruikt. Deze is beschreven als een C {\em union}, een structuur die juist 1 van zijn elementen kan bevatten (door ze dezelfde geheugenruimte te laten delen), dit in tegenstelling tot een {\em struct}, die ze allemaal tegelijk bevat (na elkaar). Als elementen van die union worden de datastructuren voor elk van de verschillende types constraints gebruikt. Dit heeft als nadeel dat er wat plaats verpild wordt als de gegevens voor de verschillende types niet evenveel plaats innemen. Dit verschil is echter meestal beperkt. Een alternatief zou kunnen zijn een apart datablok gebruiken voor elk van de types, wat dan weer het nadeel heeft van meer allocaties tijdens het uitvoeren.
+
+De lijsten die het doubly-linked list type aanbiedt, bevatten alle constraints van een bepaald type, en de \code{CSM\_LOOP} macro gebruikt dan de iterator van de linked list om erover te itereren. Het \code{cchr\_id\_t} datatype dat gebruikt wordt voor iteratoren, is dan ook gedefinieerd in het CSM definitiebestand als hetzelfde type dat de doubly-linked list implementatie gebruikt als {\em PID}. Op die manier zou men kunnen argumenteren dat de gegenereerde code toegang krijgt tot een definitie die door CSM afgeschermd zou moeten zijn. De gegenereerde code gebruikt echter het \code{cchr\_id\_t} type zelf niet, krijgt het enkel en geeft het door, en moet het verder als ``black box'' type beschouwen.
+
+De constraint suspensions zelf bevatten (afhankelijk van het type): \begin{itemize}
+  \item De argumenten van de betrokken constraint
+  \item Eventuele propagation history (zie verder)
+  \item Een generatienummer. Dit wordt verhoogd elke keer dat een constraint gereactiveerd wordt, om zo de generation optimalisatie te kunnen doorvoeren. Hierbij wordt het generatienummer van de constraint bij activatie bijgehouden, en zal de \code{CSM\_DEADSELF} macro ook ``waar'' teruggeven indien dat getal ondertussen veranderde.
+\end{itemize}
+
 Voor de constraint store is gekozen voor een verzameling doubly-linked lists, die een gemeenschappelijk gealloceerd blok delen te gebruiken. Het gealloceerd blok wordt beschouwd als een array van elk elementen, waarbij elk element: \begin{itemize}
   \item Een verwijzing naar het volgende element heeft.
   \item Een verwijzing naar het vorige element heeft.
@@ -287,8 +299,19 @@ De ``lege'' plaatsen in de array worden in een aparte (single) linked list bijge
 
 \subsection{De propagation history} \label{ssec:impl-csm-ph}
 
-\subsection{De index} \label{ssec:inpl-csm-index}
+Om de propagation history bij te houden gebruiken we een zelf ge\"implementeerde hashtable. Op de implementatie ervan wordt ingegaan in sectie~\ref{ssec:impl-rt-ht}. Ze vereist dat zelf een datatype aangegeven wordt om in de hashtable te gebruiken, inclusief een manier om aan te geven of zulk een datatype een ``gebruikte plaats'' voorstelt.
 
+Voor de propagation history gaan we dus de \em{ID}s (niet de \em{PID}s) van de betrokken constraint suspensions opslagen, voorafgegaan door een 0 of een 1, die aangeeft of de plaats in gebruik is. Nu hebben we twee opties: \begin{enumerate}
+  \item Alles opslagen in 1 globale hashtable.
+  \item Voor elke rule $R$ waarvoor propagation history bijgehouden wordt (geen simplification of simpagation rules dus) een van zijn constraint occurrence $O$ van constraint type $C$ kiezen, en in de constraint suspensions $S$ van type $C$ de elementen van de propagation history opslagen voor rule $R$ die voor occurrence $O$ de suspension $S$ hebben.
+\end{enumerate}
+Die tweede methode vraagt meer overhead (veel aparte hashtables in plaats van 1 grote), maar zorgt ervoor dat er niet expliciet elementen uit de propagation history verwijderd moeten worden. Deze verdwijnen immers automatisch zodra de constraint suspension waarin ze opgeslagen zitten verdwijnt.
+
+\subsection{De index} \label{ssec:impl-csm-index}
+
+Voor de waardenindexen, die we gebruiken met de \code{CSM\_IDXLOOP} en verwante macros, gaan we opnieuw gebruik maken van de hashtable implementatie die ook voor de propagation history gebruikt werd. We gaan ze zelfs 2 maal in elkaar gebruiken: eerst een table om de verschillende waardes aan subtables te koppelen, en dan in die tables dan de betrokken constraint suspensions opslagen. We slagen echter zowel de {\em ID}s als de {\em PID}s op, waarbij de {\em ID}s (omwille van uniek zijn) als sleutel in de hashtable gebruikt worden, terwijl de {\em PID}s als waarbij gebruikt worden, om eens een bepaalde constraint gevonden, ze ook snel terug te vinden. Dat laatste was bij de propagation history niet nodig, aangezien we enkel moesten kunnen controleren of een bepaalde (combinatie van) constraint suspension(s) aanwezig was, en niet de constraint suspensions zelf moesten kunnen terugvinden.
+
+Voor \code{CSM\_IDXLOOP} itereren we gewoon over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt
 \section{Runtime} \label{sec:impl-rt}
 
 Als ``runtime'' beschouwen we alle software-componenten die gemeenschappelijk zijn voor alle CCHR programma's, met uitzondering van de CSM definities die reeds behandeld zijn.
@@ -300,13 +323,13 @@ Er zijn slechts enkele stukken die nog overblijven om tot deze laag te beschouwe
   \item De code voor de hashfunctie voor bovenstaande hashtable.
 \end{itemize}
 
-\subsection{Doubly-linked lists} \label{sec:impl-rt-dll}
+\subsection{Doubly-linked lists} \label{ssec:impl-rt-dll}
 
-\subsection{Logische variabelen} \label{sec:impl-rt-log}
+\subsection{Logische variabelen} \label{ssec:impl-rt-log}
 
-\subsection{De hashtable} \label{sec:impl-rt-ht}
+\subsection{De hashtable} \label{ssec:impl-rt-ht}
 
-\subsection{De hashfunctie} \label{sec:impl-rt-hf}
+\subsection{De hashfunctie} \label{ssec:impl-rt-hf}
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

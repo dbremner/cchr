@@ -1,10 +1,11 @@
 % Document class and font size report, article, book,..
-\documentclass[dutch,12pt,oneside,a4paper]{book}
+%\documentclass[dutch,12pt,oneside,a4paper]{book}
+\documentclass[a4paper,11pt]{report}
 
 % Make sure you can process texts with accents
 \usepackage[dutch]{babel}
 \usepackage[latin1]{inputenc}
-\usepackage{THcover}
+%\usepackage{THcover}
 
 % Handle differences between PdfLaTeX/LaTeX
 \ifx\pdftexversion\undefined
@@ -83,7 +84,7 @@
 \input{defs}
 
 \begin{document}
-\input{THcover}
+%\input{THcover}
 
 \cleardoublepage
 \section*{Dankwoord}
@@ -94,7 +95,7 @@ Hier komt mijn dankwoord.
 \tableofcontents
 
 \newpage
-\mainmatter
+%\mainmatter
 \chapter{Inleiding}
 \label{inleiding:chap}
 \begin{quote}
@@ -121,7 +122,7 @@ Hier komt mijn dankwoord.
 
 \input{part-app}
 
-\backmatter
+%\backmatter
 \addcontentsline{toc}{chapter}{Bibliografie}
 \bibliography{thesis}
 \bibliographystyle{alpha}

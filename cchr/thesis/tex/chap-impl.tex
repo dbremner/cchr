@@ -158,11 +158,11 @@ Deze lijn defini\"eert welke chr constraints allemaal bestaan. Ze is heel flexib
 \end{Verbatim}
 
 Deze techniek wordt echter voor een stuk meer gebruikt dan enkel het aanduiden van de bestaande chr constraints. Er worden zulke index-macros gedefinieerd voor: \begin{itemize}
-\item Welke chr constraints bestaan.
-\item De occurrences van elke constraint.
-\item Aantal kept/removed constraints in elke rule
-\item Wat in propagation history bij te houden
-\item Welke indexen nodig zijn, en waarover
+\item Welke chr constraints bestaan (\code{CONSLIST}).
+\item De occurrences van elke constraint (\code{RULELIST\_\argu{constraint}\_\argu{ariteit}}).
+\item Aantal kept/removed constraints in elke rule (\code{RULE\_KEPT\_\argu{rule}}).
+\item Wat en waarin in propagation history bij te houden (\code{PROPHIST\_\argu{rule}} en \code{PROPHIST\_HOOK\_\argu{rule}}).
+\item Welke indexen nodig zijn, en waarover (\code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} en \\ \code{HASHDEF\_\argu{constraint}\_\argu{ariteit}\_\argu{indexnaam}}).
 \end{itemize}
 Verder worden er nog gelijkaardige, maar eenvoudigere constructies gegenereerd voor constructor-, destructor-, add en kill routines per chr constraint.
 
@@ -174,7 +174,7 @@ Als afsluiter van de gegenereerde code staat een ``\code{CSM\_START}'', deze mac
 
 Voor elke constraint occurrence wordt een stuk code gegenereerd in de vorm van een aparte macro definitie. We zullen hier de basisopbouw geven, en later optimalisaties doorvoeren.
 
-De naam die aan de gegenereerde macro voor een constraint occurrence moet van de vorm ``\code{CODE\_\argu{occurrence-naam}}'' zijn, en geen parameters hebben. De benaming voor de occurrence moet gewoon overal dezelfde zijn in de gegenereerde code. In praktijk gebruikt de compiler benamingen als ``\code{\argu{constraint}\_\argu{ariteit}\_\argu{rule}\_\argu{positie}}''. Positie is hierbij de letter \code{K} voor kept constraints, of de letter \code{R} voor removed constraints, gevolgd door een getal dat aanduidt de hoeveelste occurrence van dat type (removed of kept) het is binnen de gegeven rule, te beginnen bij 1.
+De naam die aan de gegenereerde macro voor een constraint occurrence moet van de vorm \\ ``\code{CODE\_\argu{occurrence-naam}}'' zijn, en geen parameters hebben. De benaming voor de occurrence moet gewoon overal dezelfde zijn in de gegenereerde code. In praktijk gebruikt de compiler benamingen als \\ ``\code{\argu{constraint}\_\argu{ariteit}\_\argu{rule}\_\argu{positie}}''. Positie is hierbij de letter \code{K} voor kept constraints, of de letter \code{R} voor removed constraints, gevolgd door een getal dat aanduidt de hoeveelste occurrence van dat type (removed of kept) het is binnen de gegeven rule, te beginnen bij 1.
 
 Dan komen we bij de inhoud van deze macros. Het is hier dat het voordeel van een template-gebaseerde code generatie tot uiting komt: het algorithme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst kan u vinden in appendix~\ref{chap:csm}. Het kan nuttig zijn de lijst erbij te nemen bij de komende uitleg, aangezien de precieze betekenis van de CSM macros hier niet meer uitgelegd wordt.
 
@@ -187,7 +187,7 @@ Als eerste versie vertrekken we van een imperatieve versie van de basisuitvoerin
   \item We defini\"eren alle lokale variabelen (met \code{CSM\_DECLOCAL} en \code{CSM\_DEFLOCAL}).
   \item We controleren of aan alle guards voldaan is (mbv. \code{CSM\_IF} en de constraint argumenten met \code{CSM\_ARG} en \code{CSM\_LARG} geschreven).
   \item We voegen de gevonden combinatie toe aan de propagation history (mbv. \code{CSM\_HISTADD}).
-  \item We verwijderen eventuele removed constraints uit de constraint store (mbv. \code{CSM\_KILL} en \code{CSM\_KILLSELF}).
+  \item We verwijderen eventuele removed constraints uit de constraint store (mbv. \code{CSM\_KILL} en \\ \code{CSM\_KILLSELF}).
   \item We voeren de body van de chr rule uit, met de verwijzingen naar lokale variabelen vervangen door \code{CSM\_LOCAL}-macros en de constraint argument door \code{CSM\_ARG} en \code{CSM\_LARG}.
   \item Als de actieve constraint uit de constraint store verwijderd is, stop dan met de afhandeling (\code {CSM\_DEADSELF} en \code{CSM\_END}).
 \end{itemize}
@@ -288,14 +288,7 @@ De constraint suspensions zelf bevatten (afhankelijk van het type): \begin{itemi
   \item Een generatienummer. Dit wordt verhoogd elke keer dat een constraint gereactiveerd wordt, om zo de generation optimalisatie te kunnen doorvoeren. Hierbij wordt het generatienummer van de constraint bij activatie bijgehouden, en zal de \code{CSM\_DEADSELF} macro ook ``waar'' teruggeven indien dat getal ondertussen veranderde.
 \end{itemize}
 
-Voor de constraint store is gekozen voor een verzameling doubly-linked lists, die een gemeenschappelijk gealloceerd blok delen te gebruiken. Het gealloceerd blok wordt beschouwd als een array van elk elementen, waarbij elk element: \begin{itemize}
-  \item Een verwijzing naar het volgende element heeft.
-  \item Een verwijzing naar het vorige element heeft.
-  \item Een uniek ID heeft (of $0$ voor ongebruikte elementen).
-  \item Een datablok heeft.
-\end{itemize}
-De eerste elementen van de array worden niet echt gebruikt voor data in op te slagen, maar enkel als aanduidingen voor waar de lijsten voor elk type constraint beginnen. Aan elk contraint type wordt immers een getal van 0 tot N-1 toegekend.
-De ``lege'' plaatsen in de array worden in een aparte (single) linked list bijgehouden, om snel een nieuwe plaats te kunnen innemen. 
+Een \code{CSM\_MAKE} macro zal een nieuw element alloceren in de constraint store, maar het nog niet aan een van de lijsten toevoegen, terwijl een \code{CSM\_NEEDSELF} ervoor zal zorgen dat dat element toevoegt aan de lijst overeenkomstig met het type constraint van dat element. Merk op dat we nergens expliciet opslagen van welk constraint-type een bepaald element is, dat volgt impliciet uit de lijst waartoe het behoort. \code{CSM\_KILL} en \code{CSM\_KILLSELF} tenslotte zullen een element zo nodig uit een lijst verwijderen, en de plaats vrijgeven voor hergebruik.
 
 \subsection{De propagation history} \label{ssec:impl-csm-ph}
 
@@ -311,21 +304,61 @@ Die tweede methode vraagt meer overhead (veel aparte hashtables in plaats van 1 
 
 Voor de waardenindexen, die we gebruiken met de \code{CSM\_IDXLOOP} en verwante macros, gaan we opnieuw gebruik maken van de hashtable implementatie die ook voor de propagation history gebruikt werd. We gaan ze zelfs 2 maal in elkaar gebruiken: eerst een table om de verschillende waardes aan subtables te koppelen, en dan in die tables dan de betrokken constraint suspensions opslagen. We slagen echter zowel de {\em ID}s als de {\em PID}s op, waarbij de {\em ID}s (omwille van uniek zijn) als sleutel in de hashtable gebruikt worden, terwijl de {\em PID}s als waarbij gebruikt worden, om eens een bepaalde constraint gevonden, ze ook snel terug te vinden. Dat laatste was bij de propagation history niet nodig, aangezien we enkel moesten kunnen controleren of een bepaalde (combinatie van) constraint suspension(s) aanwezig was, en niet de constraint suspensions zelf moesten kunnen terugvinden.
 
-Voor \code{CSM\_IDXLOOP} itereren we gewoon over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt
+Voor \code{CSM\_IDXLOOP} itereren we gewoon over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt. Dit is nodig, omdat de hashtable implementatie geen wijzigingen tijdens het itereren toelaat. Zie sectie~\ref{ssec:impl-rt-ht}.
+
+CSM zal automatisch alle indexen onderhouden die met de macro \code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} gedefinieerd zijn, zowel het toevoegen van nieuwe waardes, constraint suspension bij een bepaalde waarde toevoegen, het verwijderen van constraint suspensions uit de juiste subtable, en indien er voor een gegeven combinatie van waardes geen overeenkomstige suspensions meer zijn, het verwijderen van de volledige subtable voor die waardes.
+
 \section{Runtime} \label{sec:impl-rt}
 
 Als ``runtime'' beschouwen we alle software-componenten die gemeenschappelijk zijn voor alle CCHR programma's, met uitzondering van de CSM definities die reeds behandeld zijn.
 
 Er zijn slechts enkele stukken die nog overblijven om tot deze laag te beschouwen: \begin{itemize}
-  \item De code voor de doubly-linked lists, die voor de constraint store gebruikt werd.
+  \item De code voor de doubly-linked lists, die voor de constraint store gebruikt wordt.
   \item De code voor de op union-find gebaseerde code om met logische variabelen te werken.
-  \item De code om de hashtables te onderhouden die voor propagation history en indexen gebruikt werd.
+  \item De code om de hashtables te onderhouden die voor propagation history en indexen gebruikt wordt.
   \item De code voor de hashfunctie voor bovenstaande hashtable.
 \end{itemize}
 
 \subsection{Doubly-linked lists} \label{ssec:impl-rt-dll}
 
+De gebruikte doubly-linked list structuur, bestaat uit een lijst (array) van elementen van gelijke grootte die in 1 geheel gealloceerd wordt. Elk element bestaat uit: \begin{itemize}
+  \item Een verwijzing naar het volgende element
+  \item Een verwijzing naar het vorige element
+  \item Een uniek ID (dat $0$ is voor niet-gebruikte plaatsen)
+  \item De eigenlijke data (die voor de bovenliggende laag beschikbaar is).
+\end{itemize}
+Door gebruik te maken van de vorige/volgende verwijzingen, worden de verschillende elementen in 1 of meerdere (cyclische) lijsten geplaatst. Deze lijsten kunnen teruggevonden worden door middel van een speciaal markeer-element, dat naar het eerste en het laatste echte element van de lijst verwijst. De elementen op posities $O$ tot en met $N-1$ (met $N$ het aantal lijsten) zijn zulke markeer-elementen. De niet-gebruikte plaatsen in de array worden zelf ook in een (single-linked) lijst geplaatst, om snel teruggevonden te kunnen worden.
+
+Aangezien het noodzakelijk kan zijn dat het gehele blok van grootte verandert, wat heralloceren en dus mogelijk verplaatsen inhoudt, worden geen echte C pointers als verwijzingen naar de elementen gebruikt, deze zouden ongeldig worden zodra de hele array verplaatst wordt. In de plaats daarvan wordt de plaats in de index als verwijzing gebruikt. Het is dan ook dit type dat de doubly-linked-lists code naar buiten toe gebruikt, het is wat eerder het {\em PID} genoemd werd. 
+
 \subsection{Logische variabelen} \label{ssec:impl-rt-log}
+
+Om logische variabelen in het algemeen te ondersteunen, zijnde onafhankelijk van wat voor data erin opgeslagen wordt, is gekozen een macro-defintiebestand te voorzien dat 2 macros definieert: \begin{itemize}
+  \item \code{logical\_header(\argu{in},\argu{tag},\argu{out})}: Definieer het datatype \code{\argu{out}}, dat een logische variabele voorstelt die een \code{\argu{in}} kan bevatten en daarbij ook nog \code{\argu{tag}} als metadata heeft.
+  \item \code{logical\_code(\argu{in},\argu{tag},\argu{out},\argu{cb})}: Genereer de functies die nodig zijn om met een \code{\argu{out}} datatype te kunnen werken. Deze functies krijgen alleen \code{\argu{out}\_} als prefix, en zullen zelf nog enkele andere routines aanroepen die \code{\argu{cb}\_} als prefix hebben.
+\end{itemize}
+
+De metadata, opgeslagen in het datatype \code{\argu{tag}}, is bedoeld om informatie te bevatten over de logische variabelen zelf, in plaats van over de waarde die ze voorstellen. Dit zou bijvoorbeeld gebruikt kunnen worden om lijsten bij te houden welke constraint suspensions gereactiveerd moeten worden indien informatie over de logische variabele verandert. Dit is echter volledig optioneel, aangezien de logische variabelen los van CCHR zelf ge\"implementeerd zijn.
+
+Om het zojuist vermelde toch te realiseren, worden er enkele ``callback'' routines ondersteund: de gebruiker van de \code{logical\_code} macro moet zelf enkele macros of functies met een specifieke naam voorzien, die aangeroepen zullen worden door de door \code{logical\_code} gegenereerde code: \begin{itemize}
+  \item \code{\argu{cb}\_created(var)}: Aangeroepen zodra een logische variabele \code{var} aangemaakt is. Dit dient om de metadata van deze variabele te initialiseren.
+  \item \code{\argu{cb}\_merged(var1,var2)}: Aangeroepen juist voor dat \code{var1} aan \code{var2} gelijkgesteld wordt. Indien de metadata een lijst te reactiveren constraint suspensions zou bevatten, zou deze routine ervoor kunnen zorgen dat de reactivatie-lijst van \code{var2} bij die van \code{var1} gevoegd wordt.
+  \item \code{\argu{cb}\_changed(var)}: Aangeroepen indien er informatie over \code{var} gewijzigd is. Dit is wanneer er een waarde aan toegekend is, of wanneer \code{var} aan een andere variabele gelijkgesteld is. Voor het reactivatie-voorbeeld zou deze routine het effectieve reactiveren moeten doen.
+  \item \code{\argu{cb}\_destrval(var)}: Aangeroepen wanneer de waarde (type \code{\argu{in}}) van \code{var} vernietigd moet worden.
+  \item \code{\argu{cb}\_destrtag(var)}: Aangeroepen wanneer de metadata (type \code{\argu{tag}}) van \code{var} vernietigd moet worden.
+\end{itemize}
+
+Voor de implementatie van de code voor logische variabelen, wordt beroep gedaan op het {\em union-find} algoritme, met {\em path compression} en {\em union-by-rank} als optimalisaties toegepast. Het resultaat is dat logische variabelen die aan elkaar gelijk gesteld zijn een boomstructuur gaan vormen, waarbij de top de eventuele bekende waarde bevat. De optimalisaties zorgen ervoor dat de afstand tot de top steeds heel beperkt blijft.
+
+Het datatype \code{\argu{out}} wordt gedefinieerd als een pointer naar een structuur die volgende informatie kan bevatten: \begin{itemize}
+  \item Een waarde, van type \code{\argu{in}}.
+  \item Metadata, van type \code{\argu{tag}}.
+  \item Een verwijzing naar een andere logische variabele (type \code{\argu{out}}).
+  \item Een aanduiding of de structuur al dan niet een waarde bevat.
+  \item Een {\em rank}, zijnde het niveau in de boomstructuur.
+  \item Een {\em reference count}, om te weten wanneer de structuur vrijgegeven mag worden.
+\end{itemize}
+Al deze elementen zijn verspreid over een structuur van C structs en unions, zodat geen twee velden die nooit tegelijk nodig zijn samen plaats innemen.
 
 \subsection{De hashtable} \label{ssec:impl-rt-ht}
 

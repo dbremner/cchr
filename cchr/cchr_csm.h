@@ -15,7 +15,7 @@
 #include "dcls.h" /* for doubly-linked lists (constraint store) */
 #include "lookup3.h" /* for hashing algorithm */
 #include "lookup3.c"
-#include "ht_cuckoo.h" /* for hashtable */
+#include "htl_cuckoo.h" /* for hashtable */
 
 #define cchr_id_t dcls_pid_t
 
@@ -94,7 +94,7 @@
   uint32_t static inline cchr_contbl_##C##_##H##_hash1(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x23C6EF37UL); } \
   uint32_t static inline cchr_contbl_##C##_##H##_hash2(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x2A54FF53UL); } \
   int static inline cchr_contbl_##C##_##H##_eq(cchr_contbl_##C##_##H##_t *v1,cchr_contbl_##C##_##H##_t *v2) { return eq((v1)->key,(v2)->key); } \
-  ht_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
+  htl_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
 
 #define CSM_CB_HistTypeDef_S
 #define CSM_CB_HistTypeDef_D(T,V,...) \
@@ -111,7 +111,7 @@
       } \
       return 1; \
     } \
-    ht_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF,CSM_HTCB_UNDEF) \
+    htl_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF,CSM_HTCB_UNDEF) \
   )
 
 #define CSM_CB_IdxDef_S
@@ -586,7 +586,7 @@ typedef struct {
   cchr_id_t pid;
 } cchr_idxlist_t;
 
-ht_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF)
+htl_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF)
 
 #endif
 

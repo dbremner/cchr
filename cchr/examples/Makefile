@@ -80,6 +80,9 @@ leq.c: leq.cchr cchr_csm.h bin/cchr Makefile
 leq.prep.c: leq.c Makefile
 	cpp -P $(DEFS) <leq.c | indent -kr -l127 >leq.prep.c
 
+fib.prep.c: fib.c Makefile
+	cpp -P $(DEFS) <fib.c | indent -kr -l127 >fib.prep.c
+
 gcd.prep.c: gcd.c Makefile
 	cpp -P $(DEFS) <gcd.c | indent -kr -l127 >gcd.prep.c
 
@@ -130,6 +133,9 @@ dijkstra: dijkstra.c ../cchr_csm.h Makefile
 
 dijkstra.prep: dijkstra.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o dijkstra.prep dijkstra.prep.c
+
+fib.prep: fib.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.prep fib.prep.c
 
 tak2.prep: tak2.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c

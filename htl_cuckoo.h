@@ -1,13 +1,19 @@
-#ifndef _HT_CUCKOO_H_
-#define _HT_CUCKOO_H_ 1
+#ifndef _HTL_CUCKOO_H_
+#define _HTL_CUCKOO_H_ 1
+
+/* onafgewerkt: cuckoo hashtable met ingebouwde link-list voor iteratie */
 
 #include <stdint.h>
 
-#define ht_cuckoo_code(hash_t,entry_t,gethash1,gethash2,eq,defined,init,unset) \
+#define htl_cuckoo_code(hash_t,entry_t,gethash1,gethash2,eq,defined,init,unset) \
+  typedef struct { \
+    entry_t val; \
+    int32_t prev,next; \
+  } hash_t ## _unit_t; \
   typedef struct { \
     int size; \
     int used; \
-    entry_t *data; \
+    hash_t##_unit_t *data; \
   } hash_t;\
   void static inline hash_t ## _init(hash_t *ht) { \
     ht->size=0; \
@@ -22,10 +28,13 @@
       uint32_t h1=gethash1((entry)),h2=gethash2((entry)); \
       h1 = (h1 >> (32-ht->size)); \
       h2 = (h2 >> (32-ht->size)) | (1 << ht->size); \
-      if (defined((ht->data)+h1) && eq((entry),(ht->data)+h1)) return (&(ht->data[h1])); \
-      if (defined((ht->data)+h2) && eq((entry),(ht->data)+h2)) return (&(ht->data[h2])); \
+      if (defined(&(ht->data[h1].val)) && eq((entry),&(ht->data[h1].val))) return (&(ht->data[h1].val)); \
+      if (defined(&(ht->data[h2].val)) && eq((entry),&(ht->data[h2].val))) return (&(ht->data[h2].val)); \
     } \
     return NULL; \
+  } \
+  hash_t##_unit_t static inline *hash_t ## _findx(hash_t *ht, entry_t *entry) { \
+    return (hash_t##_unit_t*)hash_t##_find(ht,entry); \
   } \
   int static inline hash_t ## _have(hash_t *ht, entry_t *entry) { \
     return ((hash_t ## _find(ht,entry)) != NULL); \
@@ -37,18 +46,23 @@
     return (ht->size > 0); \
   } \
   void static inline hash_t ## _double(hash_t *ht) { \
-    entry_t *nw=malloc(sizeof(entry_t)*(4 << (ht->size))); \
-    for (int i=0; i<(2 << ht->size); i++) { \
-      if (ht->size && defined((ht->data)+i)) { \
-        uint32_t h=(i < (1 << ht->size)) ? gethash1((ht->data)+i) : gethash2((ht->data)+i); \
-        h = (h >> (31-ht->size)) & 1; \
-        nw[i<<1 | h]=ht->data[i]; \
-        init(nw+(i<<1 | (h^1))); \
-      } else { \
-        init(nw+(i<<1)); \
-	init(nw+(i<<1 | 1)); \
-      } \
+    hash_t##_unit_t *nw=malloc(sizeof(hash_t##_unit_t)*(1+(4 << (ht->size))))+1; \
+    for (int i=0; i<(4 << ht->size); i++) { \
+      init(&(nw[i].val)); \
     } \
+    int32_t i=-1; \
+    int32_t pr=-1; \
+    if (ht->size) while (ht->data[i].next != -1) { \
+      i=ht->data[i].next; \
+      uint32_t h=(i < (1 << ht->size)) ? gethash1(&(ht->data[i].val)) : gethash2(&(ht->data[i].val)); \
+      h = (h >> (31-ht->size)); \
+      nw[h].val=ht->data[i].val; \
+      nw[h].prev=pr; \
+      nw[pr].next=h; \
+      pr=h; \
+    } \
+    nw[i].next=-1; \
+    nw[-1].prev=i; \
     ht->size++; \
     if (ht->data==NULL) { \
       /*fprintf(stderr,"[alloc " #hash_t " hashtable %p]\n",ht);*/ \
@@ -58,10 +72,10 @@
     ht->data=nw; \
   } \
   void static inline hash_t ## _set(hash_t *ht, entry_t *entry) { \
-    entry_t *r=hash_t ## _find(ht,entry); \
+    hash_t##_unit_t *r=hash_t ## _findx(ht,entry); \
     entry_t bak; \
     if (r) { \
-      (*r)=(*entry); \
+      (r)->val=(*entry); \
       return; \
     } \
     /*fprintf(stderr,"[adding element to %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
@@ -69,29 +83,51 @@
     if (ht->used>(5*(1<< (ht->size)))/6) { \
       hash_t ## _double(ht); \
     } \
+    int32_t nxt=ht->data[-1].next; \
+    int32_t prv=-1; \
     while (1) { \
       int maxiter=(23*ht->size+11)/2; \
       while (maxiter--) { \
         uint32_t h1=gethash1((entry)); \
         h1 = (h1 >> (32-ht->size)); \
-        if (!(defined((ht->data)+h1))) { \
-	  ht->data[h1]=(*entry); \
+	int32_t oprv1=ht->data[h1].prev; \
+	int32_t onxt1=ht->data[h1].next; \
+	ht->data[h1].next=nxt; \
+	ht->data[nxt].prev=h1; \
+	ht->data[h1].prev=prv; \
+	ht->data[prv].next=h1; \
+        if (!(defined(&(ht->data[h1].val)))) { \
+	  ht->data[h1].val=(*entry); \
 	  return; \
 	} else { \
-          bak=ht->data[h1]; \
-	  ht->data[h1]=(*entry); \
+          bak=ht->data[h1].val; \
+	  nxt=onxt1; \
+	  prv=oprv1; \
+	  ht->data[h1].val=(*entry); \
 	} \
         uint32_t h2=gethash2(&bak); \
         h2 = (h2 >> (32-ht->size)) | (1 << ht->size); \
-        if (!(defined((ht->data)+h2))) { \
-	  ht->data[h2]=bak; \
+	int32_t oprv2=ht->data[h1].prev; \
+	int32_t onxt2=ht->data[h1].next; \
+	ht->data[h2].next=nxt; \
+	ht->data[nxt].prev=h2; \
+	ht->data[h2].prev=prv; \
+	ht->data[prv].next=h2; \
+        if (!(defined(&(ht->data[h2].val)))) { \
+	  ht->data[h2].val=bak; \
 	  return; \
 	} else { \
-          (*entry)=ht->data[h2]; \
-	  ht->data[h2]=bak; \
+          (*entry)=ht->data[h2].val; \
+	  nxt=onxt1; \
+	  prv=oprv2; \
+	  ht->data[h2].val=bak; \
 	} \
       } \
+      int32_t nxth=(nxt==-1) ? -1 : ((nxt < (1 << ht->size)) ? gethash1(&(ht->data[nxt].val)) : gethash2(&(ht->data[nxt].val))); \
+      int32_t prvh=(prv==-1) ? -1 : ((prv < (1 << ht->size)) ? gethash1(&(ht->data[prv].val)) : gethash2(&(ht->data[prv].val))); \
       hash_t ## _double(ht); \
+      nxt=nxth >> (32-ht->size); \
+      prv=prvh >> (32-ht->size); \
     } \
   } \
   void static inline hash_t ## _unset(hash_t *ht, entry_t *entry) { \
@@ -108,8 +144,8 @@
     if (ht->data) { \
       /*fprintf(stderr,"[removing %i-element " #hash_t " hash %p (size %i)]\n",ht->used,ht,ht->size);*/ \
       for (int j=0; j<(2<<ht->size); j++) { \
-        if (defined(ht->data+j)) { \
-          unset((ht->data+j)); \
+        if (defined(&(ht->data[j].val))) { \
+          unset(&(ht->data[j].val)); \
         } \
       } \
       ht->size=0; \
@@ -139,21 +175,15 @@
   } \
   entry_t static inline * hash_t ## _first(hash_t *ht) { \
     if (ht->data) { \
-      for (int j=0; j<(2<<(ht->size)); j++) { \
-        if (defined(&(ht->data[j]))) { \
-	  return (&(ht->data[j])); \
-	} \
-      } \
+      int32_t pos=ht->data[-1].next; \
+      if (pos>=0) return &(ht->data[pos].val); \
     } \
     return NULL; \
   } \
   entry_t static inline * hash_t ## _next(hash_t *ht, entry_t *entry) { \
     if (ht->data) { \
-      for (int j=entry-ht->data+1; j<(2<<(ht->size)); j++) { \
-        if (defined(&(ht->data[j]))) { \
-	  return (&(ht->data[j])); \
-	} \
-      } \
+      int32_t pos=((hash_t##_unit_t*)entry)->next; \
+      if (pos>=0) return &(ht->data[pos].val); \
     } \
     return NULL; \
   } \

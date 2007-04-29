@@ -15,7 +15,7 @@
 #include "dcls.h" /* for doubly-linked lists (constraint store) */
 #include "lookup3.h" /* for hashing algorithm */
 #include "lookup3.c"
-#include "htl_cuckoo.h" /* for hashtable */
+#include "ht_cuckoo.h" /* for hashtable */
 
 #define cchr_id_t dcls_pid_t
 
@@ -94,7 +94,7 @@
   uint32_t static inline cchr_contbl_##C##_##H##_hash1(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x23C6EF37UL); } \
   uint32_t static inline cchr_contbl_##C##_##H##_hash2(cchr_contbl_##C##_##H##_t *val) { return (uint32_t)hashbytes(&((val)->key),sizeof((val)->key),0x2A54FF53UL); } \
   int static inline cchr_contbl_##C##_##H##_eq(cchr_contbl_##C##_##H##_t *v1,cchr_contbl_##C##_##H##_t *v2) { return eq((v1)->key,(v2)->key); } \
-  htl_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
+  ht_cuckoo_code(cchr_conht_##C##_##H##_t, cchr_contbl_##C##_##H##_t, cchr_contbl_##C##_##H##_hash1, cchr_contbl_##C##_##H##_hash2, cchr_contbl_##C##_##H##_eq, CSM_CTCB_DEFINED, CSM_CTCB_INIT, CSM_CTCB_UNDEF) 
 
 #define CSM_CB_HistTypeDef_S
 #define CSM_CB_HistTypeDef_D(T,V,...) \
@@ -111,7 +111,7 @@
       } \
       return 1; \
     } \
-    htl_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF,CSM_HTCB_UNDEF) \
+    ht_cuckoo_code(cchr_propstr_##V##_t, cchr_propent_##V##_t, cchr_propent_##V##_hash1, cchr_propent_##V##_hash2, cchr_propent_##V##_eq,CSM_HTCB_DEFINED,CSM_HTCB_UNDEF,CSM_HTCB_UNDEF) \
   )
 
 #define CSM_CB_IdxDef_S
@@ -420,9 +420,26 @@
 	} \
 }
 
-#define CSM_IDXUNILOOP(CON,HASH,VAR,CODE) CSM_IDXLOOP(CON,HASH,VAR,CODE)
+#define CSM_IDXUNILOOP(CON,HASH,VAR,CODE) { \
+	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
+	if (_idx_##VAR) { \
+	  CSM_FMTOUT("in IDXUNILOOP (%s.%s var=%s)",#CON,#HASH,#VAR); \
+	  cchr_htdc_t _idxcopy_##VAR; \
+	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
+	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
+	    __label__ csm_loop_##VAR; \
+            cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
+	    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
+            if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
+	      CODE \
+            } \
+	    csm_loop_##VAR: {} \
+	  } \
+          CSM_UNIEND(CON,VAR) \
+	} \
+}
 
-#define CSM_UNIEND(CON,VAR)
+#define CSM_UNIEND(CON,VAR) {CSM_FMTOUT("UNIEND con=%s var=%s",#CON,#VAR); cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
 
 #define CSM_LOGLOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
   cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
@@ -439,7 +456,23 @@
   } \
 }
 
-#define CSM_LOGUNILOOP(CON,VAR,ENT,TYPE,ARG,CODE) CSM_LOGLOOP(CON,VAR,ENT,TYPE,ARG)
+#define CSM_LOGUNILOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
+  cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
+  CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s)",#CON,#ENT,#VAR); \
+  cchr_htdc_t _idxcopy_##VAR; \
+  cchr_htdc_t_copy(_log_##VAR,&_idxcopy_##VAR); \
+  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
+    __label__ csm_loop_##VAR; \
+    cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
+    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
+    if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
+      CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
+      CODE \
+    } \
+    csm_loop_##VAR: {} \
+  } \
+  CSM_UNIEND(CON,VAR) \
+}
 
 #define CSM_END { \
 	CSM_DEBUG( \
@@ -553,7 +586,7 @@ typedef struct {
   cchr_id_t pid;
 } cchr_idxlist_t;
 
-htl_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF)
+ht_cuckoo_code(cchr_htdc_t,cchr_idxlist_t,CSM_HTDC_HASH1,CSM_HTDC_HASH2,CSM_HTDC_EQ,CSM_HTDC_DEFINED,CSM_HTDC_UNDEF,CSM_HTDC_UNDEF)
 
 #endif
 

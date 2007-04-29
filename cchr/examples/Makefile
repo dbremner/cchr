@@ -1,7 +1,7 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99
 DEFS :=
 
-MODE := normal
+MODE := debug
 #MODE := debug
 #MODE := debugopt
 #MODE := efence

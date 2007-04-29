@@ -420,26 +420,9 @@
 	} \
 }
 
-#define CSM_IDXUNILOOP(CON,HASH,VAR,CODE) { \
-	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
-	if (_idx_##VAR) { \
-	  CSM_FMTOUT("in IDXUNILOOP (%s.%s var=%s)",#CON,#HASH,#VAR); \
-	  cchr_htdc_t _idxcopy_##VAR; \
-	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
-	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
-	    __label__ csm_loop_##VAR; \
-            cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
-	    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
-            if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
-	      CODE \
-            } \
-	    csm_loop_##VAR: {} \
-	  } \
-          CSM_UNIEND(CON,VAR) \
-	} \
-}
+#define CSM_IDXUNILOOP(CON,HASH,VAR,CODE) CSM_IDXLOOP(CON,HASH,VAR,CODE)
 
-#define CSM_UNIEND(CON,VAR) {CSM_FMTOUT("UNIEND con=%s var=%s",#CON,#VAR); cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
+#define CSM_UNIEND(CON,VAR)
 
 #define CSM_LOGLOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
   cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
@@ -456,23 +439,7 @@
   } \
 }
 
-#define CSM_LOGUNILOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
-  cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
-  CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s)",#CON,#ENT,#VAR); \
-  cchr_htdc_t _idxcopy_##VAR; \
-  cchr_htdc_t_copy(_log_##VAR,&_idxcopy_##VAR); \
-  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
-    __label__ csm_loop_##VAR; \
-    cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
-    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
-    if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
-      CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
-      CODE \
-    } \
-    csm_loop_##VAR: {} \
-  } \
-  CSM_UNIEND(CON,VAR) \
-}
+#define CSM_LOGUNILOOP(CON,VAR,ENT,TYPE,ARG,CODE) CSM_LOGLOOP(CON,VAR,ENT,TYPE,ARG,CODE)
 
 #define CSM_END { \
 	CSM_DEBUG( \

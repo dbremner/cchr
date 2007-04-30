@@ -11,34 +11,17 @@ typedef struct {
 cchr {
   constraint fib(int,bigint_t) option(destr,{mpz_clear($2.v);}) option(fmt,"fib(%i,%p)",$1,$2.v);
   constraint init(int) option(fmt,"init(%i)",$1);
-  extern alt;
   
-  begin @ 
-      init(_) 
-    ==> 
-      bigint_t Z=, 
-      bigint_t Y=, 
-      {
-      	mpz_init_set_si(Z.v,1);
-      	mpz_init_set_si(Y.v,1);
-      },
-      fib(0,Z),
-      fib(1,Y);
+  begin @ init(_) ==> 
+    bigint_t Z=, bigint_t Y=, 
+    { mpz_init_set_si(Z.v,1); mpz_init_set_si(Y.v,1); },
+    fib(0,Z), fib(1,Y);
 
-  calc @ 
-  	  init(Max),
-  	  fib(N1,M1),
-  	  fib(N,M2)
-  	==>
-	  alt(N1+1==N,N1==N-1),
-  	  N<Max
-  	| 
-  	  bigint_t sum=,
-  	  {
-  	  	mpz_init(sum.v);
-  	  	mpz_add(sum.v,M1.v,M2.v);
-  	  },
-  	  fib(N+1, sum);
+  calc @ init(Max), fib(N1,M1), fib(N,M2) ==>
+  alt(N1+1==N,N1==N-1), N<Max |
+    bigint_t sum=,
+    { mpz_init(sum.v); mpz_add(sum.v,M1.v,M2.v); },
+    fib(N+1, sum);
 
 }
 

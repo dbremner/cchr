@@ -362,7 +362,31 @@ Al deze elementen zijn verspreid over een structuur van C structs en unions, zod
 
 \subsection{De hashtable} \label{ssec:impl-rt-ht}
 
+Een hashtable is in het algemeen een datastructuur die bedoeld is om elementen heel snel in op te slagen en op te zoeken. Het maakt gebruik een ``hashfunctie'' die de op te slagen elementen afbeeldt op een natuurlijk getal binnen een bepaald
+bereik. Elementen worden dan opgeslagen op een positie die afhankelijk is van het resultaat van deze hashfunctie. Deze hashfunctie is liefst zo grillig mogelijk, om patronen in de invoer geen patronen in de uitvoer te laten veroorzaken. Op deze hashfunctie gaan we in sectie~\ref{ssec:impl-rt-hf}.
+
+Het grootste probleem met hashtables is het probleem van ``collisions'', verschillende elementen die op dezelfde plaats terechtkomen in de tabel. De kans dat zulke collisions optreden, kan bepaald worden met wat het ``verjaardagsprobleem'' genoemd wordt -- gelijkaardig aan de kans bepalen dat 2 mensen in een groep dezelfde verjaardag hebben. Vereenvoudigd kan gesteld worden dat een eerste collision zou optreden wanneer het aantal elementen $N$ ongeveer gelijk is aan $\sqrt{D}$, met $D$ het aantal plaatsen in de tabel.
+
+Hieruit volgt dat het onmogelijk is de tabel redelijk gevuld te houden eens er een redelijk aantal elementen in opgeslagen moeten worden. Er zijn verschillende oplossingen voor dit probleem: \begin{enumerate}
+\item We vergroten de tabel zodra een collision optreedt.
+\item We staan toe dat 1 tabelpositie meerdere elementen bevat.
+\item Indien een plaats bezet is, plaatsen we het gegeven element 1 plaats verder.
+\item We gebruiken 2 verschillende tabellen, waarin 2 onafhankelijke hashfuncties gebruikt worden. Elk element dat toegevoegd wordt, komt op zijn correcte plaats in tabel 1 terecht, en indien die plaats reeds benomen is, wordt het element dat daar stond naar zijn plaats in tabel 2 verplaatst. Indien daar reeds iets stond, wordt dat teruggeplaatst naar zijn plaats in tabel 1, enzovoort.
+\end{enumerate}
+
+Deze eerste leidt veel te snel tot teveel geheugengebruik, de tweede techniek vereist dat voor elke verschillende waarde in de tabel een allocatie gedaan wordt. De derde techniek zorgt ervoor dat de tabel gefragmenteerd wordt als er elementen verwijderd worden uit de tabel, aangezien de lege plaatsen niet echt vrijgemaakt kunnen worden (er kunnen nog elementen met een lagere hashwaarde erna komen). Daarom werd voor de vierde techniek, {\em cuckoo hashing} gekozen. Deze techniek en enkele analyses erop worden vermeld in \cite{cuckoo}.
+
+In het kaber van deze thesis is dat algoritme ge\"implementeerd (alweer) als een macro defintiebestand. Een datatype als hastable definieren gebeurt mits:
+\code{ht\_cuckoo\_code(\argu{hash\_t},\argu{entry\_t},\argu{hash1},\argu{hash2},\argu{eq},\argu{defined},\argu{init},\argu{unset})}
+Hierbij wordt het type \argu{hash\_t} gedefinieerd als een hashtable die elementen van het type \argu{entry\_t} kan bevatten. \argu{hash1} en \argu{hash2} zijn de namen van de 2 te gebruiken hashfuncties. De functie \argu{eq} moet controleren of 2 elementen aan elkaar gelijk zijn, \argu{defined} of een element een ``vrije'' plaats voorstelt, en \argu{init} en \argu{unset} dienen om een element te initialiseren (als ongebruikt) en om het terug vrij te geven.
+
+Om te vermijden dat er oneindige lussen ontstaan bij het heen en weer verplaatsen van elementen in de hashtable, wordt zoals voorgesteld in het artikel een limiet opgelegd op het aantal iteraties dat er mogen gebeuren voor de tabelgrootte verdubbeld wordt. Als de tabel meer dan $5/12$ gevuld is, wordt ze ook automatisch verdubbeld van grootte.
+
 \subsection{De hashfunctie} \label{ssec:impl-rt-hf}
+
+Met de gebruikte hashtable is het vrij essentieel dat een goede hashfunctie gebruikt wordt. De invoer (zijnde de elementen die geplaatst moeten worden in de tabel) bevat vaak patronen, zoals opeenvolgende getallen. Indien dit patroon zou resulteren in een verhoogde kans op collisions, zou de kwaliteit van het hashtable algoritme al snel achteruit gaan.
+
+Voor de hasfunctie is gekozen voor ``lookup3'', een publiek-domein algoritme. Zie \cite{hashing} voor meer informatie.
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

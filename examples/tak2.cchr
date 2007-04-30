@@ -12,9 +12,13 @@
 #define log_int_cb_destrval(val)
 #define log_int_cb_destrtag(tag)
 
+typedef struct {
+  int a[0];
+} nothing_t;
+
 /* define a log_int_t to be a logical uint64_t, with no destructor */
-logical_header(int64_t,int,log_int_t)
-logical_code(int64_t,int,log_int_t,log_int_cb)
+logical_header(int64_t,nothing_t,log_int_t)
+logical_code(int64_t,nothing_t,log_int_t,log_int_cb)
 
 /* the cchr block */
 cchr {

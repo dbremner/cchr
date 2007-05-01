@@ -11,11 +11,11 @@
 \end{figure}
 }
 
-In dit hoofdstuk gaan we enkele voorbeelden bekijken en zien hoe goed ze presteren in de verschillende CHR implementaties. Van elk van deze voorbeelden is een ook pure C implementatie geschreven, om een idee te hebben hoe ver (C)CHR er nog van af staat.
+In dit hoofdstuk worden enkele voorbeelden bekeken en gezien hoe goed ze presteren in de verschillende CHR implementaties. Van elk van deze voorbeelden is een ook pure C implementatie geschreven, om een idee te hebben hoe ver (C)CHR er nog van af staat.
 
 \subsection{Grootst gemene deler} \label{sec:bench-gcd}
 
-Het eerste voorbeeld dat we beschouwen is een programma dat de grootst gemene deler van 2 getallen kan bepalen. Het werkt door zolang er 2 getallen groter dan 0 zijn, het kleinste van het grootste af te trekken. 
+Het eerste voorbeeld dat beschouwd wordt, is een programma dat de grootst gemene deler van 2 getallen kan bepalen. Het werkt door zolang er 2 getallen groter dan 0 zijn, het kleinste van het grootste af te trekken. 
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 cchr {
@@ -28,11 +28,11 @@ cchr {
 \caption{\label{code:fib} Grootst gemene deler in CCHR}
 \end{exCode}
 \benchfig{gcd}{Grootst gemene deler benchmark}
-De benchmark resultaten vindt u in figuur~\ref{fig:bench-gcd}. Op de grafiek is te zien hoe de CCHR versie slechts een factor 3 ongeveer trager is dan de pure C implementatie. Het verschil met de SWI-Prolog versie is heel groot, meer dan een factor 1000. Dit is vooral te wijten aan de extreem snelle lussen die in C mogelijk zijn in vergelijking met Prolog. De eigenlijke uitvoering van het algoritme komt immers neer op een variabele die van een groot getal aftelt tot 0. Merk op dat we hier de ineffici\"ente versie van het algoritme gebruiken dat een aftrekking in plaats van een modulus-bewerking gebruikt wordt. Dit om de uitvoeringstijd van het algoritme meetbaar te houden. De berekende waardes zijn $gcd(5,1000 X)$, met $X$ de ``problem size''. Deze test was in JCHR niet uit te voeren, wegens vrij snel een stack overflow.
+De benchmark resultaten vindt u in figuur~\ref{fig:bench-gcd}. Op de grafiek is te zien hoe de CCHR versie slechts een factor 3 ongeveer trager is dan de pure C implementatie. Het verschil met de SWI-Prolog versie is heel groot, meer dan een factor 1000. Dit is vooral te wijten aan de extreem snelle lussen die in C mogelijk zijn in vergelijking met Prolog. De eigenlijke uitvoering van het algoritme komt immers neer op een variabele die van een groot getal aftelt tot 0. Merk op dat hier de ineffici\"ente versie van het algoritme gebruikt wordt, gebruik makende van een aftrekking in plaats van een modulus-bewerking wordt. Dit om de uitvoeringstijd van het algoritme meetbaar te houden. De berekende waardes zijn $gcd(5,1000 X)$, met $X$ de ``problem size''. Deze test was in JCHR niet uit te voeren, wegens vrij snel een stack overflow.
 
 \subsection{Fibonacci getallen} \label{sec:bench-fib}
 
-Als tweede voorbeeld beschouwen we een programma dat de getallen van Fibonacci berekent. Deze keer gaan we een iets ingewikkelder algoritme gebruiken: we gaan in elke taal een bibliotheek om met grote getallen (willekeurige lengte) te kunnen werken gebruiken, en alle kleinere getallen bijhouden. Hier is de code:
+Als tweede voorbeeld wordt een programma beschouwd dat de getallen van Fibonacci berekent. Deze keer een iets ingewikkelder algoritme: er is in elke taal gebruikt gemaakt van een bibliotheek om met grote getallen (willekeurige lengte) te kunnen werken gebruiken, en alle kleinere getallen bijhouden. Hier is de code:
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 #include <gmp.h>
@@ -56,15 +56,15 @@ cchr {
     fib(N+1, sum);
 }
 \end{Verbatim}
-\caption{\label{fib:exCode} Fibonacci met GMP in CCHR}
+\caption{\label{code:fibgmp} Fibonacci met GMP in CCHR}
 \end{exCode}
 \benchfig{fib}{Fibonacci benchmark}
 
-We maken gebruik van de {\em GNU Multiprecision Library}, die de mogelijkheid biedt om met willekeurig grote getallen te werken. De C versie van het programma gebruikt ook GMP, en SWI-Prolog gebruikt het intern ook. In JCHR maken we gebruik van de java.math.BigInteger klasse. De resultaten kan u zien in figuur~\ref{fig:bench-fib}. De CCHR versie lijkt korter en korter bij de uitvoeringstijd van de C versie te komen. Dit kan te verklaren zijn door dat een groot deel van het rekenwerk door GMP gebeurt, en naarmate de getallen groter worden, meer en meer. Er blijft wel een duidelijk snelheidsverschil met JCHR en zeker SWI-Prolog.
+Er wordt gebruik gemaakt van de {\em GNU Multiprecision Library}, die de mogelijkheid biedt om met willekeurig grote getallen te werken. De C versie van het programma gebruikt ook GMP, en SWI-Prolog gebruikt het intern ook. In JCHR maken wordt de java.math.BigInteger klasse gebruikt. De resultaten kan u zien in figuur~\ref{fig:bench-fib}. De CCHR versie lijkt korter en korter bij de uitvoeringstijd van de C versie te komen. Dit kan te verklaren zijn door dat een groot deel van het rekenwerk door GMP gebeurt, en naarmate de getallen groter worden, meer en meer. Er blijft wel een duidelijk snelheidsverschil met JCHR en zeker SWI-Prolog.
 
 \subsection{Priemgetallen} \label{sec:bench-primes}
 
-Onze volgende test gaat over het bepalen van priemgetallen. We gebruiken hierbij het principe van de zeef van Erathostenes: we beginnen eerst van een lijst van alle natuurlijke getallen van 2 tot en met tot waar we de priemgetallen willen zoeken, om vervolgens alle getallen die deelbaar zijn door een ander getal uit de lijst te schrappen. Het algoritme is uiterst eenvoudig in (C)CHR te schrijven.
+Onze volgende test gaat over het bepalen van priemgetallen. Hierbij wordt het principe van de zeef van Erathostenes gebruikt: beginnen met een lijst van alle natuurlijke getallen van 2 tot en met tot waar de priemgetallen gevraagd zijn, om vervolgens alle getallen die deelbaar zijn door een ander getal uit de lijst te schrappen. Het algoritme is uiterst eenvoudig in (C)CHR te schrijven.
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 cchr {
@@ -77,13 +77,13 @@ cchr {
 \caption{\label{code:primes} Priemgetallen in CCHR}
 \end{exCode}
 \benchfig{primes}{Primes benchmark}
-De resultaten zijn te vinden in figuur~\ref{fig:bench-primes}. De ``problem size'' komt overeen met het getal tot waar we alle priemgetallen willen zoeken. Voor de C versie van het algoritme houden we een array bij van alle gevonden priemgetallen, en proberen we daar \'e\'en voor \'e\'en opeenvolgende getallen aan toe te voegen, door te controleren of er geen deelbaarheid is met een van de eerder gevonden getallen. Het toenemende tijdsverschil tussen de CCHR en C versie, is misschien te verklaren door de kleine toename in rekentijd die optreedt bij groter wordende constraint store en indexen, waar de C versie geen last van heeft.
+De resultaten zijn te vinden in figuur~\ref{fig:bench-primes}. De ``problem size'' komt overeen met het getal tot waar alle priemgetallen gevraagd zijn. Voor de C versie van het algoritme wordt een array bijgehouden van alle reeds gevonden priemgetallen, en geprobeerd daar \'e\'en voor \'e\'en opeenvolgende getallen aan toe te voegen, door te controleren of er geen deelbaarheid is met een van de eerder gevonden getallen. Het toenemende tijdsverschil tussen de CCHR en C versie, is te verklaren door de kleine toename in rekentijd die optreedt bij groter wordende constraint store en indexen, waar de C versie geen last van heeft.
 
 Er bestaan trouwens veel betere algoritmes om dit te implementeren, die in C nauwelijks moeilijker te implementeren zijn. Bijvoorbeeld slechts proberen te delen door priemgetallen tot en met $\sqrt{N}$ zorgt reeds voor hogere snelheid. Om de test eerlijk te houden in vergelijking met CHR, is deze optimalisatie niet doorgevoerd.
 
 \subsection{Takeuchi functie} \label{sec:bench-tak}
 
-Als vierde test in de rij beschouwen we een programma om de Takeuchi functie te berekenen. Dit is een functie $tak(X,Y,Z)$  van 3 natuurlijke getallen $X$,$Y$ en $Z$, die gedefinieerd is als:
+Als vierde test in de rij wordt een programma beschouwd om de Takeuchi functie te berekenen. Dit is een functie $tak(X,Y,Z)$ van 3 natuurlijke getallen $X$, $Y$ en $Z$, die gedefinieerd is als:
 \begin{equation*}
 tak(X,Y,Z) = 
 \begin{cases} 
@@ -91,7 +91,7 @@ tak(X,Y,Z) =
   tak(tak(X-1,Y,Z),tak(Y-1,Z,X),tak(Z-1,X,Y)) & \text{als $X > Y$.}
 \end{cases}
 \end{equation*}
-Het is duidelijk dat deze functie extreem recursief van aard is, en zonder maatregelen zou de grote hoop van de functie-evaluaties vele malen opnieuw uitgevoerd worden voor dezelfde argumenten. Om dit tegen te gaan maken we gebruik van een techniek die {\em tabling} heet. Het komt er op neer dat elke berekende (of nog niet berekende) functie-evaluatie bijgehouden wordt, en indien er een tweede evaluatie met dezelfde argumenten gevraagd wordt, het antwoord hiervan onmiddellijk gelijk gesteld wordt aan het resultaat van de reeds gevraagde evaluatie. We geven hier enkel de code voor het probleem in Prolog CHR, die overzichtelijker is. De CCHR code kan u vinden in de appendix.
+Het is duidelijk dat deze functie extreem recursief van aard is, en zonder maatregelen zou de grote hoop van de functie-evaluaties vele malen opnieuw uitgevoerd worden voor dezelfde argumenten. Om dit tegen te gaan wordt gebruik gemaakt van een techniek die {\em tabling} heet. Het komt er op neer dat elke berekende (of nog niet berekende) functie-evaluatie bijgehouden wordt, en indien er een tweede evaluatie met dezelfde argumenten gevraagd wordt, het antwoord hiervan onmiddellijk gelijk gesteld wordt aan het resultaat van de reeds gevraagde evaluatie. Hier wordt enkel de code voor het probleem in Prolog CHR gegeven, die overzichtelijker is. De CCHR code is te vinden in de appendix.
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 :- chr_constraint tak(+int,+int,+int, ?int).
@@ -112,7 +112,7 @@ De resultaten zijn te vinden in figuur~\ref{fig:bench-tak}. Bij probleemgrootte 
 
 \subsection{Kleiner-dan-of-gelijk-aan} \label{sec:bench-leq}
 
-Het voorlaatste voorbeeld dat we beschouwen is de kleiner-dan-of-gelijk-aan test. We bouwen een cyclus van $N$ variabelen, die telkens kleiner dan of gelijk aan de vorige is, inclusief de eerste kleiner of gelijk aan de laatste. Dit wordt als invoer gegeven aan een programma dat dan mbv. de definitie van de orde-operator moet besluiten dat alle variabelen aan elkaar gelijk zijn. We geven hier alweer de code voor Prolog CHR, de versie voor CCHR vindt u in sectie~\ref{sec:leq-cchr}.
+Het voorlaatste voorbeeld dat bewordt, is de kleiner-dan-of-gelijk-aan test. Er wordt een cyclus gebouwd van $N$ variabelen, die elk kleiner dan of gelijk aan de vorige zijn, inclusief de eerste kleiner of gelijk aan de laatste. Dit wordt als invoer gegeven aan een programma dat dan mbv. de definitie van de orde-operator moet besluiten dat alle variabelen aan elkaar gelijk zijn. We geven hier alweer de code voor Prolog CHR, de versie voor CCHR vindt u in sectie~\ref{sec:leq-cchr}.
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 :- chr_constraint leq/2.
@@ -123,7 +123,7 @@ idempotence  @ leq(X,Y) \ leq(X,Y) <=> true.
 transitivity @ leq(X,Y), leq(Y,Z) ==> leq(X,Z).
 \end{Verbatim}
 \caption{\label{code:tak} LEQ in Prolog CHR}
-Na enkele pogingen een snelle C versie van dit algoritme te schrijven, is besloten de CCHR compiler output letterlijk naar C te vertalen, maar met gebruik van intelligentere datastructuren. In het bijzonder hebben we hier in plaats van een constraint store slechts een matrix van $N$ op $N$ (met $N$ het aantal variabelen), waarvan elke cel aangeeft hoe vaak een constraint die een $\leq$ uitdrukt geactiveerd werd. Voor de gelijkheden te volgen worden dezelfde logische variabelen gebruikt als in CCHR. De code is eveneens te vinden in sectie~\ref{code:leq-c}.
+Na enkele pogingen een snelle C versie van dit algoritme te schrijven, is besloten de CCHR compiler output letterlijk naar C te vertalen, maar met gebruik van geschiktere datastructuren. In het bijzonder hebben we hier in plaats van een constraint store slechts een matrix van $N$ op $N$ (met $N$ het aantal variabelen), waarvan elke cel aangeeft hoe vaak een constraint die een $\leq$ uitdrukt geactiveerd werd. Voor de gelijkheden te volgen worden dezelfde logische variabelen gebruikt als in CCHR. De code is eveneens te vinden in sectie~\ref{code:leq-c}.
 \end{exCode}
 
 

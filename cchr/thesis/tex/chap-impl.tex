@@ -238,8 +238,8 @@ Om deze indexen te gebruiken in CSM, is het nodig ze eerst in een index-macro te
 
 Deze optimalisatie is degene die de belangrijkste snelheidsverbetering teweegbracht bij de implementatie, wat logisch is, bij sommige problemen maakt het de uitvoering een grootte-orde sneller door onmiddellijk de juiste constraint te vinden, in plaats van mogelijks er duizenden te moeten doorlopen.
 
-Dit is ge\"implementeerd door bepaalde guards als speciaal te herkennen en aanleiding te laten geven tot indexen. Op dit moment gebeurt dit enkel voor logische (\code{==}) of binaire gelijkheden (\code{eq(\ldots)}, een eigen aanvulling). Hierbij komt ook het \code{alt} sleutelwoord kijken, dat zorgt voor verschillende mogelijkheden hoe de guard bekeken wordt. Uiteindelijk wordt tijdens de join ordering elke constraint waarvan 1 of meer argumenten door een simpele gelijkheid aan een expressie (van bekende waardes) bepaald kunnen worden, door een index-iterator beschreven en gezorgd, in plaats van door een normale iterator plus guard.
-
+Dit is ge\"implementeerd door bepaalde guards als speciaal te herkennen en aanleiding te laten geven tot indexen. Hoe dit gebeurt wordt uitgelegd in sectie~\ref{sec:matching}.
+ 
 \subsection{Existenti\"ele en universele iteratoren}
 
 Tijdens het uitvoeren van CCHR code wordt er ge\"itereerd over constraints in verschillende geneste lussen, en middenin die lussen worden er constraints verwijderd, toegevoegd, en gereactiveerd. Dit zorgt ervoor dat de toestand van de constraint store, en indien er indexen gebruikt worden, ook deze indexen tijdens het itereren op allerlei mogelijke manieren kunnen veranderen.
@@ -254,6 +254,18 @@ Om die reden worden voor iteratoren waar het ingewikkeld is, 2 verschillende ver
 \end{itemize}
 
 Een universele iterator kan een veel grotere kost hebben om uitgevoerd te worden, wat ook in rekening wordt gebracht bij de kost berekening voor de join ordering.
+
+\subsection{Matching} \label{sec:matching}
+
+Zoals aangehaald is het nodig om bepaalde guards te laten herkennen als efficienter te schrijven dan een simpele \code{CSM\_IF}. Het gaat hier om controles die ingebed kunnen worden in een lus. Daarom is een algmene routine geschreven die gegeven de nog te controleren guards op een bepaalde plaats in het uitvoeringsalgoritme, beslist welke soort iterator gebruikt moet worden. De verschillende iteratoren hebben een prioriteit toegekend gekregen, en voor elke iteratie die moet gebeuren wordt de iterator met de hoogst mogelijke prioriteit gekozen.
+
+Er zijn 3 iteratoren ge\"implementeerd, van lage naar hoge prioriteit: \begin{enumerate}
+\item De simpele \code{CSM\_LOOP} iterator. Deze wordt enkel gekozen als er geen betere iteratoren gevonden kunnen worden. Deze iterator heeft geen impliciete guard.
+\item De \code{CSM\_IDXLOOP} iterator die een waarde-index gebruikt voor het itereren. Alle guards die equivalenties voorstellen tussen een variabele die het argument is van eenzelfde constraint occurrence, worden gebruikt om 1 index-iterator te bouwen. Op die manier kunnen een heel aantal guards samen in 1 iterator terecht komen. Bij de herkenning van dergelijke equivalenties, is de standaard C equivalentie (\code{==}) ondersteund, en ook een binaire equivalentie die algemener is (\code{eq(arg1,arg2)}).
+\item Iteratoren over de elementen van een index in een logische variabele bijgehouden. Dit is slechts half afgewerkt, maar een voorbeeld kan gevonden worden in sectie~\ref{sec:leq-cchr}.
+\end{enumerate}
+
+Bij deze matching komt trouwens het sleutelwoord \code{alt} terug, dat in sectie~\ref{sec:rules} aangehaald werd. Alle argumenten van een \code{alt} worden door het matchalgoritme overlopen, om een zo goed mogelijke match te vinden.
 
 \section{CSM Definities} \label{sec:impl-csm}
 
@@ -301,7 +313,7 @@ Voor de waardenindexen, die gebruikt worden met de \code{CSM\_IDXLOOP} en verwan
 
 Voor \code{CSM\_IDXLOOP} wordt ge\"itereerd over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt. Dit is nodig, omdat de hashtable implementatie geen wijzigingen tijdens het itereren toelaat. Zie sectie~\ref{ssec:impl-rt-ht}.
 
-CSM zal automatisch alle indexen onderhouden die met de macro \code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} gedefinieerd zijn, zowel het toevoegen van nieuwe waardes, constraint suspension bij een bepaalde waarde toevoegen, het verwijderen van constraint suspensions uit de juiste subtable, en indien er voor een gegeven combinatie van waardes geen overeenkomstige suspensions meer zijn, het verwijderen van de volledige subtable voor die waardes.
+CSM zal automatisch alle indexen onderhouden die met de macro \code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} gedefinieerd zijn, zowel het toevoegen van nieuwe waardes, nieuwe constraint suspensions bij de subtable voor een bestaande waarde toevoegen, het verwijderen van constraint suspensions uit de juiste subtable, en indien er voor een gegeven combinatie van waardes geen overeenkomstige suspensions meer zijn, het verwijderen van de volledige subtable voor die waardes.
 
 \section{Runtime} \label{sec:impl-rt}
 

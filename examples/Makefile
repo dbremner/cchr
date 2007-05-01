@@ -1,4 +1,4 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99
+CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=athlon64
 DEFS :=
 
 MODE := normal

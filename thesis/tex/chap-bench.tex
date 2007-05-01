@@ -13,6 +13,8 @@
 
 In dit hoofdstuk worden enkele voorbeelden bekeken en gezien hoe goed ze presteren in de verschillende CHR implementaties. Van elk van deze voorbeelden is een ook pure C implementatie geschreven, om een idee te hebben hoe ver (C)CHR er nog van af staat.
 
+\TODO{Benchmarksysteem beschrijven}
+
 \subsection{Grootst gemene deler} \label{sec:bench-gcd}
 
 Het eerste voorbeeld dat beschouwd wordt, is een programma dat de grootst gemene deler van 2 getallen kan bepalen. Het werkt door zolang er 2 getallen groter dan 0 zijn, het kleinste van het grootste af te trekken. 
@@ -112,7 +114,7 @@ De resultaten zijn te vinden in figuur~\ref{fig:bench-tak}. Bij probleemgrootte 
 
 \subsection{Kleiner-dan-of-gelijk-aan} \label{sec:bench-leq}
 
-Het voorlaatste voorbeeld dat bewordt, is de kleiner-dan-of-gelijk-aan test. Er wordt een cyclus gebouwd van $N$ variabelen, die elk kleiner dan of gelijk aan de vorige zijn, inclusief de eerste kleiner of gelijk aan de laatste. Dit wordt als invoer gegeven aan een programma dat dan mbv. de definitie van de orde-operator moet besluiten dat alle variabelen aan elkaar gelijk zijn. We geven hier alweer de code voor Prolog CHR, de versie voor CCHR vindt u in sectie~\ref{sec:leq-cchr}.
+Het voorlaatste voorbeeld dat bewordt, is de kleiner-dan-of-gelijk-aan test. Er wordt een cyclus gebouwd van $N$ variabelen, die elk kleiner dan of gelijk aan de vorige zijn, inclusief de eerste kleiner of gelijk aan de laatste. Dit wordt als invoer gegeven aan een programma dat dan mbv. de definitie van de orde-operator moet besluiten dat alle variabelen aan elkaar gelijk zijn. Hier wordt alweer enkel de code voor Prolog CHR, de versie voor CCHR vindt u in sectie~\ref{sec:leq-cchr}.
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 :- chr_constraint leq/2.
@@ -123,11 +125,24 @@ idempotence  @ leq(X,Y) \ leq(X,Y) <=> true.
 transitivity @ leq(X,Y), leq(Y,Z) ==> leq(X,Z).
 \end{Verbatim}
 \caption{\label{code:tak} LEQ in Prolog CHR}
-Na enkele pogingen een snelle C versie van dit algoritme te schrijven, is besloten de CCHR compiler output letterlijk naar C te vertalen, maar met gebruik van geschiktere datastructuren. In het bijzonder hebben we hier in plaats van een constraint store slechts een matrix van $N$ op $N$ (met $N$ het aantal variabelen), waarvan elke cel aangeeft hoe vaak een constraint die een $\leq$ uitdrukt geactiveerd werd. Voor de gelijkheden te volgen worden dezelfde logische variabelen gebruikt als in CCHR. De code is eveneens te vinden in sectie~\ref{code:leq-c}.
 \end{exCode}
-
+Na enkele pogingen een snelle C versie van dit algoritme te schrijven, is besloten de CCHR compiler output letterlijk naar C te vertalen, maar met gebruik van geschiktere datastructuren. In het bijzonder is hier in plaats van een constraint store slechts een matrix van $N$ op $N$ (met $N$ het aantal variabelen) gebruikt, waarvan elke cel aangeeft hoe vaak een constraint die een $\leq$ uitdrukt geactiveerd werd. Voor de gelijkheden te volgen worden dezelfde logische variabelen gebruikt als in CCHR. De code is eveneens te vinden in sectie~\ref{code:leq-c}.
+\benchfig{leq}{LEQ benchmark}
+De resultaten zijn te vinden in figuur~\ref{fig:bench-leq}. Opvallend is de helling die bij CCHR hoger is dan bij C, veroorzaakt door de vele overbodige reactivaties. De JCHR en Prolog versie zijn wel trager, maar het is niet duidelijk of ze dezelfde sterkere helling vertonen.
 
 \subsection{Ram simulator} \label{sec:bench-ram}
 
-\benchfig{leq}{LEQ benchmark}
-\benchfig{ram}{RAM benchmark}
+Het laatste testvoorbeeld dat beschouwd wordt is de RAM simulator in CHR, zoals beschreven in \cite{jon:complexity:chr05}.
+Hierin wordt een simpel programmaatje dat van $N$ tot $0$ telt geladen, met $N$ de ``problem size''. De code is bijna identiek aan de Prolog versie, en is te vinden in sectie~\ref{sec:ram-cchr}. \benchfig{ram}{RAM benchmark}. De resultaten zijn te vinden in figuur~\ref{fig:bench-ram}. Het opvallendste is het bijna perfect lineair zijn van het voorbeeld in alle talen, met enkel constante factoren ertussen. In de C versie is het hele programma een enkele lus die een instructie leest, en binnen een {\em switch} uitvoert. Hierbij is helemaal geen tijd die verloren gaat aan het opzoeken van elementen in het geheugen.
+
+\section{Correctheid}
+
+\subsection{Standaarden}
+
+Alle code, zowel de compiler als de gegenereerde code, is C code, of iets dat ernaar omgezet wordt. De programmeertaal C bestaat echter in vele varianten en er zijne vele standaarden voor gedefinieerd. Wat betreft de C compiler is steeds gebruik gemaakt van de {\em GNU Compiler Collection} (GCC). De compiler heeft geen externe afhankelijkheden van andere projecten of bibliotheken, en is volledig conform aan de ``C99'' standaard (ISO 9899:1999). Merk op dat GCC zelf nog niet volledig C99 ondersteunt, maar de broncode gebruikt ook geen functionaliteit die niet in GCC 3.3 aanwezig is. De gegenereerde code, of beter gezegd, de huidige CSM definities, maken gebruik van 1 mogelijkheid die niet tot de C99 standaard behoort, en slechts vanaf GCC 4 beschikbaar is: ``local labels''. Deze worden gebruikt om uit geneste lussen te springen op een elegante manier.
+
+\subsection{Geheugenlekken}
+
+In beide gevallen wordt vaak gebruik gemaakt van het dynamisch geheugen dat deze taal aanbiedt, mbv. de systeemfuncties \code{malloc()}, \code{free()} en \code{realloc()}. Het probleem met gebruik hiervan is dat de programmeur volledig zelf verantwoordelijk wordt voor het geheugenbeheer. Er moet voor gezorgd worden dat elke byte gealloceerd geheugen ook effectief vrijgegeven wordt, en dat er nooit naar niet-gealloceerd of reeds-vrijgegeven geheugen verwezen wordt. Om deze fouten te kunnen opsporen is gebruik gemaakt van de geheugen debuggers {\em valgrind} en {\em Electric Fence}, en met de  {\em boundschecking} patch voor GCC. Zowel de compiler zelf als de gegenereerde code zijn vaak met deze tools gecontroleerd, en in de uiteindelijke versie zijn dan ook geen ``geheugenlekken'' of gebruik van niet-gealloceerd geheugen meer gevonden.
+
+Uiteraard blijft de gebruiker van de CCHR compiler wel verantwoordelijk om zelf geen geheugenlekken te veroorzaken, bv. door C code die in de body van een CHR rule staat.

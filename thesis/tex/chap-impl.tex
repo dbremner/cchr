@@ -267,7 +267,7 @@ Zoals aangehaald is het nodig om bepaalde guards te laten herkennen als efficien
 
 Er zijn 3 iteratoren ge\"implementeerd, van lage naar hoge prioriteit: \begin{enumerate}
 \item De simpele \code{CSM\_LOOP} iterator. Deze wordt enkel gekozen als er geen betere iteratoren gevonden kunnen worden. Deze iterator heeft geen impliciete guard.
-\item De \code{CSM\_IDXLOOP} iterator die een waarde-index gebruikt voor het itereren. Alle guards die equivalenties voorstellen tussen een variabele die het argument is van eenzelfde constraint occurrence, worden gebruikt om 1 index-iterator te bouwen. Op die manier kunnen een heel aantal guards samen in 1 iterator terecht komen. Bij de herkenning van dergelijke equivalenties, is de standaard C equivalentie (\code{==}) ondersteund, en ook een binaire equivalentie die algemener is (\code{eq(arg1,arg2)}).
+\item De \code{CSM\_IDXLOOP} iterator die een waarde-index gebruikt voor het itereren. Alle guards die equivalenties voorstellen tussen een variabele die het argument is van eenzelfde constraint occurrence, worden gebruikt om 1 index-iterator te bouwen. Op die manier kunnen een heel aantal guards samen in 1 iterator terecht komen. Bij de herkenning van dergelijke equivalenties, is de standaard C equivalentie (\code{==}) ondersteund, en ook een binaire equivalentie die algemener is (\code{eq(arg1,arg2)}, zie sectie~\ref{sec:rules}).
 \item Iteratoren over de elementen van een index in een logische variabele bijgehouden. Dit is slechts half afgewerkt, maar een voorbeeld kan gevonden worden in sectie~\ref{sec:leq-cchr}.
 \end{enumerate}
 

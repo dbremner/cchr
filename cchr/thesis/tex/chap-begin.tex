@@ -1,10 +1,18 @@
 \chapter{Inleiding}
-\label{inleiding:chap}
-\begin{quote}
-{{\small\it Ruimtevaart is FAKE.}}
+\label{chap:inleiding}
 
-{{\small\sc - Mark Peeters}}
-\end{quote}
-\medskip
+{\em Constraint Handling Rules}, of CHR, zijn een hoog-niveau, declaratieve taal, oorspronkelijk bedoeld was voor het eenvoudig schrijven van gebruiker-gedefinieerde, applicatie-specifieke ``constraint solvers'' in een gegeven programmeertaal, maar worden tegenwoordig meer en meer gebruikt als algemene programmeertaal op zich gebruikt. Ze worden voor een brede waaier van toepassingen gebruikt, oa. multi-agent systemen, onderzoek naar datatypes, en natural language processing, om er maar enkele te noemen.
 
-%Een goed boek over automatisch leren is \cite{mitchell:book}.
+``Constraint solvers'' zijn hierbij programmas die (effici\"ent) op zoek gaan naar een oplossing, in de vorm van een combinatie van variabelen, die voldoet aan een aantal opgegeven {\em constraints}. Dit zijn algemene feiten die bekend zijn en beperkingen opleggen aan de gevraagde variabelen.
+
+CHR op zichzelf is geen volledige taal, slechts een taaluitbreiding die het schrijven van constraint solvers erin vergemakkelijkt. Sinds zijn ontstaan in 1991 zijn er CHR systemen voor vele talen geschreven, voornamelijk voor Prolog en andere declaratieve talen. Momenteel is het meest geavanceerde CHR systeem voor Prolog het K.U.Leuven CHR Systeem, beschikbaar voor een heel aantal Prolog implementaties. 
+
+Voor zover wij weten bestond er tot op heden slechts 1 imperatieve programmeertaal waarvoor een CHR systeem bestond: Java. Voor deze populaire object-georienteerde taal bestaan momentel al meerdere implementaties, onder andere het K.U.Leuven JCHR systeem. De imperatieve aard van de taal maakt reeds meer optimalisaties aan het compilatie-proces mogelijk door het gebruik van overschrijvende aanpassing van variabelen, wat in Prolog standaard ontbreekt. Java blijft echter een redelijk hoog-niveau taal die weinig controle over de preciese datastructuren toelaat.
+
+De programmeertaal C werd in het jaar 1972 ontwikkeld als een eenvoudige imperatieve procedurale taal die eenvoudig omgezet kon worden in machinetaal. Na vele standaardisaties (K\&R C, ANSI C, ISO C, C99) wordt ze nog steeds veel gebruikt, voornamelijk voor besturingssystemen, systeemsoftware en bepaalde applicaties. Door het gebruik van een gestandaardiseerde voorverwerker en het gebruik van (systeem specifieke) ``header'' bestanden, kan C broncode tegelijk platformonafhankelijk zijn en zeer laag-niveau mogelijkheden zoals pointers hebben, die directe geheugentoegang bieden.
+
+Het is gebruikelijk dat C programmas eerst gecompileerd worden tot machinetaal vooraleer ze uitgevoerd worden. Tegenwoordig bestaan er vele C compilers, voor allerlei platformen, die sterk optimaliseren. Veel recentere programmeertalen kennen ``C bindings'' wat erin geschreven programmas toelaat C routines aan te roepen. Een CHR systeem voor C zou dus de mogelijkheid kunnen bieden om heel effici\"ente CHR code te schrijven, die bruikbaar is vanuit vele talen.
+
+Het opzet van deze thesis is dus een {\bf effici\"ent} CHR systeem schrijven dat {\bf nauwe interactie} met C mogelijk maakt.
+
+

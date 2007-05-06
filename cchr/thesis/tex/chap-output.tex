@@ -225,10 +225,10 @@ cchr {
   
   taklow @ tak(X,Y,Z,A) ==> X <= Y | { set(A,Z); };
   takhi  @ tak(X,Y,Z,A) ==> X > Y | 
-    log_int_t A1=new(A1), log_int_t A2=new(A2), log_int_t A3=new(A3),
-    tak(X-1,Y,Z,A1), tak(Y-1,Z,X,A2), tak(Z-1,X,Y,A3),
+    log_int_t A1=new(A1), log_int_t A2=new(A2), log_int_t A3=new(A3), /* creation */
+    tak(X-1,Y,Z,A1), tak(Y-1,Z,X,A2), tak(Z-1,X,Y,A3), 
     tak(get(A1),get(A2),get(A3),A),
-    { del(A1); del(A2); del(A3); }
+    { del(A1); del(A2); del(A3); } /* destruction */
   ;
 }
 \end{Verbatim}
@@ -328,22 +328,35 @@ De C versie van het algoritme is als volgt:
 logical_header(int,int,log_int_t)
 logical_code(int,int,log_int_t,log_int_cb)
 
+/**
+ * State a "LEQ" relation between 2 variables X and Y
+ * size = number of variables
+ * a = id of var X, b = id of var Y
+ * vars = pointer to array of the variables. All variables
+ *  have as value a number referring to their representative.
+ *  When 2 variables are unified, one of them gets the
+ *  representative of the other.
+ * cmp = cmp[size*a+b] contains how often the implied
+ *  "LEQ(X,Y)" constraint suspension was activated
+ */
 void addleq(int size,int a,int b,log_int_t *vars,int *cmp) {
-  cmp[size*a+b]++;
+  cmp[size*a+b]++; /* activate */
   a=log_int_t_getval(vars[a]);
   b=log_int_t_getval(vars[b]);
-  if (a==b) {
+  if (a==b) { /* quit if already equal */
     return;
   }
-  int ov=cmp[size*b+a];
-  if (ov) {
-    log_int_t_seteq(vars[a],vars[b]);
-    int low=log_int_t_getval(vars[a]);
-    for (int j=0; j<size; j++) {
+  int ov=cmp[size*b+a]; /* remember "generation" of LEQ(Y,X) */
+  if (ov) { /* LEQ(Y,X) exists, X and Y must be equal */
+    log_int_t_seteq(vars[a],vars[b]); /* make them equal */
+    int low=log_int_t_getval(vars[a]); /* get the representative 
+      of the 2 (unified) variables */
+    for (int j=0; j<size; j++) { /* make sure representative's generation
+      is higher than both original's generation */
       cmp[j*size+low] = cmp[j*size+a]+cmp[j*size+b];
       cmp[low*size+j] = cmp[a*size+j]+cmp[b*size+a];
     }
-    for (int j=0; j<size; j++) {
+    for (int j=0; j<size; j++) { /* re-activate existing LEQ's */
       if (cmp[j*size+low]) addleq(size,j,low,vars,cmp);
       if (cmp[low*size+j]) addleq(size,low,j,vars,cmp);
     }

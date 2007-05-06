@@ -173,7 +173,7 @@ In dit voorbeeld wordt de pointer louter gebruikt wordt om een waarde terug te g
 
 Indien de {\em CHR refined operational semantics} gevolgd worden, zal het beoogde gedrag van bovenstaan CCHR programma zijn dat wanneer er een \code{facmult(\argu{N},\argu{V})} constraint bestaat, er zodra \code{*N} op $x$ (groter dan \code{0}) gezet wordt, \code{*N} terug nul wordt, en \code{*V} vermenigvuldigd met $x!$. Het is echter moeilijk, zo niet onmogelijk, om effici\"ent te controleren wanneer de waarde van een expressie gewijzigd kan zijn, zeker in combinate met bv. pointers die kunnen wijzen naar geheugenplaatsen die buiten de controle van het programma zelf kunnen wijzigen (denk bijvoorbeeld aan {\em Shared Memory} (SHM) technieken waarbij een deel (virtueel) geheugen gedeeld kan worden tussen verschillende programmas).
 
-Daarom wordt gesteld dat de CCHR programmeur zelf verantwoordelijk is voor aanduiden wanneer een expressie die als guard gebruikt wordt gewijzigd kan zijn. De syntax hiervoor wordt in de volgende sectie aangereikt.
+Daarom wordt gesteld dat de CCHR programmeur zelf verantwoordelijk is voor aanduiden wanneer een expressie die als guard gebruikt wordt gewijzigd kan zijn. De syntax hiervoor wordt in sectie~\ref{sec:crout-reactiv} aangereikt. Op zich is de programmeur niet verplicht voor deze reactivatie te zorgen, maar in dat geval verdwijnt de garantie dat het programma voldoet aan de verfijnde operationele semantief $\omega_r$.
 
 \subsection{Logische variabelen}
 
@@ -186,7 +186,7 @@ Om de mogelijkheden van CHR in C niet te beperken, is er ook ondersteuning voor 
 
 Logische variabelen hebben ook de mogelijkheid om door de programmeur gespecifieerde routines aan te roepen bij bepaalde acties. Dit kan het bekendmaken dat reactivatie nodig kan zijn aanzienlijk vereenvoudigen. Op logische variabelen wordt teruggekomen in sectie~\ref{sec:logvar}.
 
-\section{C routines} \label{taal:impl-crout}
+\section{C routines}
 
 Tot hiertoe werden enkel de mogelijkheden beschreven die CCHR code biedt. Het is echter ook noodzakelijk te specifi\"eren hoe C code kan interageren met de CCHR constraints. Er wordt ingegaan op de C routines die ter beschikking gesteld worden. Deze routines zullen in praktijk C functies of macros zijn. Sommigen zijn algemeen voor een cchr-blok, en andere zijn specifiek voor bepaalde constraints.
 
@@ -204,7 +204,7 @@ Vooraleer iets nuttig met CCHR gedaan kan worden, zal het nodig zijn tenminste \
   void cchr_add_\argu{constraint}_\argu{ariteit}(\argu{arg1},\argu{arg2},\ldots);
 \end{Verbatim}
 
-\subsection{Reactivatie}
+\subsection{Reactivatie} \label{sec:crout-reactiv}
 
 Soms is het nodig de CCHR runtime te informeren dat de waarde van een expressie in een guard gewijzigd zou kunnen zijn. Hier worden volgende routines voor voorzien: \begin{Verbatim}[commandchars=\\\{\}]
 /* alle constraint suspensions */
@@ -212,7 +212,7 @@ Soms is het nodig de CCHR runtime te informeren dat de waarde van een expressie 
 /* alle constraint suspensions van bepaalde constraint */
   cchr_reactivate_all_\argu{constraint}_\argu{ariteit}();
 /* enkel bepaalde constraint suspension */
-  cchr_reactivate_\argu{constraint}_\argu{ariteit}(cchr_pid_t {\em{PID}});
+  cchr_reactivate_\argu{constraint}_\argu{ariteit}(cchr_id_t {\em{PID}});
 \end{Verbatim}
 
 \subsection{Iteratie}

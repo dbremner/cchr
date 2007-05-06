@@ -84,7 +84,9 @@ In C bestaat echter reeds een gestandaardiseerd macro-systeem. Er is dan ook voo
 
 Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler is een sequentie van C macros in plaats van echte C code.
 
-Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen. 
+Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen.
+
+De gegenereerde code wordt in detail uitgewerkt in sectie~\ref{sec:gencode}.
 
 \subsection{Uitvoer module} \label{sec:uitvoer}
 
@@ -173,7 +175,7 @@ Voor elke constraint occurrence wordt een stuk code gegenereerd in de vorm van e
 
 De naam die aan de gegenereerde macro voor een constraint occurrence moet van de vorm \\ ``\code{CODE\_\argu{occurrence-naam}}'' zijn, en geen parameters hebben. De benaming voor de occurrence moet gewoon overal dezelfde zijn in de gegenereerde code. In praktijk gebruikt de compiler benamingen als \\ ``\code{\argu{constraint}\_\argu{ariteit}\_\argu{rule}\_\argu{positie}}''. Positie is hierbij de letter \code{K} voor kept constraints, of de letter \code{R} voor removed constraints, gevolgd door een getal dat aanduidt de hoeveelste occurrence van dat type (removed of kept) het is binnen de gegeven rule, te beginnen bij 1.
 
-Dan de inhoud van deze macros. Het is hier dat het voordeel van een template-gebaseerde code generatie tot uiting komt: het algorithme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst kan u vinden in appendix~\ref{chap:csm}. Het kan nuttig zijn de lijst erbij te nemen bij de komende uitleg, aangezien de precieze betekenis van de CSM macros hier niet meer uitgelegd wordt.
+Dan de inhoud van deze macros. Het is hier dat het voordeel van een template-gebaseerde code generatie tot uiting komt: het algorithme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst beschikbare macros kan u vinden in appendix~\ref{chap:csm}. Het kan nuttig zijn de lijst erbij te nemen bij de komende uitleg, aangezien de precieze betekenis van de CSM macros hier niet meer uitgelegd wordt.
 
 Als eerste versie wordt vertrokken van een imperatieve versie van de basisuitvoering, zoals beschreven in \cite{tomsphdthesis}:
 \begin{itemize}
@@ -302,6 +304,8 @@ De constraint suspensions zelf bevatten (afhankelijk van het type): \begin{itemi
 \end{itemize}
 
 Een \code{CSM\_MAKE} macro zal een nieuw element alloceren in de constraint store, maar het nog niet aan een van de lijsten toevoegen, terwijl een \code{CSM\_NEEDSELF} ervoor zal zorgen dat dat element toevoegt aan de lijst overeenkomstig met het type constraint van dat element. Merk op dat nergens expliciet opgeslagen is van welk constraint-type een bepaald element is, dat volgt impliciet uit de lijst waartoe het behoort. \code{CSM\_KILL} en \code{CSM\_KILLSELF} tenslotte zullen een element zo nodig uit een lijst verwijderen, en de plaats vrijgeven voor hergebruik.
+
+Aangezien de datastructuur waarin de constraint suspensions bijgehouden worden de suspensions zelf bevat, en geen verwijzingen ernaar, zal een verwijderde constraint gevolgd door de aanmaak van een nieuwe constraint sowieso het vrijgekomen geheugen hergebruiken. Dit samen met de hoge effici\"entie van de gelinkte lijst voor verwijder en toevoeg operaties verlaagt de nood aan speciale geheugen-herbruik technieken, zoals voor Prolog beschreven in \cite{jon:memory_reuse}.
 
 \subsection{De propagation history} \label{sec:prophist}
 

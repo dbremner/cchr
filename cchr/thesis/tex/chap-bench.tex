@@ -13,7 +13,9 @@
 
 In dit hoofdstuk worden enkele voorbeelden bekeken en gezien hoe goed ze presteren in de verschillende CHR implementaties. Van elk van deze voorbeelden is een ook pure C implementatie geschreven, om een idee te hebben hoe ver (C)CHR er nog van af staat.
 
-\TODO{Benchmarksysteem beschrijven}
+Alle benchmarks zijn uitgevoerd op hetzelfde systeem, met zo min mogelijk andere taken op het zelfde moment lopende. Het gaat om een AMD Athlon64 3500+ processor met 1GiB PC3200 DDR geheugen, met als besturingssyteem Gentoo op een Linux 2.6.19 kernel. De gebruikte C compiler (voor zowel de C versies, als de gegenereerde C code) is GCC (Gnu Compiler Collection) 4.1.2. De gebruikte Java compiler en runtime zijn versie 1.5.0.11. Voor de SWI-Prolog benchmarks is gebruik gemaakt van SWI 5.6.17, met GMP ondersteuning. Er werd gebruik gemaakt van de GMP (GNU Multiprecision Library) versie 4.2.1.
+
+Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, test en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden, en uiteindelijk de totale gebruikte cpu tijd gemeten (dus niet de kloktijd, maar het aantal seconden effectieve cpu belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit laatste om de constante tijd (inladen uitvoerbaar bestand, compilen van CHR naar Prolog, opstarten Java JVM en JIT compilatie) niet in rekening te brengen bij de tests. Het uiteindelijk resultaat werd met behulp van gnuplot uitgezet op een grafiek.
 
 \subsection{Grootst gemene deler} \label{sec:bench-gcd}
 

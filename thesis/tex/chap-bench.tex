@@ -109,7 +109,7 @@ tak(X,Y,Z,A) ==> X > Y |
 \end{Verbatim}
 \caption{\label{code:tak} De Takeuchi functie in Prolog CHR}
 \end{exCode}
-Er was wat moeite nodig om een versie in C te schrijven van dit algoritme, dat sneller was dan CCHR. Uiteindelijk bleek de reeds berekende waarden in een hashtable bewaren (zie sectie~\ref{ssec:impl-rt-ht}) voldoende. Bij een eerdere poging om alle eerder berekende waardes in een 3-dimensionele array te bewaren, bleken de hoge geheugenvereisten voor vertraging te zorgen.
+Er was wat moeite nodig om een versie in C te schrijven van dit algoritme, dat sneller was dan CCHR. Uiteindelijk bleek de reeds berekende waarden in een hashtable bewaren (zie sectie~\ref{sec:hashtable}) voldoende. Bij een eerdere poging om alle eerder berekende waardes in een 3-dimensionele array te bewaren, bleken de hoge geheugenvereisten voor vertraging te zorgen.
 
 \benchfig{tak}{Takeuchi benchmark}
 De resultaten zijn te vinden in figuur~\ref{fig:bench-tak}. Bij probleemgrootte $N$, is de waarde van $tak(\lceil\frac{100}{81}N\rceil,\lceil\frac{10}{9}N\rceil,N)$ berekend.
@@ -126,7 +126,7 @@ antisymmetry @ leq(X,Y), leq(Y,X) <=> X = Y.
 idempotence  @ leq(X,Y) \ leq(X,Y) <=> true.
 transitivity @ leq(X,Y), leq(Y,Z) ==> leq(X,Z).
 \end{Verbatim}
-\caption{\label{code:tak} LEQ in Prolog CHR}
+\caption{\label{code:leq} LEQ in Prolog CHR}
 \end{exCode}
 Na enkele pogingen een snelle C versie van dit algoritme te schrijven, is besloten de CCHR compiler output letterlijk naar C te vertalen, maar met gebruik van geschiktere datastructuren. In het bijzonder is hier in plaats van een constraint store slechts een matrix van $N$ op $N$ (met $N$ het aantal variabelen) gebruikt, waarvan elke cel aangeeft hoe vaak een constraint die een $\leq$ uitdrukt geactiveerd werd. Voor de gelijkheden te volgen worden dezelfde logische variabelen gebruikt als in CCHR. De code is eveneens te vinden in sectie~\ref{code:leq-c}.
 \benchfig{leq}{LEQ benchmark}

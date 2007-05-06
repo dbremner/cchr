@@ -73,7 +73,7 @@ Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties
 \item Constraint occurrences worden bepaald (in welke rules en op welke plaats daarin elke constraint voorkomt).
 \item Variabele occurrences worden bepaald (in welke constraint occurrence en op welke plaats daarin elke variabele voorkomt).
 \item Afhankelijkheden tussen variabelen en statements worden bepaald.
-\item Met deze afhankelijkheden wordt voor elke constraint occurrence een goede ``join ordering'' bepaald (zie sectie~\ref{ssec:joinorder}).
+\item Met deze afhankelijkheden wordt voor elke constraint occurrence een goede ``join ordering'' bepaald (zie sectie~\ref{sec:joinorder}).
 \end{itemize}
 
 \subsection{Code generatie} \label{sec:codegen}
@@ -238,9 +238,9 @@ De gewichten die gebruikt worden zijn redelijk eenvoudig, en komen vermoedelijk 
 
 \Quote{If you don't find it in the index, look very carefully through the entire catalogue.}{Unknown, Sears, Roebuck, and Co. Consumer's Guide, 1897}
 
-Na al deze verbeteringen blijft het meeste tijd verloren gaan in het opzoeken van de partner constraints. In sommige gevallen kunnen de nodige partner constraints al bekend zijn, door indexen aan te leggen en te onderhouden die aangeven welke constraint suspensions allemaal een of meerdere waardes als bepaalde argumenten hebben. Hoe dit ge\"implementeerd is wordt uitgelegd in sectie~\ref{sec:impl-runtime}.
+Na al deze verbeteringen blijft het meeste tijd verloren gaan in het opzoeken van de partner constraints. In sommige gevallen kunnen de nodige partner constraints al bekend zijn, door indexen aan te leggen en te onderhouden die aangeven welke constraint suspensions allemaal een of meerdere waardes als bepaalde argumenten hebben. Hoe dit ge\"implementeerd is wordt uitgelegd in sectie~\ref{sec:runtime}.
 
-Om deze indexen te gebruiken in CSM, is het nodig ze eerst in een index-macro te defini\"eren zoals aangehaald in sectie~\ref{ssec:impl-code-alg}. Daarna is het ook nodig om in plaats van de traditionele \code{CSM\_LOOP} macro enkele andere macros te gebruiken. Eerst en vooral moet gedeclareerd worden dat een bepaalde variabele als index-iterator gebruikt gaat worden (met \code{CSM\_DEFIDXVAR}). Daarna moeten de op te zoeken waardes voor de verschillende argumenten ingevuld worden met \code{CSM\_SETIDXVAR}, en uiteindelijk moet ge\"itereerd worden met \code{CSM\_IDXLOOP} of \code{CSM\_IDXUNILOOP}. Op het verschil tussen beide wordt dadelijk ingegaan.
+Om deze indexen te gebruiken in CSM, is het nodig ze eerst in een index-macro te defini\"eren zoals aangehaald in sectie~\ref{sec:impl}. Daarna is het ook nodig om in plaats van de traditionele \code{CSM\_LOOP} macro enkele andere macros te gebruiken. Eerst en vooral moet gedeclareerd worden dat een bepaalde variabele als index-iterator gebruikt gaat worden (met \code{CSM\_DEFIDXVAR}). Daarna moeten de op te zoeken waardes voor de verschillende argumenten ingevuld worden met \code{CSM\_SETIDXVAR}, en uiteindelijk moet ge\"itereerd worden met \code{CSM\_IDXLOOP} of \code{CSM\_IDXUNILOOP}. Op het verschil tussen beide wordt dadelijk ingegaan.
 
 Deze optimalisatie is degene die de belangrijkste snelheidsverbetering teweegbracht bij de implementatie, wat logisch is, bij sommige problemen maakt het de uitvoering een grootte-orde sneller door onmiddellijk de juiste constraint te vinden, in plaats van mogelijks er duizenden te moeten doorlopen.
 
@@ -289,7 +289,7 @@ De belangrijkste taak van CSM is de gebruikte datastructuren afschermen van de g
  
 \subsection{De constraint store} \label{sec:constore}
 
-Voor de constraint store wordt gebruikt gemaakt van een structuur van doubly-linked lists. De juiste implementatie wordt uitgewerkt in sectie~\label{ssec:impl-rt-dll}, en hier is het voldoende te weten dat het de mogelijkheid geeft om geheugenblokken van vaste grootte snel te alloceren en vrij te geven. Er kan een op voorhand bepaald aantal lijsten aan gekoppeld zijn, en elk blok kan in maximaal 1 zulke lijst geplaatst worden. Er wordt naar een blok verwezen dmv. een {\em PID} (positie ID), maar dit kan herbruikt worden nadat een blok vrijgegeven is. Verder krijgt elk blok een uniek {\em ID}, dat nooit herbruikt wordt.
+Voor de constraint store wordt gebruikt gemaakt van een structuur van doubly-linked lists. De juiste implementatie wordt uitgewerkt in sectie~\ref{sec:dll}, en hier is het voldoende te weten dat het de mogelijkheid geeft om geheugenblokken van vaste grootte snel te alloceren en vrij te geven. Er kan een op voorhand bepaald aantal lijsten aan gekoppeld zijn, en elk blok kan in maximaal 1 zulke lijst geplaatst worden. Er wordt naar een blok verwezen dmv. een {\em PID} (positie ID), maar dit kan herbruikt worden nadat een blok vrijgegeven is. Verder krijgt elk blok een uniek {\em ID}, dat nooit herbruikt wordt.
 
 Als datablok worden de constraint suspensions gebruikt. Deze is beschreven als een C {\em union}, een structuur die juist 1 van zijn elementen kan bevatten (door ze dezelfde geheugenruimte te laten delen), dit in tegenstelling tot een {\em struct}, die ze allemaal tegelijk bevat (na elkaar). Als elementen van die union worden de datastructuren voor elk van de verschillende types constraints gebruikt. Dit heeft als nadeel dat er wat plaats verpild wordt als de gegevens voor de verschillende types niet evenveel plaats innemen. Dit verschil is echter meestal beperkt. Een alternatief zou kunnen zijn een apart datablok gebruiken voor elk van de types, wat dan weer het nadeel heeft van meer allocaties tijdens het uitvoeren.
 
@@ -307,7 +307,7 @@ Een \code{CSM\_MAKE} macro zal een nieuw element alloceren in de constraint stor
 
 \Quote{History repeats itself; that's one of the things that's wrong with history.}{Clarence Darrow (1857 - 1938)}
 
-Om de propagation history bij te houden wordt een zelf ge\"implementeerde hashtable gebruikt. Op de implementatie ervan wordt ingegaan in sectie~\ref{ssec:impl-rt-ht}. Ze vereist dat zelf een datatype aangegeven wordt om in de hashtable te gebruiken, inclusief een manier om aan te geven of zulk een datatype een ``gebruikte plaats'' voorstelt.
+Om de propagation history bij te houden wordt een zelf ge\"implementeerde hashtable gebruikt. Op de implementatie ervan wordt ingegaan in sectie~\ref{sec:hashtable}. Ze vereist dat zelf een datatype aangegeven wordt om in de hashtable te gebruiken, inclusief een manier om aan te geven of zulk een datatype een ``gebruikte plaats'' voorstelt.
 
 Voor de propagation history wordt dus de \em{ID}s (niet de \em{PID}s) van de betrokken constraint suspensions opgeslagen, voorafgegaan door een 0 of een 1, die aangeeft of de plaats in gebruik is. Ze zijn twee opties: \begin{enumerate}
   \item Alles opslagen in 1 globale hashtable.
@@ -319,7 +319,7 @@ Die tweede methode vraagt meer overhead (veel aparte hashtables in plaats van 1 
 
 Voor de waardenindexen, die gebruikt worden met de \code{CSM\_IDXLOOP} en verwante macros, wordt opnieuw gebruik gemaakt van de hashtable implementatie die ook voor de propagation history gebruikt werd. Ze wordt zelfs 2 maal in elkaar gebruikt: eerst een table om de verschillende waardes aan subtables te koppelen, en dan in die tables dan de betrokken constraint suspensions opslagen. Zowel de {\em ID}s als de {\em PID}s op worden echter opgeslagen, waarbij de {\em ID}s (omwille van uniek zijn) als sleutel in de hashtable gebruikt worden, terwijl de {\em PID}s als waarbij gebruikt worden, om eens een bepaalde constraint gevonden, ze ook snel terug te vinden. Dat laatste was bij de propagation history niet nodig, aangezien enkel snel kunnen controleren of een bepaalde (combinatie van) constraint suspension(s) aanwezig was vereist is, en niet de constraint suspensions zelf moeten kunnen terugvinden.
 
-Voor \code{CSM\_IDXLOOP} wordt ge\"itereerd over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt. Dit is nodig, omdat de hashtable implementatie geen wijzigingen tijdens het itereren toelaat. Zie sectie~\ref{ssec:impl-rt-ht}.
+Voor \code{CSM\_IDXLOOP} wordt ge\"itereerd over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt. Dit is nodig, omdat de hashtable implementatie geen wijzigingen tijdens het itereren toelaat. Zie sectie~\ref{sec:hashtable}.
 
 CSM zal automatisch alle indexen onderhouden die met de macro \code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} gedefinieerd zijn, zowel het toevoegen van nieuwe waardes, nieuwe constraint suspensions bij de subtable voor een bestaande waarde toevoegen, het verwijderen van constraint suspensions uit de juiste subtable, en indien er voor een gegeven combinatie van waardes geen overeenkomstige suspensions meer zijn, het verwijderen van de volledige subtable voor die waardes.
 

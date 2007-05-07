@@ -4,11 +4,11 @@ use strict;
 
 my $BENCHER="./bench.sh";
 
-my $FACTOR=1.01;
-my $EFACTOR=1.01;
-my $MINTIME=0;
-my $MAXTIME=0.001;
-my $RUNTIME=100;
+my $FACTOR=1.03;
+my $EFACTOR=1.2;
+my $MINTIME=0.045;
+my $MAXTIME=4.5;
+my $RUNTIME=40;
 
 my $AVGTIME=($MINTIME+$MAXTIME)/2;
 
@@ -24,13 +24,15 @@ my %BENCHERS=(
 
 my %SYSTEMS=(
 #  jchr => sub { my ($prog,@args)=@_; return ('java','-cp','/home/pw/Desktop/KULeuven_JCHR.jar:Java',$prog,@args); },
-  cchr => sub { my ($prog,@args)=@_; return ("./$prog",@args); },
-  c => sub {    my ($prog,@args)=@_; return ("C/$prog",@args); },
+#  cchr => sub { my ($prog,@args)=@_; return ("./$prog",@args); },
+#  c => sub {    my ($prog,@args)=@_; return ("C/$prog",@args); },
 #  swi => sub {  my ($prog,@args)=@_; return ('./benchswi.sh',$prog,join(',',@args)); } 
+  cchr2 => sub { my ($prog,@args)=@_; return ("./$prog",@args); },
 );
 
 my %SYSTBL=(
   cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
+  cchr2 =>{gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
   jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
   c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" },
   swi =>  {gcd => "gcd", fib => "fib", leq => "leq", primes => "primes2", ram => "ram_simulator", tak => "tak" }
@@ -44,7 +46,8 @@ my %MAX=(
   swi => {gcd => 800, ram => 25000, tak => 500, fib => 750, primes => 14000, leq => 65},
   jchr => {fib => 10000, leq => 100, primes => 9000, ram => 2500, leq => 850},
   c => {leq => 450, fib => 135000, gcd => 35000000, primes => 350000, ram => 250000000, tak => 3400},
-  cchr => {ram => 4800, tak => 2000, fib => 25000, gcd => 10000000, primes => 80000, leq => 250}
+  cchr => {ram => 4500, tak => 2000, fib => 25000, gcd => 10000000, primes => 80000, leq => 250}
+  cchr2 =>{ram => 4200, tak => 2000, fib => 25000, gcd => 10000000, primes => 80000, leq => 250}
 );
 
 sub execBench {

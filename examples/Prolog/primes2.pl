@@ -43,6 +43,6 @@ A: upto(-1).
 
 
 gen   @ upto(N) <=> N>1 | M is N-1, upto(M), prime(N).
-sift  @ prime(X) \ prime(Y) <=> Y mod X =:= 0 | true.
+sift  @ prime(X) \ prime(Y) <=> Z is Y mod X, Z == 0 | true.
 
 test(N) :- upto(N).

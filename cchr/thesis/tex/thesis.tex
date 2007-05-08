@@ -7,37 +7,7 @@
 \usepackage[latin1]{inputenc}
 %\usepackage{THcover}
 
-% Handle differences between PdfLaTeX/LaTeX
-\ifx\pdftexversion\undefined
-\usepackage{url}
-\usepackage[dvips]{geometry}
-\usepackage[dvips]{graphics}
-\newcommand{\phantomsection}{}
-\newcommand{\includepdf}[1]{}
-\newcommand{\texorpdfstring}[2]{#1}
-% In LaTeX, include a converted .eps
-\newcommand{\includebitmap}[2]{\includegraphics[width=#1\textwidth]{#2}}
-\newcommand{\includevector}[2]{\includegraphics[width=#1\textwidth]{#2}}
-\else
-\usepackage[pdftex]{geometry}
-\usepackage[pdftex]{graphics}
-\usepackage{pdfpages}
-\usepackage[
-        pdftex,
-        pdfpagelabels=true,
-        plainpages=false,
-        colorlinks=true,
-        breaklinks=true,
-        linktocpage=true,
-        pdfstartview=FitV,
-        linkcolor=black,
-        citecolor=black,
-        urlcolor=black
-]{hyperref}
-% In PdfLaTeX, include a .png directly
-\newcommand{\includebitmap}[2]{\includegraphics[width=#1\textwidth]{#2.png}}
-\newcommand{\includevector}[2]{\includegraphics[width=#1\textwidth]{#2.pdf}}
-\fi
+\usepackage{compat}
 
 \geometry{%
         a4paper,
@@ -84,9 +54,10 @@
 \input{defs}
 
 \begin{document}
-%\input{THcover}
 
-\cleardoublepage
+%\includegraphics{THcover}
+%\cleardoublepage
+
 \section*{Dankwoord}
 
 Hier komt mijn dankwoord. 

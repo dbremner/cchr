@@ -18,21 +18,23 @@
 % Revised by B. De Decker <bart@cs.kuleuven.ac.be> January 14, 2002.  (acm,ams added)
 % Revised by R. Cools <ronald@cs.kuleuven.ac.be> April 30, 2002. (tt instruction)
 % Revised by R. Cools <ronald@cs.kuleuven.ac.be> May 15, 2002. (MS toegevoegd)
+% Revised by R. Cools <ronald@cs.kuleuven.be> May 15, 2006. (TW -> FirW)
 %
 
-\typeout{Document Style `THcover' <May 2002>.}
+\typeout{Document Style `THcover' <May 2006>.}
 \typeout{****************************************************************************}
-\typeout{Het logo bovenaan de frontpagina is NIET te zien op scherm,}
-\typeout{enkel op papier. U dient het resultaat af te drukken op printer wit.}
+\typeout{Het logo bovenaan de frontpagina is NIET te zien op scherm met xdvi,}
+\typeout{enkel op papier en in het Postscript bestand.}
+\typeout{NIET verwerken met pdflatex, wel met latex + dvips.}
+\typeout{U dient het resultaat af te drukken op printer wit.}
 \typeout{Binnen tt geeft u eerst het commando "wit" en dan "p".}
 \typeout{Werd uw nederlandse titel en engelse vertaling door uw promotor goedgekeurd?}
 \typeout{****************************************************************************}
 
-
-%\setlength{\textheight}{25cm}
-%\setlength{\textwidth}{17cm}
-%\hoffset=-2.1cm
-%\voffset=-3cm
+\setlength{\textheight}{25cm}
+\setlength{\textwidth}{17cm}
+\hoffset=-2.1cm
+\voffset=-3cm
 \gdef\thanks#1{}		% no thanks on cover page
 
 % dutch/english [auxiliary function]
@@ -159,7 +161,7 @@
 			\or	1	% + WET		-> WET
 			\or	2	% + WET&TW	-> WET&TW
 			\fi
-		\or			% WET&TW +
+		\or			% WET&TW + 
 			\ifcase\@@fac{\other@deg}
 				2	% + CW		-> WET&TW
 			\or	2	% + WET		-> WET&TW
@@ -262,10 +264,12 @@
 % caption (postscript) as formulated on the 1st page
 \gdef\addr@i{%
 	\ifcase\@fac
-%		% CW
-	\mbox{}\hfill\includegraphics{cover/THcwres}
+		% CW
+	\special{psfile="cover/THcwres.ps"}
 	\or	% WET
-	\mbox{}\hfill\includegraphics{cover/THwetres}
+	\special{psfile="cover/THwetres.ps"}
+	\or	% WET&TW
+	\special{psfile="cover/THwettwres.ps"}
 	\fi
 }
 
@@ -274,7 +278,7 @@
 	%% FIRST LINE %%
 	\ifcase\@fac
 		% CW
-	{\it Faculteit Toegepaste Wetenschappen}
+	{\it Faculteit Ingenieurswetenschappen}
 	\or	% WET
 	{\it Faculteit Wetenschappen}
 	\or	% WET&TW
@@ -288,7 +292,7 @@
 	\or	% WET
 	\mbox{}
 	\or	% WET&TW
-	{\it en Toegepaste Wetenschappen}
+	{\it en Ingenieurswetenschappen}
 	\fi
 	\hfill{\d@e{Academiejaar}{Academic year} \@acyear}
 	%% REMAINDER %%
@@ -320,7 +324,7 @@
 \let\lca=a \let\lcb=b \let\lcc=c \let\lcd=d \let\lce=e \let\lcf=f \let\lcg=g
 \let\lch=h \let\lci=i \let\lcj=j \let\lck=k \let\lcl=l \let\lcm=m \let\lcn=n
 \let\lco=o \let\lcp=p \let\lcq=q \let\lcr=r \let\lcs=s \let\lct=t \let\lcu=u
-\let\lcv=v \let\lcw=w \let\lcx=x \let\lcy=y \let\lcz=z
+\let\lcv=v \let\lcw=w \let\lcx=x \let\lcy=y \let\lcz=z 
 
 % title; ordinary capitalization
 \def\title#1{\gdef\@title{#1}\gdef\@TITLE{\n@uppercase{#1}}}
@@ -356,7 +360,7 @@
 	\ifx\otherstud@i\@empty
 		\xdef\otherstud@i{{\bf #1 \n@uppercase{#2}}}
 		\xdef\otherstud@ii{{\rm #2 #1}}
-	\else
+	\else	
 		\xdef\otherstud@i{\otherstud@i\\{\bf #1 \n@uppercase{#2}}}
 		\xdef\otherstud@ii{\otherstud@ii\d@e{ en }{ and }{\rm #2 #1}}
 			%% all but the last "and" should be comma's
@@ -510,7 +514,7 @@
 				\end{itemize}}
 		\fi
 	\fi
-}{%
+}{%        
 	\vfill
 	% degree(s), supervisor(s), reader(s) and counsellor(s)
 	\noindent
@@ -529,7 +533,7 @@
 	\end{tabular}
 }
 
-\newenvironment{abstract}{%
+\renewenvironment{abstract}{%
 	\noindent{\it\d@e{Korte inhoud}{Abstract}\,:}\vspace{2mm}
 	\nonfrenchspacing
 	\begin{small}	% looks better when using 12pt

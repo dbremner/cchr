@@ -1,27 +1,29 @@
 \chapter{Constraint Handling Rules}
 
-In dit hoofdstuk zullen we een overzicht geven van de taal CHR.
+In dit hoofdstuk wordt een overzicht gegeven van de taal CHR.
 
 \section{Inleiding}
 
-CHR is een hoog-niveau, declaratieve taaluitbreiding voor CLP. Het geeft de mogelijkheid om in een gegeven host-taal die reeds enkele {\em built-in constraints} ondersteunt, nieuwe door de gebruiker gedefini\"eerde constraints (ofwel CHR constraints) te gaan toevoegen. CHR geeft dan een mogelijkheid te specifi\"eren hoe deze CHR constraints, die door een programma in de host-taal toegevoegd kunnen worden, omgezet worden in verschillende stappen tot nieuwe CHR constraints, en built-in constraints.
+De eerste constraint solvers volgden het zogenaamde {\em black box} principe: men kon constraints opgeven en de constraint solver, die specifiek voor de gebruikte constraints over een vastgesteld domein gemaakt was, lostte ze op. Hierbij was het nauwelijks mogelijk om inzicht te krijgen hoe de constraint solvers zelf werkten, en zeker moeilijk of onmogelijk om er aanpassingen aan te maken. Men had echter nood aan constraint solvers die specifiek voor een bepaalde applicaties problemen konden oplossen. In een volgende geneneratie solvers, werd dit probleem opgelost door meer controle over de solver in handen van de programmeur te leggen. De gebruikte zogenaamde  {\em glass box} technieken en evolutie wordt uitgelegd in \cite{chr}. Hierin haalt men ook de {\em no box} strategie aan: de werking van de constraint solver ligt volledig in handen van de programmeur.
 
-CHR staat voor Constraint Handling Rules, en bestaat uit een opsomming van regels die beschrijven hoe en wanneer CHR constraints herschreven mogen worden tot andere constraints. We zullen hier een beschrijving geven van CHR in te bedden in Prolog, wat gebruikelijk is. Op die manier kan de CHR syntax en semantiek het gemakkelijkst beschreven worden. Bij het inbedden van CHR in een imperatieve taal zijn vaak enkele omwegen nodig om de hosttaal als CLP taal te kunnen gebruiken. De built-in constraints die Prolog aanbiedt zijn zijn \code{=} (unificatie), \code{==} (termgelijkheid), gebruiker-gedefinieerde predikaten en enkele ingebouwde predikaten.
+CHR is een hoog-niveau, declaratieve taaluitbreiding voor C(L)P. Het geeft de mogelijkheid om in een gegeven host-taal die reeds enkele {\em built-in constraints} ondersteunt, nieuwe door de gebruiker gedefini\"eerde constraints (ofwel CHR constraints) te gaan toevoegen. CHR geeft dan een mogelijkheid te specifi\"eren hoe deze CHR constraints, die door een programma aan de host-taal toegevoegd kunnen worden, omgezet worden in verschillende stappen tot nieuwe CHR constraints, en built-in constraints. In wezen bestaat de uitvoering van een CHR programma uit een herhaaldelijke toepassing van transformatie-regels die op de gegeven constraints uitgevoerd worden tot ze opgelost zijn.
+
+CHR staat voor Constraint Handling Rules, en een CHR programma bestaat uit een opsomming van regels die beschrijven hoe en wanneer CHR constraints herschreven mogen worden tot andere constraints. We zullen hier een beschrijving geven van CHR in te bedden in Prolog, wat gebruikelijk is. Op die manier kan de CHR syntax en semantiek het gemakkelijkst beschreven worden. Bij het inbedden van CHR in een imperatieve taal zijn vaak enkele omwegen nodig om de hosttaal als C(L)P taal te kunnen gebruiken. De built-in constraints die Prolog aanbiedt zijn zijn \code{=} (unificatie), \code{==} (termgelijkheid), gebruiker-gedefinieerde predikaten en enkele ingebouwde predikaten.
 
 \subsection{Syntax}
 
-Constraints nemen de vorm aan van predikaten, met een naam en een ariteit. Ze moeten op een of andere manier gedeclareerd worden als constraint, ipv. normaal predikaat. In Prolog CHR gebeurt dat met: \begin{Verbatim}
+Constraints nemen de vorm aan van predikaten, met een naam en een ariteit. Ze moeten op een of andere manier gedeclareerd worden als constraint, in plaats van normaal predikaat. In Prolog CHR gebeurt dat met: \begin{Verbatim}
   :- chr_constraint upto(+int),prime(+int).
 \end{Verbatim}
 Hiermee wordt duidelijk gemaakt dat \code{upto/1} en \code{prime/1} geen predikaten maar constraints zijn.
 
-Voor de rest kunnen er nu CHR rules gegeven worden, die beschrijven hoe de gebruikers-gedefinieerde constraints \code{fib/2} behandeld moet worden. Er zijn 3 types van CHR rules: \begin{itemize}
-\item Simplification: Een regel die aangeeft dat onder een bepaalde voorwaarden, bepaalde CHR constraints verwijderd mogen worden en er andere in de plaats komen. De algemene syntax is:  $naam @ R_1, R_2, \ldots <=> G_1, G_2, \ldots | A_1, A_2, \ldots.$. $R_i$ zijn hierbij de constraints na het uitvoeren van de regel verwijderd mogen worden (``removed constraints''), $G_i$ de voorwaardes waaraan voldaan moet zijn (``guards''), en $A_i$ de constraints die toegevoegd moeten worden (``added constraint''). Zulk een regel wordt gebruikt om een vereenvoudiging toe te laten. Het $naam @$ gedeelte is optioneel, net als het $G_i, \ldots |$ gedeelte, indien er geen $G_i$'s zijn.
-\item Propagation: een regel die dat onder bepaalde voorwaardes, bepaalde CHR constraints toegevoegd mogen worden. De syntax is: $naam @ K_1, K_2, \ldots ==> G_1, G_2, \ldots | A_1, A_2, \ldots.$. $K_i$ zijn hierbij de constraints die reeds moeten bestaan (``kept constraints''), $G_i$ en $A_i$ zijn gelijkaardig aan het vorige voorbeeld.
-\item Simpagation: Een combinatie van Propagation en Simplification. De syntax is $naam @ K_1, K_2, \ldots \backslash R_1, R_2, \ldots <=> G_1, G_2, \ldots | A_1, A_2, \ldots.$. Hierbij moeten zowel de kept als de removed constraints bestaan, en aan de guards voldaan zijn, en zullen de removed constraint verwijderd worden en de added constraints toegevoegd.
+Voor de rest kunnen er nu CHR rules gegeven worden, die beschrijven hoe de gebruikers-gedefinieerde constraints behandeld moet worden. Er zijn 3 types van CHR rules: \begin{itemize}
+\item Simplification: Een regel die aangeeft dat onder een bepaalde voorwaarden, bepaalde CHR constraints verwijderd mogen worden en er andere in de plaats komen. De algemene syntax is: \\ $naam @ R_1, R_2, \ldots <=> G_1, G_2, \ldots | A_1, A_2, \ldots.$. $R_i$ zijn hierbij de constraints na het uitvoeren van de regel verwijderd mogen worden (``removed constraints''), $G_i$ de voorwaarden waaraan voldaan moet zijn (``guards''), en $A_i$ de constraints die toegevoegd moeten worden (``added constraint''). Zulk een regel wordt gebruikt om een vereenvoudiging toe te laten. Het $naam @$ gedeelte is optioneel, net als het $G_i, \ldots |$ gedeelte, indien er geen $G_i$'s zijn.
+\item Propagation: een regel die stelt dat onder bepaalde voorwaarden, bepaalde CHR constraints toegevoegd moeten worden. De syntax is: \\ $naam @ K_1, K_2, \ldots ==> G_1, G_2, \ldots | A_1, A_2, \ldots.$. $K_i$ zijn hierbij de constraints die reeds moeten bestaan (``kept constraints''), $G_i$ en $A_i$ zijn gelijkaardig aan het vorige voorbeeld.
+\item Simpagation: Een combinatie van Propagation en Simplification. De syntax is \\ $naam @ K_1, K_2, \ldots \backslash R_1, R_2, \ldots <=> G_1, G_2, \ldots | A_1, A_2, \ldots.$. Hierbij moeten zowel de kept als de removed constraints bestaan, en aan de guards voldaan zijn, en zullen de removed constraint verwijderd worden en de added constraints toegevoegd.
 \end{itemize}
 
-Een vollediger voorbeeldje:
+Een voorbeeldje:
 \begin{Verbatim}
   simplification @ upto(X) <=> X<2 | true.
   propagation @ upto(X) ==> X>1 | Y is X-1, upto(Y), prime(X).

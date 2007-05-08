@@ -6,14 +6,14 @@ In dit hoofdstuk wordt ingegaan op hoe ons CCHR systeem ontworpen en ge\"impleme
 
 Zoals reeds aangehaald bestaat de implementatie van een CHR systeem normaal uit twee delen: de {\em compiler} en de {\em runtime}. De compiler zorgt voor een vertaling van de CHR-syntax naar code die uitvoerbaar is op het host-platform, en de runtime bevat alles wat noodzakelijk is om de vertaalde code te kunnen uitvoeren (algemene routines, onderhouden van de constraint store, \ldots).
 
-Onze compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot normale C code, die dan verder door een standaard C compiler vertaald kan worden tot uitvoerbare code (machinetaal voor een specifiek platform). In tegenstelling tot Prolog en Java wordt het programma bij compilatie volledig tot machinetaal herleid, en is er dus geen {\em interpretatie} of {Just-in-time compilatie} meer nodig bij de uitvoering.
+Onze compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot normale C code, die dan verder door een standaard C compiler vertaald kan worden tot uitvoerbare code (machinetaal voor een specifiek platform). Bij C is het gebruikelijk dat er een volledige compilatie tot machinetaal gebeurt, in plaats van slechts een omzetting tot bytecode zoals in Java. Hierdoor duurt compileren langer, en is de uitvoer van de C compiler slechts op \'e\'en platform bruikbaar. Het voordeel is echter dat veel specifiekere machine-optimalisaties mogelijk zijn, waar CCHR ook van profiteert.
 
 \section{De Compiler} \label{sec:compiler}
 
 \Quote{If the programmer can simulate a construct faster then the compiler can implement the construct itself, then the compiler writer has blown it badly.}{Guy L. Steele Jr., Tartan Laboratories}
 
-De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: de CHR broncode wordt naar de host-language zelf vertaald, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren, en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke hosttaal. De precieze implementatie verschilt wel danig: \begin{itemize}
-  \item De CCHR compiler vertaalt logischerwijs naar C en niet naar Java
+De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: de CHR broncode wordt naar de host-language zelf vertaald, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren, en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke hosttaal. De precieze implementatie verschilt wel: \begin{itemize}
+  \item De CCHR compiler vertaalt naar C en niet naar Java
   \item De CCHR compiler is zelf ook in C geschreven. De JCHR compiler was zelf in Java gemaakt.
   \item De gebruikte lexer en parser zijn gegenereerd met {\em Flex} en {\em Bison}, in plaats van {\em ANTLR}.
   \item In plaats van een extern pakket voor de templates te gebruiken, worden standaard C macro's gebruikt.
@@ -31,8 +31,8 @@ De algemene werking van de CCHR compiler is als volgt: \begin{itemize}
     \item De {\em parser} bouwt een {\em abstract syntax tree} (AST).
     \item De AST wordt geanalyseerd, en een tussenvorm wordt opgebouwd.
     \item Op de tussenvorm worden optimalisaties doorgevoerd.
-    \item Uiteindelijk wordt de tussenvorm opgezet naar een sequentie van C macro's.
-    \item Deze C macro's worden in het uitvoerbestand (C) op de plaats gezet waar het {\em cchr-blok} stond.
+    \item Uiteindelijk wordt de tussenvorm omgezet naar een sequentie van C macro's.
+    \item Deze C macro's worden in het uitvoerbestand op de plaats gezet waar het {\em cchr-blok} stond.
   \end{itemize}
 \end{itemize}
 
@@ -54,11 +54,11 @@ De parser is geschreven met behulp van Bison. Op de website van Bison staat te l
 
 Er kan opgemerkt worden dat de werkwijze van Bison sterk lijkt op de CCHR compiler zelf. Er wordt ook uitgegaan van een andere taal die in C ingebed kan worden, en met behulp van een template-gebaseerde methode wordt pure C code gegenereerd.
 
-Hiervoor is de grammaticale structuur van CCHR beschreven als een Bison {\em Context-Free Grammar}, met semantische acties erbij die een AST genereren. Er moet wel opgemerkt worden dat hoewel CCHR toelaat arbitraire C code op te nemen, de CCHR grammatica geen volledige C grammatica bevat. Ingebedde C code wordt namelijk niet volledig geparset, slechts tot op de hoogte dat noodzakelijk is om het begin en het einde ervan te herkennen. Dat wil bijvoorbeeld zeggen dat \code{1+2*(3-4)} gewoonweg als \code{1 + 2 * ( 3 - 4 )} beschouwd wordt, en niet als \code{+(1,*(2,-(3,4)))}. Het letterlijk doorgeven van C expressies volstaat, aangezien alles toch nog door de C compiler zelf moet.
+Hiervoor is de grammaticale structuur van CCHR beschreven als een Bison {\em Context-Free Grammar}, met semantische acties erbij die een AST genereren. Er moet wel opgemerkt worden dat hoewel CCHR toelaat arbitraire C code op te nemen, de CCHR grammatica geen volledige C grammatica bevat. Slechts een deel van de taalstructuren worden geparset. Functie-aanroepen en variabele-namen worden herkend, maar operatoren worden onverwerkt doorgegeven. Dat wil bijvoorbeeld zeggen dat \code{1+2*(3-4)} gewoonweg als \code{1 + 2 * ( 3 - 4 )} beschouwd wordt, en niet als \code{+(1,*(2,-(3,4)))}. Het letterlijk doorgeven van C expressies volstaat, aangezien alles toch nog door de C compiler zelf moet.
 
 Voor de {\em tokens} die de grammatica als basisblokken gebruikt, wordt beroep gedaan op de {\em lexer}.
 
-Het resultaat hiervan is dus een AST, die echter helemaal niet geschikt is om converties en analyses op uit te voeren. Alle variabelen, constraints, \ldots zijn nog steeds beschreven als een hoop tekenreeksen. In de volgende stap wordt dit omgezet naar een werkbaar formaat. 
+Het resultaat hiervan is dus een AST, die echter helemaal niet geschikt is om er converties en analyses op uit te voeren. Alle variabelen, constraints, \ldots zijn nog steeds beschreven als een hoop tekenreeksen. In de volgende stap wordt dit omgezet naar een handiger formaat. 
 
 \subsection{De tussenvorm} \label{sec:tussenvorm}
 
@@ -78,24 +78,24 @@ Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties
 
 \subsection{Code generatie} \label{sec:codegen}
 
-In de laatste fase van het vertalingsproces wordt de tussenvorm omgezet naar C code. Bij JCHR wordt van de template engine FreeMarker gebruik gemaakt. Het voordeel van templates gebruiken is duidelijk: de code die door de compiler zelf gegenereerd moet worden is algemener en beschrijft het proces op hoger niveau. Implementatie details zoals datastructuren kunnen dan onafhankelijk van de compiler uitgewerkt worden, wat het geheel flexibeler maakt en de kans op fouter beperkt.
+In de laatste fase van het vertalingsproces wordt de tussenvorm omgezet naar C code. Bij JCHR wordt van de template engine FreeMarker gebruik gemaakt. Het voordeel van templates te gebruiken is duidelijk: de code die door de compiler zelf gegenereerd moet worden is algemener en beschrijft het proces op hoger niveau. Implementatie details zoals datastructuren kunnen dan onafhankelijk van de compiler uitgewerkt worden, wat het geheel flexibeler maakt en de kans op fouten beperkt.
 
-In C bestaat echter reeds een gestandaardiseerd macro-systeem. Er is dan ook voor gekozen om deze C macros te gebruiken in plaats van een apart template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
+In C bestaat echter reeds een gestandaardiseerd macro-systeem. Er is dan ook voor gekozen om deze C macros te gebruiken in plaats van een aparte template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
 
 Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler is een sequentie van C macros in plaats van echte C code.
 
-Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden dat het veroorzaakt bij het debuggen.
+Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden die het gebruik van macros veroorzaakt bij het debuggen. Zo is het niet mogelijk de code die door de preprocessor geproduceerd wordt een verwijzing te laten bevatten naar de oorspronkelijke lijnnummers in het CCHR bronbestand. Daardoor zullen C syntax fouten in de body's van rules geen zinvolle waarschuwingen/foutmeldingen geven.
 
 De gegenereerde code wordt in detail uitgewerkt in sectie~\ref{sec:gencode}.
 
 \subsection{Uitvoer module} \label{sec:uitvoer}
 
-Uiteindelijk roept de codegenerator een uitvoer module aan, die verantwoordelijk is voor de code mooi ge\"indenteerd weg te schrijven naar het uitvoerbestand, en ondertussen informatie bij te houden over het aantal geschreven regels. Dit is nodig omdat er lijnen van de vorm: \begin{Verbatim}
+Uiteindelijk roept de codegenerator een uitvoer module aan, die verantwoordelijk is voor het mooi ge\"indenteerd wegschrijven van de gegenereerde code naar het uitvoerbestand, en ondertussen informatie bij te houden over het aantal geschreven regels. Dit is nodig omdat er lijnen van de vorm: \begin{Verbatim}
   #line "source.cchr" 16
   ...
   #line "source.c" 214
 \end{Verbatim}
-in de uitvoer gezet worden, die de C compiler hints geven over waar de code in het bestand vandaan kwam, om zinvollere waarschuwingen te kunnen geven. 
+in de uitvoer gezet worden, die de C compiler hints geven over waar de code in het bestand vandaan kwam, om zinvollere waarschuwingen te kunnen geven. Het nut hiervan is eerder beperkt, aangezien het grootste deel van de code macrodefinities zijn, waarbij deze techniek niet opgaat.
 
 \section{Gegenereerde code} \label{sec:gencode}
 
@@ -105,18 +105,18 @@ Zoals gezegd bestaat de gegenereerde code uit C macros. In dit stuk wordt ingega
 
 Eerst een korte inleiding over de C voorvertaler (``{\em preprocessor}'').
 
-Het is een component die deel is van het standaard C compilatieproces (preprocessor, compiler, assembler, linker), en vooral gebruikt om platform-afhankelijke definites in te voegen in C programma. Zo bijvoorbeeld kan met het preprocessor {\em directive} \begin{Verbatim}
+Het is een component van het standaard C compilatieproces (preprocessor, compiler, assembler, linker), en vooral gebruikt om platform-afhankelijke definites in te voegen in C programma. Zo bijvoorbeeld kan met het preprocessor {\em directive} \begin{Verbatim}
   #include <stdio.h>
 \end{Verbatim}
 Het {\em headerbestand} \code{stdio.h} ingeladen worden. Volgens de standaard zal dit bestand definities opnemen voor een aantal datatypes en functies nodig voor invoer/uitvoerroutines. 
 
-Alle ``instructies'' die deze preprocessor kent heten {\em directives} (directieven), en moeten op een aparte lijn in het bronbestand staan, te beginnen met een hekje (\code{\#}). De belangrijkste directives die wij gebruiken zijn \code{\#include}, en \code{\#define}. Dat laatste dient om een macro te defini\"eren.
+Alle ``instructies'' die deze preprocessor kent heten {\em directives} (directieven), en moeten op een aparte lijn in het bronbestand staan, te beginnen met een hekje (\code{\#}). De belangrijkste directives die wij gebruiken zijn \code{\#include}, en \code{\#define}. \code{#define} dient om een macro te defini\"eren.
 
 Macros zijn {\em tokens} die gedefinieerd worden als te substitueren door een reeks andere tokens. De eenvoudigste vorm, ook objectvorm genaamd, is: \begin{Verbatim}
   #define FOO bar(1);
 \end{Verbatim}
 wat aangeeft dat vanaf hier in de code ``\code{FOO}'' vervangen zal worden door ``\code{bar(1);}''. Macros kunnen echter ook parameters aannemen, de functionele vorm: \begin{Verbatim}
-  #define FOO(par) bar(par1,par1+1);
+  #define FOO(par) bar(par,par+1);
 \end{Verbatim}
 waarbij bij voorbeeld de code ``\code{FOO(7)}'' vervangen zal worden door ``\code{bar(7,7+1);}''. Zulke macros hebben ook ondersteuning voor {\em variable arguments}: \begin{Verbatim}
   #define FOO(par,...) bar(par,__VA_ARGS__)
@@ -132,7 +132,7 @@ In de komende tekst zal vaak verwezen worden naar macros, sommigen daarvan staan
 
 \subsection{Algemeen} \label{sec:gencode-alg}
 
-Met het oog de gegenereerde macro-code niet te overladen met informatie die over heel het programma hetzelfde is, zoals de lijst van alle chr-constraints, is gekozen zoveel mogelijk op een algemene manier op te slagen. Dit vraagt een woordje uitleg.
+Met het oog de gegenereerde macro-code niet te overladen met informatie die over heel het programma hetzelfde is, zoals de lijst van alle chr-constraints, is ervoor gekozen om zoveel mogelijk \'e\'enmalig op te slagen. Dit vraagt een woordje uitleg.
 
 Stel dat dit CCHR blok vertaald moet worden: \begin{Verbatim}
 cchr {
@@ -144,107 +144,107 @@ cchr {
     fib(N2+1, M1+M2);
 }
 \end{Verbatim}
-De volledige compiler uitvoer kan u vinden in sectie~\ref{sec:out-fib}.
+De volledige compiler-uitvoer kan gevonden worden in sectie~\ref{sec:out-fib}.
 
 De eerste belangrijke lijn die gegenereerd wordt is deze: 
 \begin{Verbatim}
   #define CONSLIST(CB) CB##_D(fib_2) CB##_S CB##_D(init_1)
 \end{Verbatim}
-Deze lijn defini\"eert welke chr constraints allemaal bestaan. Ze is heel flexibel in gebruik, de aanroeper moet zelf 2 macros of functies voorzien: een voor het defini\"eren van een constraint, en een voor wat er tussen 2 constraints moet gebeuren. Zo is het mogelijk om code te laten genereren voor elke constraint, gescheiden met comma's, mits: \begin{Verbatim}
+Deze lijn defini\"eert welke chr constraints allemaal bestaan. Ze is heel flexibel in gebruik, de aanroeper moet zelf twee macros of functies voorzien: een voor het defini\"eren van een constraint, en een voor wat er tussen twee constraints moet gebeuren. Zo is het mogelijk om code te laten genereren voor elke constraint, gescheiden met comma's, mits: \begin{Verbatim}
   #define CB_D(con) CODE_VOOR_CONSTRAINT(con)
   #define CB_S ,
   CONSLIST(CB)
 \end{Verbatim}
 
-Deze techniek wordt echter voor een stuk meer gebruikt dan enkel het aanduiden van de bestaande chr constraints. Er worden zulke index-macros gedefinieerd voor: \begin{itemize}
+Deze techniek wordt echter voor meer gebruikt dan enkel het aanduiden van de bestaande CHR constraints. Er worden zulke index-macros gedefinieerd voor: \begin{itemize}
 \item Welke chr constraints bestaan (\code{CONSLIST}).
 \item De occurrences van elke constraint (\code{RULELIST\_\argu{constraint}\_\argu{ariteit}}).
 \item Aantal kept/removed constraints in elke rule (\code{RULE\_KEPT\_\argu{rule}}).
 \item Wat en waarin in propagation history bij te houden (\code{PROPHIST\_\argu{rule}} en \code{PROPHIST\_HOOK\_\argu{rule}}).
 \item Welke indexen nodig zijn, en waarover (\code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} en \\ \code{HASHDEF\_\argu{constraint}\_\argu{ariteit}\_\argu{indexnaam}}).
 \end{itemize}
-Verder worden er nog gelijkaardige, maar eenvoudigere constructies gegenereerd voor constructor-, destructor-, add en kill routines per chr constraint.
+Verder worden er nog gelijkaardige, maar eenvoudigere constructies gegenereerd voor constructor, destructor, add en kill routines per chr constraint.
 
-Dan volgen nog enkele macros die de het mechanisme op hoog niveau beschrijven wat er voor elke constraint occurrence moet gebeuren. Hier wordt zodadelijk op ingegaan.
+Dan volt voor elke constraint-occurrence nog een macro die op hoog niveau het uitvoeringsalgoritme beschrijft. Hier gaan we in sectie~\ref{gencode-conocc} op in.
 
 Als afsluiter van de gegenereerde code staat een ``\code{CSM\_START}'', deze macro is gedefinieerd in het algemene macro-definitie bestand (zie runtime), en zal gebruikmakende van alle eerder gegenereerde macrodefinities expanderen tot de uiteindelijke C code. Daaruit volgt dat alle echte CCHR-code schijnbaar op de lijn van deze \code{CSM\_START} komt te staan.
 
 \subsection{Constraint occurrences} \label{gencode-conocc}
 
-Voor elke constraint occurrence wordt een stuk code gegenereerd in de vorm van een aparte macro definitie. Eerst wordt hier de basisopbouw gegeven, en later optimalisaties doorgevoerd.
+Voor elke constraint occurrence wordt een stuk code gegenereerd in de vorm van een aparte macro definitie. Eerst wordt hier de basisopbouw gegeven, en vanaf sectie~\ref{sec:optim} worden optimalisaties uitgewerkt.
 
-De naam die aan de gegenereerde macro voor een constraint occurrence moet van de vorm \\ ``\code{CODE\_\argu{occurrence-naam}}'' zijn, en geen parameters hebben. De benaming voor de occurrence moet gewoon overal dezelfde zijn in de gegenereerde code. In praktijk gebruikt de compiler benamingen als \\ ``\code{\argu{constraint}\_\argu{ariteit}\_\argu{rule}\_\argu{positie}}''. Positie is hierbij de letter \code{K} voor kept constraints, of de letter \code{R} voor removed constraints, gevolgd door een getal dat aanduidt de hoeveelste occurrence van dat type (removed of kept) het is binnen de gegeven rule, te beginnen bij 1.
+De naam van de gegenereerde macro voor een constraint occurrence moet van de vorm \\ ``\code{CODE\_\argu{occurrence-naam}}'' zijn, en mag geen parameters hebben. De benaming voor de occurrence moet gewoon overal dezelfde zijn in de gegenereerde code. In praktijk gebruikt de compiler benamingen als \\ ``\code{\argu{constraint}\_\argu{ariteit}\_\argu{rule}\_\argu{positie}}''. Positie is hierbij de letter \code{K} voor kept constraints, of de letter \code{R} voor removed constraints, gevolgd door een getal dat aanduidt de hoeveelste occurrence van dat type (removed of kept) het is binnen de gegeven rule, te beginnen bij 1.
 
-Dan de inhoud van deze macros. Het is hier dat het voordeel van een template-gebaseerde code generatie tot uiting komt: het algorithme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst beschikbare macros kan u vinden in appendix~\ref{chap:csm}. Het kan nuttig zijn de lijst erbij te nemen bij de komende uitleg, aangezien de precieze betekenis van de CSM macros hier niet meer uitgelegd wordt.
+Bij de inhoud van de macros komt het voordeel van een template-gebaseerde code generatie tot uiting: het algoritme wordt niet als C code gegenereerd, maar als een sequentie van macros. Deze set van macros is CSM gedoopt (Constraint Solver Macros), en een volledige lijst beschikbare macros kan u vinden in appendix~\ref{chap:csm}. Het kan nuttig zijn de lijst erbij te nemen bij de komende uitleg, aangezien de precieze betekenis van de CSM macros hier niet meer uitgelegd wordt.
 
 Als eerste versie wordt vertrokken van een imperatieve versie van de basisuitvoering, zoals beschreven in \cite{tomsphdthesis}:
-\begin{itemize}
+\begin{enumerate}
   \item Eerst ervoor zorgen dat de actieve constraint bestaat (\code{CSM\_MAKE}), en toegevoegd is aan de constraint store (\code{CSM\_NEEDSELF}).
-  \item Er wordt ge\"itereerd over alle partner constraints, zijnde de constraint occurrences in de huidige rule behalve de actieve, mbv. \code{CSM\_LOOP}.
-  \item Er wordt controleerd of er geen dubbels zijn in de verschillende partner constraints (mbv.  \code{CSM\_DIFF} en \code{CSM\_DIFFSELF} binnen een \code{CSM\_IF}).
-  \item Er wordt controleerd of de gevonden combinatie nog niet reeds geprobeerd is (mbv. \code{CSM\_CHECKHIST}).
+  \item Er wordt ge\"itereerd over alle partner constraints, zijnde de constraint occurrences in de huidige rule behalve de actieve, met \code{CSM\_LOOP}.
+  \item Er wordt controleerd of er geen dubbels zijn in de verschillende partner constraints (met \code{CSM\_DIFF} en \code{CSM\_DIFFSELF} binnen een \code{CSM\_IF}).
+  \item Er wordt controleerd of de gevonden combinatie nog niet reeds geprobeerd is (met \code{CSM\_CHECKHIST}).
   \item Alle lokale variabelen worden gedefinieerd, met \code{CSM\_DECLOCAL} en \code{CSM\_DEFLOCAL}.
-  \item Er wordt gecontroleerd of aan alle guards voldaan is (mbv. \code{CSM\_IF} en de constraint argumenten met \code{CSM\_ARG} en \code{CSM\_LARG} geschreven).
-  \item De gevonden combinatie wordt toegevoegd aan de propagation history (mbv. \code{CSM\_HISTADD}).
-  \item Eventuele removed constraints worden uit de constraint store verwijderd (mbv. \code{CSM\_KILL} en \\ \code{CSM\_KILLSELF}).
+  \item Er wordt gecontroleerd of aan alle guards voldaan is (met \code{CSM\_IF} en de constraint argumenten met \code{CSM\_ARG} en \code{CSM\_LARG} geschreven).
+  \item De gevonden combinatie wordt toegevoegd aan de propagation history (met \code{CSM\_HISTADD}).
+  \item Eventuele removed constraints worden uit de constraint store verwijderd (met \code{CSM\_KILL} en \\ \code{CSM\_KILLSELF}).
   \item De body van de CHR rule wordt uitgevoerd, met de verwijzingen naar lokale variabelen vervangen door \code{CSM\_LOCAL}-macros en de constraint argumenten door \code{CSM\_ARG} en \code{CSM\_LARG}.
   \item Als de actieve constraint uit de constraint store verwijderd is, wordt de afhandeling gestopt (\code {CSM\_DEADSELF} en \code{CSM\_END}).
-\end{itemize}
+\end{enumerate}
 
-Met deze versie zijn enkele problemen, die misschien niet op het eerste zicht duidelijk zijn: \begin{itemize}
-  \item Zodra een \code{CSM\_KILL} gebeurd is, kan \code{CSM\_LARG} niet meer gebruikt worden, omdat naar een onbestaande constraint verwezen kan worden (of erger nog: naar een andere constraint suspension die nu op die plaats staat). Daarom zullen de constraint argumenten voor de uitvoering van de body opslagen worden in lokale (onwijzigbare) variabelen, mbv. \code{CSM\_IMMLOCAL}. Als er dan verder naar verwezen wordt in de body, wordt \code{CSM\_LOCAL} ipv. \code{CSM\_LARG} gebruikt om ernaar te verwijzen.
-  \item Het is mogelijk dat een constraint-argument verwijst naar een apart gealloceerd object, dat dmv. een destructor aangegeven is voor vernietiging bij verwijderen van de constraint suspension. Deze destructor kan echter niet aangeroepen worden door \code{CSM\_KILL}, omdat code verder in de body misschien nog naar het apart gealloceerd object kan verwijzen. Daarom wordt een \code{CSM\_DESTRUCT} ingevoerd voor elke \code{CSM\_KILL} of \code{CSM\_KILLSELF}, die pas na de body aangeroepen wordt.
-  \item Wanneer de actieve constraint nog niet uit de constraint store verwijderd is, maar een van de voorgaande partner constraints al wel, dan moet onmiddellijk het volgende element van die iterator voor die partner constraint gekozen worden, om te vermijden dat de body toegepast zou worden voor een op dat moment niet meer bestaande constraint suspension. Daarom wordt na de controle of de actieve constraint nog in de store zit, ook een controle ingevoerd voor alle \code{CSM\_LOOP}s, van buiten naar binnen, dmv. \code{CSM\_DEAD}, met een \code{CSM\_LOOPNEXT} op de betrokken variabele in. Deze controle is echter niet nodig voor de binnenste lus, aangezien daar sowieso onmiddellijk het volgende element gekozen zal worden.
+Met deze versie zijn enkele problemen die misschien niet op het eerste zicht duidelijk zijn: \begin{itemize}
+  \item Zodra in stap 8 een \code{CSM\_KILL} gebeurd is, kan \code{CSM\_LARG} niet meer gebruikt worden, omdat naar een onbestaande constraint verwezen kan worden, of zelfs naar een andere constraint suspension die nu op die plaats staat. Daarom zullen de constraint argumenten voor de uitvoering van de body opslagen worden in lokale (onwijzigbare) variabelen, met \code{CSM\_IMMLOCAL}. Als er dan verder naar verwezen wordt in de body, wordt \code{CSM\_LOCAL} ipv. \code{CSM\_LARG} gebruikt om ernaar te verwijzen.
+  \item Het is mogelijk dat een constraint-argument verwijst naar een apart gealloceerd object, dat door middel van een destructor aangegeven is voor vernietiging bij verwijderen van de constraint suspension. Deze destructor kan echter niet aangeroepen worden door \code{CSM\_KILL} in stap 8, omdat code verder in de body misschien nog naar het apart gealloceerd object kan verwijzen. Daarom wordt een \code{CSM\_DESTRUCT} ingevoerd voor elke \code{CSM\_KILL} of \code{CSM\_KILLSELF}, die pas na de body aangeroepen wordt.
+  \item Wanneer de actieve constraint nog niet uit de constraint store verwijderd is, maar \'e\'en van de voorgaande partner constraints al wel, dan moet de iterator voor die partner constraint onmiddellijk overgaan naar het volgende element, om te vermijden dat de body toegepast zou worden voor een op dat moment niet meer bestaande constraint suspension. Daarom wordt na de controle of de actieve constraint nog in de store zit, ook een controle ingevoerd voor alle \code{CSM\_LOOP}s, van buiten naar binnen, door middel van een \code{CSM\_LOOPNEXT} onder voorwaarde van een \code{CSM\_DEAD}. Deze controle is echter niet nodig voor de binnenste lus, aangezien daar sowieso onmiddellijk het volgende element gekozen zal worden.
 \end{itemize}
 
 \subsection{Optimalisaties} \label{sec:optim}
 
-Deze eerste versie van het compilatieschema is echter voor verbetering vatbaar. Voor een gedetailleerde uitleg over de optimalisaties en waarom ze toegestaan zijn, wordt verwezen naar \cite{tomsphdthesis}. 
+Deze eerste versie van het compilatieschema is voor verbetering vatbaar. Voor een gedetailleerde uitleg over de optimalisaties en waarom ze toegestaan zijn, wordt verwezen naar \cite{tomsphdthesis}. 
 
-{\bf Dubbels per type}: Het is enkel nodig om te controleren op dubbele constraint suspensions (\code{CSM\_DIFF} en \code{CSM\_DIFFSELF}) tussen suspensions van hetzelfde constraint type.
+{\bf Dubbels per type}: Het is enkel nodig om te controleren op dubbele constraint suspensions (\code{CSM\_DIFF} en \code{CSM\_DIFFSELF}) tussen suspensions van hetzelfde constraint type in stap 3.
 
-{\bf Propagation history}: Men hoeft enkel een propagation history bij te houden voor rules die geen removed constraints hebben. Deze laatste kunnen immers sowieso geen 2 maal uitgevoerd worden.
+{\bf Propagation history}: Men hoeft enkel een propagation history bij te houden voor rules die geen removed constraints hebben. Deze laatste kunnen immers sowieso geen twee maal uitgevoerd worden voor dezelfde constraint suspensions. Dit vermijdt soms stappen 4 en 7.
 
-{\bf Destruction}: Indien een destructor aangeroepen moet worden voor een bepaalde constraint suspension, is het niet nodig hiermee te wachten tot na de uitvoering van de gehele body. Dit kan (meestal) gedaan worden zodra niet meer naar een variabele van die constraint verwezen wordt in de rule. De CCHR compiler zal de \code{CSM\_DESTRUCT} macro dan ook plaatsen na het laatste stuk body dat naar een variabele ervan verwijst.
+{\bf Destruction}: Indien een destructor aangeroepen moet worden voor een bepaalde constraint suspension, is het niet nodig hiermee te wachten tot na de uitvoering van de gehele body. Dit kan gedaan worden zodra niet meer naar een variabele van die constraint verwezen wordt in de rule. De CCHR compiler zal de \code{CSM\_DESTRUCT} macro dan ook plaatsen na het laatste stuk body dat naar een variabele ervan verwijst.
 
-{\bf Late Storage}: Het is wenselijk om het aanmaken van een constraint suspension, en zeker het eigenlijke toevoegen ervan aan de constraint store, zoveel mogelijk uit te stellen. Dit eerste bespaart geheugen, en dit tweede kan de snelheid ten goede komen, aangezien er ondertussen minder elementen in de store zijn om over te itereren. Er wordt voor gezorgd dat de suspension aangemaakt is juist voor het zoeken naar partner constraints van een propagate-overgang\footnote{Een propagate-overgang komt in onze uitvoer overeen met een occurrence-macro waarbij de actieve constraint geen removed constraint is}, door de \code{CSM\_MAKE} enkel te plaatsen aan het begin van ``kept'' occurrence macros. Verder wordt er pas voor gezorgd dat de constraint suspension in de store zit aan het begin van de uitvoering van de body van zo'n propagate-overgang. De \code{CSM\_NEEDSELF} wordt dus geplaatst voor de body van zo'n occurrence.
+{\bf Late Storage}: Het is wenselijk om het aanmaken van een constraint suspension, en zeker het eigenlijke toevoegen ervan aan de constraint store, zoveel mogelijk uit te stellen. Dit eerste bespaart geheugen, en dit tweede kan de snelheid ten goede komen, aangezien er ondertussen minder elementen in de store zijn om over te itereren. Er wordt voor gezorgd dat de suspension aangemaakt is juist voor het zoeken naar partner constraints van een propagate-overgang\footnote{Een propagate-overgang komt in onze uitvoer overeen met een occurrence-macro waarbij de actieve constraint geen removed constraint is}, door de \code{CSM\_MAKE} uit stap 1 enkel te plaatsen aan het begin van ``kept'' occurrence macros. Verder wordt er pas voor gezorgd dat de constraint suspension in de store zit aan het begin van de uitvoering van de body van zo'n propagate-overgang. De \code{CSM\_NEEDSELF} wordt dus geplaatst voor de body van zo'n occurrence.
 
-{\bf Simplification}: Bij simplificatie-overgangen is er zekerheid dat na uitvoering van de body, de actieve constraint zich niet meer in de store zal bevinden. Er is dus geen \code{CSM\_DEADSELF} meer nodig om te controleren of een \code{CSM\_END} mag. Dit kan uitgebreid worden tot propagation-overgangen die partner constraints verwijderen. Hierbij kan de \code{CSM\_DEAD} conditie rond de \code{CSM\_LOOPNEXT} weggelaten worden. Daarbij komt nog dat na een dergelijke niet-conditionele \code{CSM\_END} of \code{CSM\_LOOPNEXT} geen verdere checks voor de diepere lussen meer nodig zijn, en dus volledig weggelaten kunnen worden. Het gebruik van deze expliciete \code{CSM\_LOOPNEXT} macros komt overeen met wat in JCHR ``backjumping'' genoemd wordt.
+{\bf Simplification}: Bij simplificatie-overgangen is er zekerheid dat na uitvoering van de body, de actieve constraint zich niet meer in de store zal bevinden. Er is dus geen \code{CSM\_DEADSELF} meer nodig in stap 10 om te controleren of een \code{CSM\_END} mag. Dit kan uitgebreid worden tot propagation-overgangen die partner constraints verwijderen. Hierbij kan de \code{CSM\_DEAD} conditie rond de \code{CSM\_LOOPNEXT} weggelaten worden. Daarbij komt nog dat na een dergelijke niet-conditionele \code{CSM\_END} of \code{CSM\_LOOPNEXT} geen verdere checks voor de diepere lussen meer nodig zijn, en dus volledig weggelaten kunnen worden. Het gebruik van deze expliciete \code{CSM\_LOOPNEXT} macros komt overeen met wat eerder ``backjumping'' genoemd werd.
 
-{\bf Generation}: Er kan aangetoond worden, dat indien tijdens de uitvoering van de body met een bepaalde actieve constraint suspension, diezelfde constraint suspension gereactiveerd werd, er geen nood meer is om nog verder te proberen rules erop toe te passen. Alle mogelijke rules zijn immers al toegepast tijdens de reactivatie. Dit wordt geimplementeerd door simpelweg in de definitie van \code{CSM\_DEADSELF} op te nemen, dat deze na reactivatie van zichzelf ook true is.
+{\bf Generation}: Er kan aangetoond worden, dat indien tijdens de uitvoering van de body met een bepaalde actieve constraint suspension, diezelfde constraint suspension gereactiveerd werd, er geen nood meer is om nog verder te proberen rules erop toe te passen. Alle mogelijke rules zijn immers al toegepast tijdens de reactivatie. Dit wordt geimplementeerd door in de definitie van \code{CSM\_DEADSELF} op te nemen, dat \code{CSM\_DEADSELF} na reactivatie van de actieve constraint ook true is.
 
 \subsection{Join ordering} \label{sec:joinorder}
 
 \Quote{It is in justice that the ordering of society is centered.}{Aristotle (384 BC - 322 BC)}
 
-Een meer algemene verbetering die aangebracht kan worden aan voorgaand compilatieschema, is wat men ``join ordering'' noemt, zoals vermeld in \cite{duck:optimizing}. Tot hiertoe werd de volgorde waarin ge\"itereerd wordt over de verschillende partner constraints ongedefinieerd gelaten, maar een juiste keuze kan veel versnelling bij de uitvoering mogelijk maken.
+Een meer ingrijpende optimalisatie die aangebracht kan worden aan voorgaand compilatieschema, is wat men ``join ordering'' noemt, zoals vermeld in \cite{duck:optimizing}. Tot hiertoe werd de volgorde waarin ge\"itereerd wordt over de verschillende partner constraints ongedefinieerd gelaten, maar een juiste keuze kan veel versnelling bij de uitvoering mogelijk maken. De ideale volgorde bepalen kan niet altijd, maar het is meestal wel mogelijk een betere keuze te maken dan gewoon van links naar rechts.
 
-In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor de uitvoering van de eigenlijke body, zo snel mogelijk te doen, dwz. binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
+In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor de uitvoering van de eigenlijke body, zo vroeg mogelijk te doen, dit wilt zeggen: binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
   \item Guards (ook impliciete, door HNF convertie)
   \item Controles op dubbele constraints
   \item Propagation-history controles
   \item Definities van lokale variabelen
   \item Lokale statements in de guard, die tot hiertoe niet vermeld waren.
 \end{itemize}
-In bovenstaand compilatieschema gebeuren al deze dingen pas zodra over alle partner constraints gelopen is, terwijl heel wat mogelijkheden al op voorhand uitgesloten zouden kunnen worden. Daarom wordt geprobeerd zoveel mogelijk van deze dingen reeds tussen de lussen door te controleren. Ze kunnen echter afhankelijk zijn van constraints, of van contraint-argumenten en lokale variabelen, die zelf ook van eerder gedefinieerde dingen afhankelijk kunnen zijn.
+In bovenstaand compilatieschema gebeuren al deze dingen pas zodra over alle partner constraints gelopen is, terwijl heel wat mogelijkheden al op voorhand uitgesloten zouden kunnen worden. Daarom wordt geprobeerd zoveel mogelijk van deze dingen reeds tussen de lussen door te controleren. Dit heet ``loop invariant code motion''. Ze kunnen echter afhankelijk zijn van constraints, of van contraint-argumenten en lokale variabelen, die zelf ook van eerder gedefinieerde dingen afhankelijk kunnen zijn.
 
 Hiervoor wordt volgend algoritme in de compiler gebruikt: \begin{itemize}
   \item Er wordt ge\"itereerd over alle mogelijke volgordes van iteratie ($O(N!)$ combinaties, met $N$ het aantal partner constraints).
   \item Voor elke volgorde wordt geprobeerd elke controle of statement zo vroeg mogelijk te plaatsen.
   \item Er wordt een ``score'' berekend, die aangeeft hoe snel deze volgorde verwacht wordt te zijn. Deze wordt bepaald door aan alle acties een gewicht toe te kennen, en deze te vermenigvuldigen met een factor voor elke lus waarbinnen ze staat.
-  \item Uiteindelijk de volgorde met de laagste score te kiezen.
+  \item Uiteindelijk wordt de volgorde met de laagste score gekozen.
 \end{itemize}
-De gewichten die gebruikt worden zijn redelijk eenvoudig, en komen vermoedelijk niet overeen met de de realiteit. De bekomen volgorde zal daardoor vaak niet optimaal zijn, maar het verschil is wel aanzienlijk.
+De heuristieken gebruikt om de gewichten te bepalen zijn redelijk eenvoudig, en niet getoetst aan de realiteit. De aldus bekomen volgorde zal in ingewikkelde gevallen dus vaak niet optimaal zijn, maar experimenteel is wel een duidelijke versnelling gebleken tegenover het na\"ive geval.
 
 \subsection{Indexen} \label{gencode-index}
 
 \Quote{If you don't find it in the index, look very carefully through the entire catalogue.}{Unknown, Sears, Roebuck, and Co. Consumer's Guide, 1897}
 
-Na al deze verbeteringen blijft het meeste tijd verloren gaan in het opzoeken van de partner constraints. In sommige gevallen kunnen de nodige partner constraints al bekend zijn, door indexen aan te leggen en te onderhouden die aangeven welke constraint suspensions allemaal een of meerdere waardes als bepaalde argumenten hebben. Hoe dit ge\"implementeerd is wordt uitgelegd in sectie~\ref{sec:runtime}.
+Na al deze verbeteringen blijft het meeste tijd besteed worden aan het opzoeken van de partner constraints. In sommige gevallen kunnen de nodige partner constraints al bekend zijn, door indexen aan te leggen en te onderhouden. Deze indexen worden dan gebruikt om bij te houden welke constraint suspensions allemaal \'e\'en of meerdere waardes als bepaalde argumenten hebben. Hoe dit ge\"implementeerd is wordt uitgelegd in sectie~\ref{sec:runtime}.
 
 Om deze indexen te gebruiken in CSM, is het nodig ze eerst in een index-macro te defini\"eren zoals aangehaald in sectie~\ref{sec:impl}. Daarna is het ook nodig om in plaats van de traditionele \code{CSM\_LOOP} macro enkele andere macros te gebruiken. Eerst en vooral moet gedeclareerd worden dat een bepaalde variabele als index-iterator gebruikt gaat worden (met \code{CSM\_DEFIDXVAR}). Daarna moeten de op te zoeken waardes voor de verschillende argumenten ingevuld worden met \code{CSM\_SETIDXVAR}, en uiteindelijk moet ge\"itereerd worden met \code{CSM\_IDXLOOP} of \code{CSM\_IDXUNILOOP}. Op het verschil tussen beide wordt dadelijk ingegaan.
 
-Deze optimalisatie is degene die de belangrijkste snelheidsverbetering teweegbracht bij de implementatie, wat logisch is, bij sommige problemen maakt het de uitvoering een grootte-orde sneller door onmiddellijk de juiste constraint te vinden, in plaats van mogelijks er duizenden te moeten doorlopen.
+Deze optimalisatie bleek voor de meeste snelheidswinst te zorgen bij de implementatie. Bij sommige problemen maakt het de uitvoering een grootte-orde sneller door onmiddellijk de juiste constraint te vinden, in plaats van er mogelijk duizenden te moeten doorlopen.
 
 Dit is ge\"implementeerd door bepaalde guards als speciaal te herkennen en aanleiding te laten geven tot indexen. Hoe dit gebeurt wordt uitgelegd in sectie~\ref{sec:matching}.
  
@@ -254,110 +254,110 @@ Tijdens het uitvoeren van CCHR code wordt er ge\"itereerd over constraints in ve
 
 Iteratoren die bestand zijn tegen willekeurige wijzigingen en garanderen dat elk element dat uiteindelijk in de store zit ook effectief doorlopen is, zijn heel moeilijk effici\"ent te schrijven. Er wordt dan ook niet ge\"eist dat \code{CSM\_LOOP} en consoorten deze functionaliteit aanbieden. Het is echter wel zo, dat constraint suspensions die tijdens het itereren toegevoegd worden aan de store, niet hoeven te worden gecontroleerd als mogelijke partner constraints, en dus niet noodzakelijk moeten overlopen worden door de iteratoren. Ze zijn immers reeds geactiveerd toen ze zelf toegevoegd werden, en ze zouden dus ondertussen reeds alle mogelijke transities met de huidige actieve constraint als partner constraint reeds moeten hebben doorgaan. Dit vergemakkelijkt de zaak duidelijk.
 
-Het probleem dat onze iteratoren wijzigingen in de constraint store moeten aankunnen tijdens het itereren blijft echter. Blijkt echter dat dit niet altijd nodig is. Indien de simplification optimalisatie en expliciete backjumping ge\"implementeerd zijn, blijkt dat wanneer een rule minstens 1 removed constraint bevat (eventueel de actieve constraint), er na het toepassen van de body van een regel sowieso wordt gesprongen naar de volgende waarde voor de ``meest buitengelegen'' iterator voor een removed constraint, of verder. Hieruit volgt dat de lussen die daarbinnen zitten nooit moeten verderlopen eens de body is uitgevoerd.
+Het probleem dat onze iteratoren wijzigingen in de constraint store moeten aankunnen tijdens het itereren blijft echter. Dit blijkt echter niet altijd nodig. Indien de simplification optimalisatie en expliciete backjumping ge\"implementeerd zijn, blijkt dat wanneer een rule minstens \'e\'en removed constraint bevat (eventueel de actieve constraint), er na het toepassen van de body van een regel sowieso wordt gesprongen naar de volgende waarde voor de ``meest buitengelegen'' iterator voor een removed constraint, of verder. Hieruit volgt dat de lussen die daarbinnen zitten nooit moeten verderlopen eens de body is uitgevoerd.
 
-Om die reden worden voor iteratoren waar het ingewikkeld is, 2 verschillende versies aangeboden: \begin{itemize}
+Om die reden worden voor iteratoren waar het ingewikkeld is, twee verschillende versies aangeboden: \begin{itemize}
 \item een versie die slechts volgende mogelijkheden geeft totdat de constraint store gewijzigd kan zijn: de {\em existenti\"ele} iterator.
-\item een versie die het algemene geval ook aankan: de {\em universele} iterator
+\item een versie die het algemene geval ook aankan: de {\em universele} iterator.
 \end{itemize}
 
 Een universele iterator kan een veel grotere kost hebben om uitgevoerd te worden, wat ook in rekening wordt gebracht bij de kost berekening voor de join ordering.
 
 \subsection{Matching} \label{sec:matching}
 
-Zoals aangehaald is het nodig om bepaalde guards te laten herkennen als efficienter te schrijven dan een simpele \code{CSM\_IF}. Het gaat hier om controles die ingebed kunnen worden in een lus. Daarom is een algmene routine geschreven die gegeven de nog te controleren guards op een bepaalde plaats in het uitvoeringsalgoritme, beslist welke soort iterator gebruikt moet worden. De verschillende iteratoren hebben een prioriteit toegekend gekregen, en voor elke iteratie die moet gebeuren wordt de iterator met de hoogst mogelijke prioriteit gekozen.
+Zoals aangehaald is het nodig om bepaalde guards te laten herkennen als efficienter te schrijven dan een simpele \code{CSM\_IF}. Het gaat hier om controles die ingebed kunnen worden in een lus. Daarom is een algemene routine geschreven die gegeven de nog te controleren guards op een bepaalde plaats in het uitvoeringsalgoritme, beslist welke soort iterator gebruikt moet worden. De verschillende iteratoren hebben een prioriteit toegekend gekregen, en voor elke iteratie die moet gebeuren wordt de iterator met de hoogst mogelijke prioriteit gekozen.
 
-Er zijn 3 iteratoren ge\"implementeerd, van lage naar hoge prioriteit: \begin{enumerate}
+Er zijn drie iteratoren ge\"implementeerd, van lage naar hoge prioriteit: \begin{enumerate}
 \item De simpele \code{CSM\_LOOP} iterator. Deze wordt enkel gekozen als er geen betere iteratoren gevonden kunnen worden. Deze iterator heeft geen impliciete guard.
-\item De \code{CSM\_IDXLOOP} iterator die een waarde-index gebruikt voor het itereren. Alle guards die equivalenties voorstellen tussen een variabele die het argument is van eenzelfde constraint occurrence, worden gebruikt om 1 index-iterator te bouwen. Op die manier kunnen een heel aantal guards samen in 1 iterator terecht komen. Bij de herkenning van dergelijke equivalenties, is de standaard C equivalentie (\code{==}) ondersteund, en ook een binaire equivalentie die algemener is (\code{eq(arg1,arg2)}, zie sectie~\ref{sec:rules}).
-\item Iteratoren over de elementen van een index in een logische variabele bijgehouden. Dit is slechts half afgewerkt, maar een voorbeeld kan gevonden worden in sectie~\ref{sec:leq-cchr}.
+\item De \code{CSM\_IDXLOOP} iterator die een waarde-index gebruikt voor het itereren. Alle guards die equivalenties voorstellen tussen een variabele die het argument is van eenzelfde constraint occurrence, worden gebruikt om \'e\'en index-iterator te bouwen. Op die manier kunnen een heel aantal guards samen in \'e\'en iterator terecht komen. Bij de herkenning van dergelijke equivalenties, is de standaard C equivalentie (\code{==}) ondersteund, en ook een binaire equivalentie die algemener is (\code{eq(arg1,arg2)}, zie sectie~\ref{sec:rules}).
+\item Iteratoren over de elementen van een index in een logische variabele bijgehouden. Dit is slechts gedeeltelijk afgewerkt, maar een voorbeeld kan gevonden worden in sectie~\ref{sec:leq-cchr}.
 \end{enumerate}
 
-Bij deze matching komt trouwens het sleutelwoord \code{alt} terug, dat in sectie~\ref{sec:rules} aangehaald werd. Alle argumenten van een \code{alt} worden door het matchalgoritme overlopen, om een zo goed mogelijke match te vinden.
+Bij deze matching komt trouwens het sleutelwoord \code{alt} terug, dat in sectie~\ref{sec:rules} aangehaald werd. Alle argumenten van een \code{alt} worden door het match-algoritme overlopen, om een zo goed mogelijke match te vinden.
 
 \section{CSM Definities} \label{sec:csmdef}
 
-Bij SWI-Prolog en JCHR kon een duidelijk onderscheid gemaakt worden tussen gegenereerde code en runtime. Bij CCHR is het echter de vraag of de definities van de CSM macros tot runtime gerekend kunnen worden. Het is namelijk geen code die tijdens de uitvoering nodig is, maar code die nodig is om de gegenereerde code naar een uitvoerbaar bestand te kunnen omzetten. Daarom zullen de de daarin behandelde problemen hier in een aparte sectie besproken worden.
+Bij SWI-Prolog en JCHR kon een duidelijk onderscheid gemaakt worden tussen gegenereerde code en runtime. Bij CCHR is het echter de vraag of de definities van de CSM macros tot de runtime gerekend kunnen worden. Het is namelijk geen code die tijdens de uitvoering nodig is, maar code die nodig is om de gegenereerde code naar een uitvoerbaar bestand te kunnen omzetten. Daarom zullen de daarin behandelde problemen hier in een aparte sectie besproken worden.
 
 De belangrijkste taak van CSM is de gebruikte datastructuren afschermen van de gegenereerde code, zodat deze beide onafhankelijk gewijzigd kunnen worden. Eerst wordt ingegaan op de gebruikte datastructuren, en dan de implementatie ervan zelf besproken.
 
 \subsection{Noodzakelijke datastructuren} \label{sec:datastruct}
 
-{\bf Constraint store} De belangrijkste datastructuur is uiteraard degene voor de constraint store. Het moet een structuur zijn die toelaat heel snel constraints toe te voegen, te verwijderen en erover te itereren. De volgorde waarin is in principe niet zo van belang, maar het niet-teruggeven van elementen die tijdens het itereren zelf zijn toegevoegd is een pluspunt. Dynamische allocaties tijdens de uitvoering blijven liefst zo veel mogelijk beperkt.
+{\bf Constraint store} De belangrijkste datastructuur is uiteraard degene voor de constraint store. Het moet een structuur zijn die toelaat heel snel constraints toe te voegen, te verwijderen en erover te itereren. De volgorde volgens dewelke ge\"itereerd wordt is in principe niet zo van belang, maar het niet-teruggeven van elementen die tijdens het itereren zelf zijn toegevoegd is een pluspunt. Dynamische allocaties tijdens de uitvoering blijven liefst zo veel mogelijk beperkt.
 
 {\bf Propagation history} Er moet ook een propagation history bijgehouden worden. Deze moet toelaten snel een bepaalde combinatie van constraint suspensions op te zoeken en verwijderen wanneer een van de betrokken constraint suspensions uit de store verwijderd wordt.
 
-{\bf Indexen} Er is een datastructuur nodig om de indexen in bij te houden. Deze moet voor 1 of meerdere argumenten van een bepaalde constraint voor elke (combinatie van) waardes voor deze argumenten een lijst kunnen bijhouden van constraint suspensions die deze (combinatie van) waardes als argumenten heeft.
+{\bf Indexen} Er is een datastructuur nodig om de indexen in bij te houden. Deze moet voor \'e\'en of meerdere argumenten van een bepaalde constraint voor elke combinatie van waarden voor deze argumenten een lijst kunnen bijhouden van constraint suspensions die deze combinatie van waardes als argumenten heeft.
  
 \subsection{De constraint store} \label{sec:constore}
 
-Voor de constraint store wordt gebruikt gemaakt van een structuur van doubly-linked lists. De juiste implementatie wordt uitgewerkt in sectie~\ref{sec:dll}, en hier is het voldoende te weten dat het de mogelijkheid geeft om geheugenblokken van vaste grootte snel te alloceren en vrij te geven. Er kan een op voorhand bepaald aantal lijsten aan gekoppeld zijn, en elk blok kan in maximaal 1 zulke lijst geplaatst worden. Er wordt naar een blok verwezen dmv. een {\em PID} (positie ID), maar dit kan herbruikt worden nadat een blok vrijgegeven is. Verder krijgt elk blok een uniek {\em ID}, dat nooit herbruikt wordt.
+Voor de constraint store wordt gebruikt gemaakt van een structuur van doubly-linked lists. De juiste implementatie wordt uitgewerkt in sectie~\ref{sec:dll}. Hier is het voldoende te weten dat het de mogelijkheid geeft om geheugenblokken van vaste grootte snel te alloceren en vrij te geven. Het kan een op voorhand bepaald aantal disjuncte lijsten bevatten, en elk blok kan in maximaal \'e\'en zulke lijst geplaatst worden. Er wordt naar een blok verwezen door middel van een {\em PID} (positie ID), wat herbruikt kan worden nadat een blok vrijgegeven is. Verder krijgt elk blok een uniek {\em ID} dat nooit herbruikt wordt.
 
-Als datablok worden de constraint suspensions gebruikt. Deze is beschreven als een C {\em union}, een structuur die juist 1 van zijn elementen kan bevatten (door ze dezelfde geheugenruimte te laten delen), dit in tegenstelling tot een {\em struct}, die ze allemaal tegelijk bevat (na elkaar). Als elementen van die union worden de datastructuren voor elk van de verschillende types constraints gebruikt. Dit heeft als nadeel dat er wat plaats verpild wordt als de gegevens voor de verschillende types niet evenveel plaats innemen. Dit verschil is echter meestal beperkt. Een alternatief zou kunnen zijn een apart datablok gebruiken voor elk van de types, wat dan weer het nadeel heeft van meer allocaties tijdens het uitvoeren.
+Als datablok worden de constraint suspensions gebruikt. Deze is beschreven als een C {\em union}, een structuur die juist \'e\'en van zijn elementen kan bevatten door ze dezelfde geheugenruimte te laten delen, dit in tegenstelling tot een {\em struct} die ze allemaal tegelijk bevat (na elkaar). Als elementen van die union worden de datastructuren voor elk van de verschillende types constraints gebruikt. Dit heeft als nadeel dat er wat plaats verspild wordt als de gegevens voor de verschillende types niet evenveel plaats innemen. Het verschil in grootte tussen de datastructuren voor de verschillende constraint-types is echter normaal niet groot. Een alternatief is een aparte constraint store gebruiken voor elk van de types, wat dan weer het nadeel heeft van meer allocaties tijdens het uitvoeren.
 
-De lijsten die het doubly-linked list type aanbiedt, bevatten alle constraints van een bepaald type, en de \code{CSM\_LOOP} macro gebruikt dan de iterator van de linked list om erover te itereren. Het \code{cchr\_id\_t} datatype dat gebruikt wordt voor iteratoren, is dan ook gedefinieerd in het CSM definitiebestand als hetzelfde type dat de doubly-linked list implementatie gebruikt als {\em PID}. Op die manier zou men kunnen argumenteren dat de gegenereerde code toegang krijgt tot een definitie die door CSM afgeschermd zou moeten zijn. De gegenereerde code gebruikt echter het \code{cchr\_id\_t} type zelf niet, krijgt het enkel en geeft het door, en moet het verder als ``black box'' type beschouwen.
+De lijsten die het doubly-linked list type aanbiedt, bevatten alle constraints van een bepaald type, en de \code{CSM\_LOOP} macro gebruikt dan de iterator van de linked list om erover te itereren. Het \code{cchr\_id\_t} datatype dat gebruikt wordt voor iteratoren, is dan ook gedefinieerd in het CSM definitiebestand als hetzelfde type dat de doubly-linked list implementatie gebruikt als {\em PID}. Men kan argumenteren dat de gegenereerde code op die manier toegang krijgt tot een definitie die door CSM afgeschermd zou moeten zijn. De gegenereerde code gebruikt echter het \code{cchr\_id\_t} type zelf niet, krijgt het enkel en geeft het door, en moet het verder als ondoorzichtig type beschouwen.
 
 De constraint suspensions zelf bevatten (afhankelijk van het type): \begin{itemize}
-  \item De argumenten van de betrokken constraint
-  \item Eventuele propagation history (zie verder)
-  \item Een generatienummer. Dit wordt verhoogd elke keer dat een constraint gereactiveerd wordt, om zo de generation optimalisatie te kunnen doorvoeren. Hierbij wordt het generatienummer van de constraint bij activatie bijgehouden, en zal de \code{CSM\_DEADSELF} macro ook ``waar'' teruggeven indien dat getal ondertussen veranderde.
+  \item De argumenten van de betrokken constraint.
+  \item Eventuele propagation history (zie sectie~\ref{sec:prophist}).
+  \item Een generatienummer. Dit wordt verhoogd elke keer dat een constraint gereactiveerd wordt, om zo de generation optimalisatie te kunnen doorvoeren. Hierbij wordt het generatienummer van de constraint bij activatie bijgehouden, en zal de \code{CSM\_DEADSELF} macro ook ``true'' teruggeven indien dat getal ondertussen veranderde.
 \end{itemize}
 
-Een \code{CSM\_MAKE} macro zal een nieuw element alloceren in de constraint store, maar het nog niet aan een van de lijsten toevoegen, terwijl een \code{CSM\_NEEDSELF} ervoor zal zorgen dat dat element toevoegt aan de lijst overeenkomstig met het type constraint van dat element. Merk op dat nergens expliciet opgeslagen is van welk constraint-type een bepaald element is, dat volgt impliciet uit de lijst waartoe het behoort. \code{CSM\_KILL} en \code{CSM\_KILLSELF} tenslotte zullen een element zo nodig uit een lijst verwijderen, en de plaats vrijgeven voor hergebruik.
+Een \code{CSM\_MAKE} macro zal een nieuw element alloceren in de constraint store, maar het nog niet aan een van de lijsten toevoegen, terwijl een \code{CSM\_NEEDSELF} ervoor zal zorgen dat dat element toegevoegd wordt aan de lijst overeenkomstig met het type constraint van dat element. Indien de constraint zich al in die lijst bevindt, doet deze macro niets. Merk op dat nergens expliciet opgeslagen is van welk constraint-type een bepaald element is: dat volgt impliciet uit de lijst waartoe het behoort. \code{CSM\_KILL} en \code{CSM\_KILLSELF} tenslotte zullen een element zo nodig uit een lijst verwijderen, en de plaats vrijgeven voor hergebruik.
 
-Aangezien de datastructuur waarin de constraint suspensions bijgehouden worden de suspensions zelf bevat, en geen verwijzingen ernaar, zal een verwijderde constraint gevolgd door de aanmaak van een nieuwe constraint sowieso het vrijgekomen geheugen hergebruiken. Dit samen met de hoge effici\"entie van de gelinkte lijst voor verwijder en toevoeg operaties verlaagt de nood aan speciale geheugen-herbruik technieken, zoals voor Prolog beschreven in \cite{jon:memory_reuse}.
+Aangezien de datastructuur waarin de constraint suspensions bijgehouden worden de suspensions zelf bevat, en geen verwijzingen ernaar, zal een verwijderde constraint gevolgd door de aanmaak van een nieuwe constraint sowieso het vrijgekomen geheugen hergebruiken. Dit samen met de hoge effici\"entie van de gelinkte lijst voor verwijder- en toevoeg-operaties verlaagt de nood aan speciale geheugen-herbruik technieken, zoals voor Prolog beschreven in \cite{jon:memory_reuse}.
 
 \subsection{De propagation history} \label{sec:prophist}
 
 \Quote{History repeats itself; that's one of the things that's wrong with history.}{Clarence Darrow (1857 - 1938)}
 
-Om de propagation history bij te houden wordt een zelf ge\"implementeerde hashtable gebruikt. Op de implementatie ervan wordt ingegaan in sectie~\ref{sec:hashtable}. Ze vereist dat zelf een datatype aangegeven wordt om in de hashtable te gebruiken, inclusief een manier om aan te geven of zulk een datatype een ``gebruikte plaats'' voorstelt.
+Om de propagation history bij te houden wordt een zelf ge\"implementeerde hashtable gebruikt. Op de implementatie ervan wordt ingegaan in sectie~\ref{sec:hashtable}. Ze vereist dat de gebruiker van de hashtable een datatype aangeeft om in de hashtable te gebruiken, inclusief een manier om te controleren of zulk een datatype een ``gebruikte plaats'' voorstelt.
 
-Voor de propagation history wordt dus de \em{ID}s (niet de \em{PID}s) van de betrokken constraint suspensions opgeslagen, voorafgegaan door een 0 of een 1, die aangeeft of de plaats in gebruik is. Ze zijn twee opties: \begin{enumerate}
-  \item Alles opslagen in 1 globale hashtable.
+Voor de propagation history wordt dus de \em{ID}s (niet de \em{PID}s) van de betrokken constraint suspensions opgeslagen, voorafgegaan door een $0$ of een $1$, die aangeeft of de plaats in gebruik is. Er zijn twee opties: \begin{enumerate}
+  \item Alles opslagen in \'e\'en globale hashtable.
   \item Voor elke rule $R$ waarvoor propagation history bijgehouden wordt (geen simplification of simpagation rules dus) een van zijn constraint occurrence $O$ van constraint type $C$ kiezen, en in de constraint suspensions $S$ van type $C$ de elementen van de propagation history opslagen voor rule $R$ die voor occurrence $O$ de suspension $S$ hebben.
 \end{enumerate}
-Die tweede methode vraagt meer overhead (veel aparte hashtables in plaats van 1 grote), maar zorgt ervoor dat er niet expliciet elementen uit de propagation history verwijderd moeten worden. Deze verdwijnen immers automatisch zodra de constraint suspension waarin ze opgeslagen zitten verdwijnt.
+Die tweede methode vraagt meer overhead (veel aparte hashtables in plaats van \'e\'en grote), maar zorgt ervoor dat er niet expliciet elementen uit de propagation history verwijderd moeten worden. Deze verdwijnen immers automatisch zodra de constraint suspension waarin ze opgeslagen zitten verdwijnt. Er is voor deze tweede optie gekozen.
 
 \subsection{De index} \label{sec:index}
 
-Voor de waardenindexen, die gebruikt worden met de \code{CSM\_IDXLOOP} en verwante macros, wordt opnieuw gebruik gemaakt van de hashtable implementatie die ook voor de propagation history gebruikt werd. Ze wordt zelfs 2 maal in elkaar gebruikt: eerst een table om de verschillende waardes aan subtables te koppelen, en dan in die tables dan de betrokken constraint suspensions opslagen. Zowel de {\em ID}s als de {\em PID}s op worden echter opgeslagen, waarbij de {\em ID}s (omwille van uniek zijn) als sleutel in de hashtable gebruikt worden, terwijl de {\em PID}s als waarbij gebruikt worden, om eens een bepaalde constraint gevonden, ze ook snel terug te vinden. Dat laatste was bij de propagation history niet nodig, aangezien enkel snel kunnen controleren of een bepaalde (combinatie van) constraint suspension(s) aanwezig was vereist is, en niet de constraint suspensions zelf moeten kunnen terugvinden.
+Voor de waardenindexen, die gebruikt worden met de \code{CSM\_IDXLOOP} en verwante macros, wordt gebruik gemaakt van de hashtable implementatie die ook voor de propagation history gebruikt werd. Ze wordt zelfs twee maal in elkaar gebruikt: eerst een table om de verschillende waardes aan subtables te koppelen, en dan in die tables dan de betrokken constraint suspensions opslagen. Zowel de {\em ID}s als de {\em PID}s worden echter opgeslagen, waarbij de {\em ID}s als unieke sleutel in de hashtable gebruikt worden, terwijl de {\em PID}s als waarden gebruikt worden, om eens een bepaalde constraint gevonden, ze ook snel terug te vinden. Het opslagen van {\em ID}s was bij de propagation history niet nodig, aangezien enkel het snel kunnen controleren of een bepaalde (combinatie van) constraint suspension(s) aanwezig was vereist is, en het terugvinden van de suspensions zelf niet.
 
 Voor \code{CSM\_IDXLOOP} wordt ge\"itereerd over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt. Dit is nodig, omdat de hashtable implementatie geen wijzigingen tijdens het itereren toelaat. Zie sectie~\ref{sec:hashtable}.
 
-CSM zal automatisch alle indexen onderhouden die met de macro \code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} gedefinieerd zijn, zowel het toevoegen van nieuwe waardes, nieuwe constraint suspensions bij de subtable voor een bestaande waarde toevoegen, het verwijderen van constraint suspensions uit de juiste subtable, en indien er voor een gegeven combinatie van waardes geen overeenkomstige suspensions meer zijn, het verwijderen van de volledige subtable voor die waardes.
+CSM zal automatisch alle indexen onderhouden die met de macro \code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} gedefinieerd zijn, zowel het toevoegen van nieuwe waardes, nieuwe constraint suspensions bij de subtable voor een bestaande waarde toevoegen, het verwijderen van constraint suspensions uit de juiste subtable, en indien er voor een gegeven combinatie van waarden geen overeenkomstige suspensions meer zijn, het verwijderen van de volledige subtable voor die waarden.
 
 \section{Runtime} \label{sec:runtime}
 
 Als ``runtime'' worden alle software-componenten die gemeenschappelijk zijn voor alle CCHR programma's beschouwd, met uitzondering van de CSM definities die reeds behandeld zijn.
 
-Er zijn slechts enkele stukken die nog overblijven om tot deze laag te beschouwen: \begin{itemize}
+Deze componenten behoren tot de runtime: \begin{itemize}
   \item De code voor de doubly-linked lists, die voor de constraint store gebruikt wordt.
-  \item De code voor de op union-find gebaseerde code om met logische variabelen te werken.
+  \item De code om met logische variabelen te werken.
   \item De code om de hashtables te onderhouden die voor propagation history en indexen gebruikt wordt.
   \item De code voor de hashfunctie voor bovenstaande hashtable.
 \end{itemize}
 
 \subsection{Doubly-linked lists} \label{sec:dll}
 
-De gebruikte doubly-linked list structuur, bestaat uit een lijst (array) van elementen van gelijke grootte die in 1 geheel gealloceerd wordt. Elk element bestaat uit: \begin{itemize}
+De gebruikte doubly-linked list structuur, bestaat uit een lijst (array) van elementen van gelijke grootte die in \'e\'en geheel gealloceerd wordt. Elk element bestaat uit: \begin{itemize}
   \item Een verwijzing naar het volgende element
   \item Een verwijzing naar het vorige element
   \item Een uniek ID (dat $0$ is voor niet-gebruikte plaatsen)
   \item De eigenlijke data (die voor de bovenliggende laag beschikbaar is).
 \end{itemize}
-Door gebruik te maken van de vorige/volgende verwijzingen, worden de verschillende elementen in 1 of meerdere (cyclische) lijsten geplaatst. Deze lijsten kunnen teruggevonden worden door middel van een speciaal markeer-element, dat naar het eerste en het laatste echte element van de lijst verwijst. De elementen op posities $O$ tot en met $N-1$ (met $N$ het aantal lijsten) zijn zulke markeer-elementen. De niet-gebruikte plaatsen in de array worden zelf ook in een (single-linked) lijst geplaatst, om snel teruggevonden te kunnen worden.
+Door gebruik te maken van de vorige/volgende verwijzingen, worden de verschillende elementen in \'e\'en of meerdere (cyclische) lijsten geplaatst. Deze lijsten kunnen teruggevonden worden door middel van een speciaal markeer-element, dat naar het eerste en het laatste echte element van de lijst verwijst. De elementen op posities $O$ tot en met $N-1$ (met $N$ het aantal lijsten) zijn zulke markeer-elementen. De niet-gebruikte plaatsen in de array worden zelf ook in een (single-linked) lijst geplaatst, zodat ze snel terug gevonden kunnen worden.
 
-Aangezien het noodzakelijk kan zijn dat het gehele blok van grootte verandert, wat heralloceren en dus mogelijk verplaatsen inhoudt, worden geen echte C pointers als verwijzingen naar de elementen gebruikt, deze zouden ongeldig worden zodra de hele array verplaatst wordt. In de plaats daarvan wordt de plaats in de index als verwijzing gebruikt. Het is dan ook dit type dat de doubly-linked-lists code naar buiten toe gebruikt, het is wat eerder het {\em PID} genoemd werd. 
+Aangezien het noodzakelijk kan zijn dat het gehele blok van grootte verandert, wat heralloceren en dus mogelijk verplaatsen inhoudt, worden geen echte C pointers als verwijzingen naar de elementen gebruikt. Deze zouden ongeldig worden zodra de hele array verplaatst wordt. In de plaats daarvan wordt de plaats in de index als verwijzing gebruikt. Het is dan ook dit type dat de doubly-linked-lists code naar buiten toe gebruikt, het is wat eerder het {\em PID} genoemd werd. 
 
 \subsection{Logische variabelen} \label{sec:logvar}
 
-Om logische variabelen in het algemeen te ondersteunen, zijnde onafhankelijk van wat voor data erin opgeslagen wordt, is gekozen een macro-defintiebestand te voorzien dat 2 macros definieert: \begin{itemize}
+Om logische variabelen te ondersteunen, onafhankelijk van wat voor data erin opgeslagen wordt, is gekozen een macro-definitiebestand te voorzien dat twee macros definieert: \begin{itemize}
   \item \code{logical\_header(\argu{in},\argu{tag},\argu{out})}: Definieer het datatype \code{\argu{out}}, dat een logische variabele voorstelt die een \code{\argu{in}} kan bevatten en daarbij ook nog \code{\argu{tag}} als metadata heeft.
   \item \code{logical\_code(\argu{in},\argu{tag},\argu{out},\argu{cb})}: Genereer de functies die nodig zijn om met een \code{\argu{out}} datatype te kunnen werken. Deze functies krijgen alleen \code{\argu{out}\_} als prefix, en zullen zelf nog enkele andere routines aanroepen die \code{\argu{cb}\_} als prefix hebben.
 \end{itemize}
 
-De metadata, opgeslagen in het datatype \code{\argu{tag}}, is bedoeld om informatie te bevatten over de logische variabelen zelf, in plaats van over de waarde die ze voorstellen. Dit zou bijvoorbeeld gebruikt kunnen worden om lijsten bij te houden welke constraint suspensions gereactiveerd moeten worden indien informatie over de logische variabele verandert. Dit is echter volledig optioneel, aangezien de logische variabelen los van CCHR zelf ge\"implementeerd zijn.
+De metadata, opgeslagen in het datatype \code{\argu{tag}}, is bedoeld om informatie te bevatten over de logische variabelen zelf, in plaats van over de waarde die ze voorstellen. Dit zou bijvoorbeeld gebruikt kunnen worden om lijsten bij te houden met welke constraint suspensions gereactiveerd moeten worden indien informatie over de logische variabele verandert. Dit is echter volledig optioneel, aangezien de logische variabelen los van CCHR zelf ge\"implementeerd zijn.
 
 Om het zojuist vermelde toch te realiseren, worden er enkele ``callback'' routines ondersteund: de gebruiker van de \code{logical\_code} macro moet zelf enkele macros of functies met een specifieke naam voorzien, die aangeroepen zullen worden door de door \code{logical\_code} gegenereerde code: \begin{itemize}
   \item \code{\argu{cb}\_created(var)}: Aangeroepen zodra een logische variabele \code{var} aangemaakt is. Dit dient om de metadata van deze variabele te initialiseren.
@@ -383,20 +383,24 @@ Al deze elementen zijn verspreid over een structuur van C structs en unions, zod
 
 Een hashtable is in het algemeen een datastructuur die bedoeld is om elementen heel snel in op te slagen en op te zoeken. Het maakt gebruik een ``hashfunctie'' die de op te slagen elementen afbeeldt op een natuurlijk getal binnen een bepaald bereik. Elementen worden dan opgeslagen op een positie die afhankelijk is van het resultaat van deze hashfunctie. Deze hashfunctie is liefst zo grillig mogelijk, om patronen in de invoer geen patronen in de uitvoer te laten veroorzaken. Op deze hashfunctie wordt in sectie~\ref{sec:hashfunc} op ingegaan.
 
-Het grootste probleem met hashtables is het probleem van ``collisions'', verschillende elementen die op dezelfde plaats terechtkomen in de tabel. De kans dat zulke collisions optreden, kan bepaald worden met wat het ``verjaardagsprobleem'' genoemd wordt -- gelijkaardig aan de kans bepalen dat 2 mensen in een groep dezelfde verjaardag hebben. Vereenvoudigd kan gesteld worden dat een eerste collision zou optreden wanneer het aantal elementen $N$ ongeveer gelijk is aan $\sqrt{D}$, met $D$ het aantal plaatsen in de tabel.
+Het grootste probleem met hashtables is het probleem van ``collisions''. Dat zijn verschillende elementen die op dezelfde plaats zouden terechtkomen in de tabel. De kans dat zulke collisions optreden, kan bepaald worden met wat het ``verjaardagsprobleem'' genoemd wordt -- gelijkaardig aan de kans bepalen dat twee mensen in een groep dezelfde verjaardag hebben. Vereenvoudigd kan gesteld worden dat een eerste collision zou optreden wanneer het aantal elementen $N$ ongeveer gelijk is aan $\sqrt{D}$, met $D$ het aantal plaatsen in de tabel.
 
-Hieruit volgt dat het onmogelijk is de tabel redelijk gevuld te houden eens er een redelijk aantal elementen in opgeslagen moeten worden. Er zijn verschillende oplossingen voor dit probleem: \begin{enumerate}
+Hieruit volgt dat het onmogelijk is de tabel gevuld te houden eens er een redelijk aantal elementen in opgeslagen moeten worden. Er zijn verschillende traditionele oplossingen voor dit probleem: \begin{enumerate}
 \item De tabel wordt vergroot zodra een collision optreedt.
-\item Er wordt toegestaan dat 1 tabelpositie meerdere elementen bevat.
-\item Indien een plaats bezet is, wordt het gegeven element 1 plaats verder geplaats.
-\item Er worden 2 verschillende tabellen gebruikt, waarin 2 onafhankelijke hashfuncties gebruikt worden. Elk element dat toegevoegd wordt, komt op zijn correcte plaats in tabel 1 terecht, en indien die plaats reeds benomen is, wordt het element dat daar stond naar zijn plaats in tabel 2 verplaatst. Indien daar reeds iets stond, wordt dat teruggeplaatst naar zijn plaats in tabel 1, enzovoort.
+\item Er wordt toegestaan dat \'e\'en tabelpositie meerdere elementen bevat.
+\item Indien een plaats bezet is, wordt het gegeven element \'e\'en plaats verder geplaatst.
 \end{enumerate}
 
-Deze eerste leidt veel te snel tot teveel geheugengebruik, de tweede techniek vereist dat voor elke verschillende waarde in de tabel een allocatie gedaan wordt. De derde techniek zorgt ervoor dat de tabel gefragmenteerd wordt als er elementen verwijderd worden uit de tabel, aangezien de lege plaatsen niet echt vrijgemaakt kunnen worden (er kunnen nog elementen met een lagere hashwaarde erna komen). Daarom werd voor de vierde techniek, {\em cuckoo hashing} gekozen. Deze techniek en enkele analyses erop worden vermeld in \cite{cuckoo}.
+Elk van deze methodes kent zijn nadelen. Een overzicht: \begin{enumerate}
+\item Dit leidt veel te snel tot teveel geheugengebruik, wat meestal onaanvaardbaar is.
+\item Indien een tabelpositie naar verscheidene elementen kan refereren, is er een aparte datastructuur nodig die deze elementen bevat. Deze zal normaal gezien per verschillende waarde een geheugenallocatie vragen. 
+\item Hierbij treedt een soort fragmentatie van de geheugenruimte op. Stel dat 2 elementen A en B een hashwaarde hebben die hen op plaats $N$ afbeeldt. A wordt op plaats $N$ gezet en B op plaats $N+1$. Stel nu dat A verwijderd wordt: plaats $N$ mag niet leeggemaakt worden, aangezien het opzoeken van B zou beginnen op plaats $N$, die leeg is, en onmiddellijk falen. Daarom moet plaats $N$ dan als ``ooit in gebruik geweest'' gemarkeerd worden, en niet echt als vrij.
+\end{enumerate}
 
-In het kaber van deze thesis is dat algoritme ge\"implementeerd (alweer) als een macro defintiebestand. Een datatype als hastable definieren gebeurt mits:
-\code{ht\_cuckoo\_code(\argu{hash\_t},\argu{entry\_t},\argu{hash1},\argu{hash2},\argu{eq},\argu{defined},\argu{init},\argu{unset})}
-Hierbij wordt het type \argu{hash\_t} gedefinieerd als een hashtable die elementen van het type \argu{entry\_t} kan bevatten. \argu{hash1} en \argu{hash2} zijn de namen van de 2 te gebruiken hashfuncties. De functie \argu{eq} moet controleren of 2 elementen aan elkaar gelijk zijn, \argu{defined} of een element een ``vrije'' plaats voorstelt, en \argu{init} en \argu{unset} dienen om een element te initialiseren (als ongebruikt) en om het terug vrij te geven.
+Daarom is gekozen om een andere minder bekende techniek te gebruiken: {\em Cuckoo Hashing}. Hierbij worden twee verschillende tabellen (A en B) gebruikt, waarin twee onafhankelijke hashfuncties gebruikt worden. Elk element dat toegevoegd wordt, komt op zijn correcte plaats in tabel A terecht, en indien die plaats reeds benomen is, wordt het element dat daar stond naar zijn plaats in tabel B verplaatst. Indien daar reeds iets stond, wordt dat teruggeplaatst naar zijn plaats in tabel A, enzovoort. Deze techniek en enkele analyses erop worden vermeld in \cite{cuckoo}.
+
+In het kader van deze thesis is dat algoritme ge\"implementeerd (alweer) als een macro defintiebestand. Een datatype als hastable definieren gebeurt mits: \\
+\code{ht\_cuckoo\_code(\argu{hash\_t},\argu{entry\_t},\argu{hash1},\argu{hash2},\argu{eq},\argu{defined},\argu{init},\argu{unset})}. Hierbij wordt het type \argu{hash\_t} gedefinieerd als een hashtable die elementen van het type \argu{entry\_t} kan bevatten. \argu{hash1} en \argu{hash2} zijn de namen van de 2 te gebruiken hashfuncties. De functie \argu{eq} moet controleren of twee elementen aan elkaar gelijk zijn, \argu{defined} of een element een ``vrije'' plaats voorstelt, en \argu{init} en \argu{unset} dienen om een element te initialiseren als ongebruikt en om het terug vrij te geven.
 
 Om te vermijden dat er oneindige lussen ontstaan bij het heen en weer verplaatsen van elementen in de hashtable, wordt zoals voorgesteld in het artikel een limiet opgelegd op het aantal iteraties dat er mogen gebeuren voor de tabelgrootte verdubbeld wordt. Als de tabel meer dan $5/12$ gevuld is, wordt ze ook automatisch verdubbeld van grootte.
 

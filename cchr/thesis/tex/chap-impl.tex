@@ -110,7 +110,7 @@ Het is een component van het standaard C compilatieproces (preprocessor, compile
 \end{Verbatim}
 Het {\em headerbestand} \code{stdio.h} ingeladen worden. Volgens de standaard zal dit bestand definities opnemen voor een aantal datatypes en functies nodig voor invoer/uitvoerroutines. 
 
-Alle ``instructies'' die deze preprocessor kent heten {\em directives} (directieven), en moeten op een aparte lijn in het bronbestand staan, te beginnen met een hekje (\code{\#}). De belangrijkste directives die wij gebruiken zijn \code{\#include}, en \code{\#define}. \code{#define} dient om een macro te defini\"eren.
+Alle ``instructies'' die deze preprocessor kent heten {\em directives} (directieven), en moeten op een aparte lijn in het bronbestand staan, te beginnen met een hekje (\code{\#}). De belangrijkste directives die wij gebruiken zijn \code{\#include}, en \code{\#define}. \code{\#define} dient om een macro te defini\"eren.
 
 Macros zijn {\em tokens} die gedefinieerd worden als te substitueren door een reeks andere tokens. De eenvoudigste vorm, ook objectvorm genaamd, is: \begin{Verbatim}
   #define FOO bar(1);
@@ -409,6 +409,20 @@ Om te vermijden dat er oneindige lussen ontstaan bij het heen en weer verplaatse
 Met de gebruikte hashtable is het vrij essentieel dat een goede hashfunctie gebruikt wordt. De invoer (zijnde de elementen die geplaatst moeten worden in de tabel) bevat vaak patronen, zoals opeenvolgende getallen. Indien dit patroon zou resulteren in een verhoogde kans op collisions, zou de kwaliteit van het hashtable algoritme al snel achteruit gaan.
 
 Voor de hasfunctie is gekozen voor ``lookup3'', een publiek-domein algoritme. Zie \cite{hashing} voor meer informatie.
+
+\section{Correctheid} \label{sec:correctheid}
+
+\subsection{Standaarden} \label{sec:standards}
+
+Alle code, zowel de compiler als de gegenereerde code, is C code, of iets dat ernaar omgezet wordt. De programmeertaal C bestaat echter in vele varianten en er zijne vele standaarden voor gedefinieerd. Wat betreft de C compiler is steeds gebruik gemaakt van de {\em GNU Compiler Collection} (GCC). De compiler heeft geen externe afhankelijkheden van andere projecten of bibliotheken, en is volledig conform aan de ``C99'' standaard (ISO 9899:1999). Merk op dat GCC zelf nog niet volledig C99 ondersteunt, maar de broncode gebruikt ook geen functionaliteit die niet in GCC 3.3 aanwezig is. De gegenereerde code, of beter gezegd, de huidige CSM definities, maken gebruik van 1 mogelijkheid die niet tot de C99 standaard behoort, en slechts vanaf GCC 4 beschikbaar is: ``local labels''. Deze worden gebruikt om uit geneste lussen te springen op een elegante manier.
+
+\subsection{Geheugenlekken} \label{sec:memleaks}
+
+\Quote{It's no use carrying an umbrella if your shoes are leaking.}{Irish proverb}
+
+In beide gevallen wordt vaak gebruik gemaakt van het dynamisch geheugen dat deze taal aanbiedt, mbv. de systeemfuncties \code{malloc()}, \code{free()} en \code{realloc()}. Het probleem met gebruik hiervan is dat de programmeur volledig zelf verantwoordelijk wordt voor het geheugenbeheer. Er moet voor gezorgd worden dat elke byte gealloceerd geheugen ook effectief vrijgegeven wordt, en dat er nooit naar niet-gealloceerd of reeds-vrijgegeven geheugen verwezen wordt. Om deze fouten te kunnen opsporen is gebruik gemaakt van de geheugen debuggers {\em valgrind} en {\em Electric Fence}, en met de  {\em boundschecking} patch voor GCC. Zowel de compiler zelf als de gegenereerde code zijn vaak met deze tools gecontroleerd, en in de uiteindelijke versie zijn dan ook geen ``geheugenlekken'' of gebruik van niet-gealloceerd geheugen meer gevonden.
+
+Uiteraard blijft de gebruiker van de CCHR compiler wel verantwoordelijk om zelf geen geheugenlekken te veroorzaken, bv. door C code die in de body van een CHR rule staat.
 
 % Een van de meest algemene afwegingen die gemaakt moeten worden, is hoeveel de compiler doet, en hoeveel aan de runtime overgelaten wordt. In het algemeen stelt vast dat men hoe meer concepten door de compiler vertaald worden (en dus hoe eenvoudiger de runtime wordt), hoe effici\"enter het resultaat kan worden. De compiler is immers in staat
 % 

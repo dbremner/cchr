@@ -13,7 +13,7 @@ In dit hoofdstuk worden enkele voorbeelden bekeken en gezien hoe goed ze prester
 
 Alle benchmarks zijn uitgevoerd op hetzelfde systeem, met zo min mogelijk andere taken op het zelfde moment lopende. Het gaat om een AMD Athlon64 3500+ processor met 1GiB PC3200 DDR geheugen, met als besturingssyteem Gentoo op een Linux 2.6.19 kernel. De gebruikte C compiler (voor zowel de C versies, als de gegenereerde C code) is GCC (Gnu Compiler Collection) 4.1.2. De gebruikte Java compiler en runtime zijn versie 1.5.0.11. Voor de SWI-Prolog benchmarks is gebruik gemaakt van SWI 5.6.17, met GMP ondersteuning. Er werd gebruik gemaakt van de GMP (GNU Multiprecision Library) versie 4.2.1.
 
-Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, test en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden, en uiteindelijk de totale gebruikte cpu tijd gemeten (dus niet de kloktijd, maar het aantal seconden effectieve cpu belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit laatste om de constante tijd (inladen uitvoerbaar bestand, compilen van CHR naar Prolog, opstarten Java JVM en JIT compilatie) niet in rekening te brengen bij de tests. Het uiteindelijk resultaat werd met behulp van gnuplot uitgezet op een grafiek.
+Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, test en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden, en werd uiteindelijk de totale gebruikte cpu tijd gemeten (dus niet de kloktijd, maar het aantal seconden effectieve cpu belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit verminderen was nodig zodat de constante tijd (inladen uitvoerbaar bestand, compilen van CHR naar Prolog, opstarten Java JVM en JIT compilatie) niet in rekening gebracht werd bij de tests. De uiteindelijke resultaten werden met behulp van gnuplot uitgezet op grafieken.
 
 \section{Grootste gemene deler} \label{sec:bench-gcd}
 
@@ -27,7 +27,7 @@ cchr {
   dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
 }
 \end{Verbatim}
-\caption{\label{code:fib} Grootste gemene deler in CCHR}
+\caption{\label{code:gcd} Grootste gemene deler in CCHR}
 \end{exCode}
 \benchfig{gcd}{Grootste gemene deler benchmark}
 De benchmark resultaten vindt u in figuur~\ref{fig:bench-gcd}. Op de grafiek is te zien hoe de CCHR versie slechts een factor 3 ongeveer trager is dan de pure C implementatie. Het verschil met de SWI-Prolog versie is heel groot, meer dan een factor 1000. Dit is vooral te wijten aan de extreem snelle lussen die in C mogelijk zijn in vergelijking met Prolog. De eigenlijke uitvoering van het algoritme komt immers neer op een variabele die van een groot getal aftelt tot 0. Merk op dat hier de ineffici\"ente versie van het algoritme gebruikt wordt, gebruik makende van een aftrekking in plaats van een modulus-bewerking wordt. Dit om de uitvoeringstijd van het algoritme meetbaar te houden. De berekende waardes zijn $gcd(5,1000 X)$, met $X$ de ``problem size''. Deze test in JCHR uitvoeren zorgde dat Java zeer snel een stack overflow gaf.
@@ -135,4 +135,25 @@ De resultaten zijn te vinden in figuur~\ref{fig:bench-leq}. Opvallend is de hell
 Het laatste testvoorbeeld dat beschouwd wordt is de RAM simulator in CHR, zoals beschreven in \cite{jon:complexity:chr05}.
 Hierin wordt een simpel programmaatje dat van $N$ tot $0$ telt geladen, met $N$ de ``problem size''. De code is bijna identiek aan de Prolog versie, en is te vinden in sectie~\ref{sec:ram-cchr}.
 \benchfig{ram}{RAM benchmark}
-De resultaten zijn te vinden in figuur~\ref{fig:bench-ram}. Het opvallendste is het bijna perfect lineair zijn van het voorbeeld in alle talen behalve Java, met enkel constante factoren ertussen. In de C versie is het hele programma een enkele lus die een instructie leest, en binnen een {\em switch} uitvoert. Hierbij is de tijd nodig om een element in het geheugen op te zoeken herleid tot \'e\'en element ophalen uit een array.
+De resultaten zijn te vinden in figuur~\ref{fig:bench-ram}. Het opvallendste is het bijna perfect lineair zijn van het voorbeeld in alle talen behalve Java, met enkel constante factoren ertussen. In de C versie is het hele programma een enkele lus die een instructie leest, en binnen een {\em switch} uitvoert. Hierbij is de tijd nodig om een element in het geheugen op te zoeken herleid tot \'e\'en opzoeking in een array.
+
+\section{Overizcht} \label{sec:bench-end}
+
+Om een globaal overzicht te krijgen over de snelheden werden gemiddeldes bepaald voor elke combinatie van platform en test. Het gaat om het meetkundig gemiddelde van de verschillende tijdsmetingen, enkel voor de probleemgroottes waar de tijden voor elk platform bestonden en hoger lagen dan $2.5 * 10^{-5}$s. Uiteindelijk werden de getallen voor elke benchmark gescaleerd zodat het resultaat voor C gelijk werd aan 1. De bekomen resultaten zijn aldus een indicatie voor hoeveel elk CHR systeem trager is dan de C versie. Ze zijn te vinden in tabel~\ref{tbl:benches}.
+\begin{table}
+\begin{center}
+\begin{tabular}{c|rr@{.}lr@{.}l}
+ & {\bf SWI} & \multicolumn{2}{c}{\bf JCHR} & \multicolumn{2}{c}{\bf CCHR} \\
+\hline
+gcd    & 26300 & \multicolumn{2}{c}{-} &   2&87 \\
+fib    & 5570  &   289&0               &   5&50 \\
+primes & 257   &   647&0               &   5&64 \\
+tak    & 142   &    73&9               &   2&25 \\
+leq    & 1290  &   504&0               &  10&3 \\
+ram    & 4120  & 12200&0               &  92&3 \\
+\end{tabular}
+\caption{Benchmark gemiddeldes}
+\label{tbl:benches}
+\end{center}
+\end{table}
+De gemeten tijden zijn voor CCHR nog steeds 2 tot 100 maal deze van de C versies, maar wel steeds duidelijk sneller dan de respectievelijke JCHR of Prolog CHR versies.

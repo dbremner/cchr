@@ -1,12 +1,12 @@
 \chapter{Conclusie en toekomstig werk} \label{chap:concl}
 
-\section{Conclusie}
+\section{Conclusie} \label{sec:concl}
 
 Het doel van deze thesis was een effici\"ent CHR systeem ontwerpen dat nauwe interactie met C mogelijk maakt.
 
 We zijn van mening dat we hierin geslaagd zijn, door een compiler te schrijven die CHR ingebed in C code kan vertalen in enkele stappen naar een C programma.
 
-{\bf Effici\"entie} Door te vertalen naar pure C code, die sterk geoptimaliseerd kan worden door bestaande compilers, kunnen algoritmes heel snel uitgevoerd worden in het uiteindelijk programma. Door het doorvoeren van enkele van de belangrijkste bekende optimalisaties voor CHR is vaak dezelfde tijdscomplexiteit te halen als bekende CHR implementaties, zoals het K.U.Leuven CHR systeem voor Prolog. De code wordt echter niet onder een vertolker (interpreter) uitgevoerd, maar direct tot machinetaal vertaald. De laagniveau mogelijkheden van C maakten een goede keuze van datastructuren mogelijk. Dit alles leidt tot een versnelling met een constante factor van ongeveer 10 tot 1000 in de gecontroleerde voorbeelden, met zowel SWI-Prolog als het K.U.Leuven JCHR systeem.
+{\bf Effici\"entie} Door te vertalen naar pure C code, die sterk geoptimaliseerd kan worden door bestaande compilers, kunnen algoritmes heel snel uitgevoerd worden in het uiteindelijk programma. Door het doorvoeren van enkele van de belangrijkste bekende optimalisaties voor CHR is vaak dezelfde tijdscomplexiteit te halen als bekende CHR implementaties, zoals het K.U.Leuven CHR systeem voor Prolog. De code wordt echter niet onder een vertolker (interpreter) uitgevoerd, maar direct tot machinetaal vertaald. De laagniveau mogelijkheden van C maakten een goede keuze van datastructuren mogelijk. Dit alles leidt tot een versnelling met een constante factor van ongeveer 30 tot 10000 in de gecontroleerde voorbeelden, met zowel SWI-Prolog als het K.U.Leuven JCHR systeem. In sectie~\ref{sec:bench-end} werden de resultaten gegeven.
 
 {\bf C} Vrijwel alles van code is ofwel C, ofwel iets dat ernaar omgezet wordt. De compiler zelf is in C geschreven, de broncode is CHR ingebed in C, en de uitvoer is C. De CHR rules kunnen willekeurige C statements en expressies bevatten als guard en body, en bijna alle C datatypes kunnen als constraint argumenten gebruikt worden. Er is tevens een duidelijk gespecifieerde interface waarmee C programma's kunnen interageren met de CHR constraint store.
 
@@ -31,4 +31,3 @@ We zijn van mening dat we hierin geslaagd zijn, door een compiler te schrijven d
 {\bf Meer indexen} Momenteel worden enkel indexen gegenereerd voor arithmetische (\code{==}) en binaire equivalenties (\code{eq()}, zie sectie~\ref{sec:rules}) op C variabelen en equivalenties op logische variabelen, met overeenkomstige matching om gepaste CSM ervoor te genereren. Zulke kunnen echter voor meer expressies gebruikt worden. Bijvoorbeeld zouden C strings met de standaard vergelijkingroutine \code{strcmp} in een hashtable bijgehouden kunnen worden (voor $O(1)$ opzoekingstijd), of in een treemap (indien niet enkel equivalentie maar ook ordening gebruikt wordt). Gelijkaardig zou voor de arithmetische vergelijkingsoperatoren in C (\code{>}, \code{<}, \code{>=}, \code{<=}) ook een treemap gebruikt kunnen worden.
 
 {\bf Heuristieken join ordering} De gebruikte heuristieken voor het bepalen van de gewichten van lussen en controles bij de join ordering toetsen aan de hand van benchmarks.
-

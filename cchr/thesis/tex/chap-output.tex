@@ -363,9 +363,9 @@ void addleq(int size,int a,int b,log_int_t *vars,int *cmp) {
     return;
   }
   for (int j=0; j<size; j++) {
-    if (cmp[size*b+j]) {
+    if (cmp[size*b+j]) { /* transitivity */
       addleq(size,a,j,vars,cmp);
-      if (cmp[size*b+a]>ov) return;
+      if (cmp[size*b+a]>ov) return; /* generation optimalisation */
     }
   }
 }

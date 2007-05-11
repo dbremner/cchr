@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#include "logical.h"
+#include "dijkstra_cchr.h"
+
+#define FALSE 0
+#define TRUE 1
+
+/* the cchr block */
+cchr {
+  
+  extern alt,eq,FALSE,TRUE;
+
+  /* the fib_heap part */
+  
+  constraint extract_min(int* , int*);
+  constraint insert(int,int), decr_or_ins(int,int);
+  constraint mark(int), decr(int,int), ch2rt(int), decr5(int, int, int, int, int), item(int, int, int, int, int);
+  constraint min(int,int), findmin();
+  
+  insert        @ insert(I,K) <=> item(I,K,0,0,FALSE), min(I,K);
+
+  keep_min      @ min(_,A) \ min(_,B) <=> A <= B | true;
+
+  extr          @ extract_min(X,Y), min(I,K), item(I,_,_,_,_) <=> ch2rt(I), findmin(), {*(X)=I; *(Y)=K;};
+  extr_empty    @ extract_min(X,Y) <=> {*(X)=0; *(Y)=0;};
+
+  c2r           @ ch2rt(I) \ item(C,K,R,I,_) <=> item(C,K,R,0,FALSE);
+  c2r_done      @ ch2rt(_I) <=> true;
+
+  find_min      @ findmin(), item(I,K,_,0,_) ==> min(I,K);
+  found_min     @ findmin() <=> true;
+
+  same_rank     @ item(I1,K1,R,0,_), item(I2,K2,R,0,_) <=> K1 <= K2 | item(I2,K2,R,I1,FALSE), item(I1,K1,R+1,0,FALSE);
+
+  decr          @ decr(I,K), item(I,O,R,P,M) <=> K < O | decr5(I,K,R,P,M);
+  decr_no       @ decr(_I,_K) <=> true;
+
+  doi_decrease  @ item(I, O, R, P, M),  decr_or_ins(I,K) <=> K < O  | decr5(I,K,R,P,M);
+  doi_nop       @ item(I, O, _, _, _) \ decr_or_ins(I,K) <=> K >=O  | true;
+  doi_insert    @ decr_or_ins(I,K) <=> insert(I,K);
+
+  d_min         @ decr5(I, K,_,_,_) ==> min(I,K);
+  d_root        @ decr5(I, K, R, 0,_) <=> item(I,K,R,0,FALSE);
+  d_ok          @ item(P, PK,_,_,_) \ decr5(I,K,R,P,M) <=> K >= PK | item(I,K,R,P,M);
+  d_prob        @ decr5(I,K,R,P,_M) <=> item(I,K,R,0,FALSE), mark(P);
+
+  mark_root     @ mark(I), item(I,K,R,0,_)  <=> item(I,K,R-1,0,FALSE);
+  mark_marked   @ mark(I), item(I,K,R,P,TRUE) <=> item(I,K,R-1,0,FALSE), mark(P);
+  mark_unmarked @ mark(I), item(I,K,R,P,FALSE) <=> item(I,K,R-1,P,TRUE);
+  error_mark    @ mark(I) <=> {fprintf(stderr,"error_mark(%i)",I);};
+
+  /* dijkstra part */
+  
+  constraint edge(int,int,int) fmt("edge(%i,%i,%i)",$1,$2,$3), dijkstra(int) fmt("dijkstra(%i)",$1);
+  constraint scan(int,int) fmt("scan(%i,%i)",$1,$2), relabel(int,int) fmt("relabel(%i,%i)",$1,$2);
+  constraint distance(int,int) fmt("distance(%i,%i)",$1,$2);
+  
+  start_scanning @ dijkstra(A) <=> scan(A,0);
+  stop_scanning  @ scan(0,_A) <=> true;
+  label_neighb   @ scan(N,L), edge(N,N2,W) ==> relabel(N2, L+W);
+  scan_next      @ scan(N,L) <=> distance(N,L), int N2=, int W2=, 
+                                 extract_min(&N2,&W2), scan(N2,W2);
+  scanned        @ distance(N,_) \ relabel(N,_) <=> true;
+  not_scanned    @ relabel(N,L) <=> decr_or_ins(N,L);
+}
+
+int main(int argc, char **argv) {
+  cchr_runtime_init();
+  cchr_add_edge_3(1,2,1);
+  cchr_add_edge_3(2,3,1);
+  cchr_add_edge_3(3,4,1);
+  cchr_add_edge_3(1,4,2);
+  cchr_add_dijkstra_1(1);
+  cchr_consloop(j,distance_2,{
+    printf("distance(%i,%i)\n",cchr_consarg(j,distance_2,1),cchr_consarg(j,distance_2,2));
+  });
+  return 0;
+}

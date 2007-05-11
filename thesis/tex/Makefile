@@ -15,7 +15,7 @@ clean:
 $(TEXOUT)/thesis.pdf: $(TEXOUT)/thesis.proc
 	cd $(TEXOUT); export TEXINPUTS=.:..:; pdflatex thesis.tex; pdflatex thesis.tex; cd ..
 
-$(TEXOUT)/book.pdf: $(TEXOUT)/thesis.proc $(TEXOUT)/THcover.pdf
+$(TEXOUT)/book.pdf: $(TEXOUT)/thesis.pdf $(TEXOUT)/THcover.pdf
 	cd $(TEXOUT); pdfjoin --paper a4paper --outfile book.pdf THcover.pdf thesis.pdf; cd ..
 
 view: $(TEXOUT)/book.pdf

@@ -2,6 +2,8 @@
 %\documentclass[dutch,12pt,oneside,a4paper]{book}
 \documentclass[a4paper,11pt]{report}
 
+\usepackage{a4wide}
+
 % Make sure you can process texts with accents
 \usepackage[dutch]{babel}
 \usepackage[latin1]{inputenc}
@@ -9,7 +11,7 @@
 
 \usepackage{compat}
 
-\geometry{%
+\geometry{
         a4paper,
         top=2cm,
         left=2cm,
@@ -20,9 +22,6 @@
 % Use special math symbols
 \usepackage{amsmath}
 
-% Set paragraph layout
-\setlength{\parindent}{0mm}
-\setlength{\parskip}{3mm}
 
 % Define symbols for natural, integer, real,.. numbers
 \DeclareSymbolFont{AMSb}{U}{msb}{m}{n}
@@ -45,7 +44,7 @@
 
 % declare some extra floats
 \usepackage{float}
-\newfloat{exCode}{thp}{lop}[chapter]
+\newfloat{exCode}{tbp}{lop}[chapter]
 \floatname{exCode}{Codevoorbeeld}
 
 \usepackage{tabularx}
@@ -64,6 +63,11 @@ Hier komt mijn dankwoord.
 
 \newpage
 \tableofcontents
+
+% Set paragraph layout
+\setlength{\parindent}{0mm}
+\setlength{\parskip}{3mm}
+
 
 \newpage
 %\mainmatter

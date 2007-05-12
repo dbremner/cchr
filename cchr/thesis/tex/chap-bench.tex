@@ -9,19 +9,19 @@
 \end{figure}
 }
 
-In dit hoofdstuk worden enkele voorbeelden bekeken en gezien hoe goed ze presteren in de verschillende CHR implementaties. Van elk van deze voorbeelden is een ook pure C implementatie geschreven, om een idee te hebben hoe ver CCHR er nog van af staat.
+In dit hoofdstuk worden enkele voorbeelden bekeken en vergeleken hoe goed ze presteren in de verschillende CHR implementaties. Van elk van deze voorbeelden is een ook pure C implementatie geschreven, om een idee te hebben hoe ver CCHR er nog van af staat.
 
-Alle benchmarks zijn uitgevoerd op hetzelfde systeem, met zo min mogelijk andere taken op het zelfde moment lopende. Het gaat om een AMD Athlon64 3500+ processor met 1GiB PC3200 DDR geheugen, met als besturingssyteem Gentoo op een Linux 2.6.19 kernel. De gebruikte C compiler (voor zowel de C versies, als de gegenereerde C code) is GCC (Gnu Compiler Collection) 4.1.2. De gebruikte Java compiler en runtime zijn versie 1.5.0.11. Voor de SWI-Prolog benchmarks is gebruik gemaakt van SWI 5.6.17, met GMP ondersteuning. Er werd gebruik gemaakt van de GMP (GNU Multiprecision Library) versie 4.2.1.
+Alle benchmarks zijn uitgevoerd op hetzelfde systeem, met zo min mogelijk andere taken op het zelfde moment lopende. Het gaat om een AMD Athlon64 3500+ processor met 1GiB PC3200 DDR geheugen, met als besturingssysteem Gentoo op een Linux 2.6.19 kernel. De gebruikte C compiler (voor zowel de C versies, als de gegenereerde C code) is GCC (Gnu Compiler Collection) 4.1.2. De gebruikte Java compiler en runtime zijn versie 1.5.0.11. Voor de SWI-Prolog benchmarks is gebruik gemaakt van SWI 5.6.17, met GMP ondersteuning. Er werd gebruik gemaakt van de GMP (GNU Multiprecision Library) versie 4.2.1.
 
-Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, test en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden, en werd uiteindelijk de totale gebruikte cpu tijd gemeten (dus niet de kloktijd, maar het aantal seconden effectieve cpu belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit verminderen was nodig zodat de constante tijd (inladen uitvoerbaar bestand, compilen van CHR naar Prolog, opstarten Java JVM en JIT compilatie) niet in rekening gebracht werd bij de tests. De uiteindelijke resultaten werden met behulp van gnuplot uitgezet op grafieken.
+Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, benchmark en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden, en werd uiteindelijk de totale gebruikte CPU tijd gemeten (dus niet de klok tijd, maar het aantal seconden effectieve CPU belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit verminderen was nodig zodat de constante tijd (inladen uitvoerbaar bestand, compileren van CHR naar Prolog, opstarten Java JAM en JUT compilatie) niet in rekening gebracht werd bij de tests. De uiteindelijke resultaten werden met behulp van GnuPlot uitgezet op grafieken.
 
 \section{Grootste gemene deler} \label{sec:bench-gcd}
 
-Het eerste voorbeeld dat beschouwd wordt, is een programma dat de grootste gemene deler van 2 getallen kan bepalen. Het werkt door zolang er 2 getallen groter dan 0 zijn, het kleinste van het grootste af te trekken. 
+Het eerste voorbeeld dat beschouwd wordt, is een programma dat de grootste gemene deler van twee getallen bepaalt. Het werkt door zolang er twee getallen groter dan nul zijn, het kleinste van het grootste af te trekken. 
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
-cchr {
-  constraint gcd(int);
+CCHR {
+  constraint cd(int);
 
   triv @ gcd(0) <=> true;
   dec @ gcd(N) \ gcd(M) <=> M>=N | gcd(M-N);
@@ -30,11 +30,11 @@ cchr {
 \caption{\label{code:gcd} Grootste gemene deler in CCHR}
 \end{exCode}
 \benchfig{gcd}{Grootste gemene deler benchmark}
-De benchmark resultaten vindt u in figuur~\ref{fig:bench-gcd}. Op de grafiek is te zien hoe de CCHR versie slechts een factor 3 ongeveer trager is dan de pure C implementatie. Het verschil met de SWI-Prolog versie is heel groot, meer dan een factor 1000. Dit is vooral te wijten aan de extreem snelle lussen die in C mogelijk zijn in vergelijking met Prolog. De eigenlijke uitvoering van het algoritme komt immers neer op een variabele die van een groot getal aftelt tot 0. Merk op dat hier de ineffici\"ente versie van het algoritme gebruikt wordt, gebruik makende van een aftrekking in plaats van een modulus-bewerking wordt. Dit om de uitvoeringstijd van het algoritme meetbaar te houden. De berekende waardes zijn $gcd(5,1000 X)$, met $X$ de ``problem size''. Deze test in JCHR uitvoeren zorgde dat Java zeer snel een stack overflow gaf.
+De benchmark resultaten vindt u in figuur~\ref{fig:bench-gcd}. Op de grafiek is te zien hoe de CCHR versie slechts een factor drie ongeveer trager is dan de pure C implementatie. Het verschil met de SWI-Prolog versie is heel groot, meer dan een factor 1000. Dit is vooral te wijten aan de extreem snelle lussen die in C mogelijk zijn in vergelijking met Prolog. De eigenlijke uitvoering van het algoritme komt immers neer op een variabele die van een groot getal aftelt tot nul. Merk op dat hier de ineffici\"ente versie van het algoritme gebruikt wordt, gebruik makende van een aftrekking in plaats van een modulus-bewerking wordt. Dit om de uitvoeringstijd van het algoritme meetbaar te houden. De berekende waardes zijn $gcd(5,1000 X)$, met $X$ de ``problem size''. Deze test in JCHR uitvoeren zorgde dat Java zeer snel een stack overflow gaf.
 
 \section{Fibonacci getallen} \label{sec:bench-fib}
 
-Als tweede voorbeeld wordt een programma beschouwd dat de getallen van Fibonacci berekent. Deze keer wordt een iets ingewikkelder algoritme dan in codevoorbeeld~\ref{fib:exCode} gebruikt: we gaan alle Fibonacci-getallen tot en met het gevraagde bijhouden in de constraint store, in plaats van enkel de laatste twee. Bovendien is er in elke taal gebruikt gemaakt van een bibliotheek om met grote getallen (willekeurige lengte) te kunnen werken. Hier is de code:
+Als tweede voorbeeld wordt een programma beschouwd dat de getallen van Fibonacci berekent. Deze keer wordt een iets ingewikkelder algoritme dan in codevoorbeeld~\ref{fib:exCode} gebruikt: we gaan alle Fibonacci-getallen tot en met het gevraagde bijhouden in de constraint store, in plaats van enkel de laatste twee. De code is te vinden in codevoorbeeld~\ref{code:fibgmp}.
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 #include <gmp.h>
@@ -58,11 +58,10 @@ cchr {
     fib(N+1, sum);
 }
 \end{Verbatim}
-\caption{\label{code:fibgmp} Fibonacci met GMP in CCHR}
+\caption{\label{code:fibgmp} Fibonacci met GMP in CCHR --- fib-gmp.cchr}
 \end{exCode}
 \benchfig{fib}{Fibonacci benchmark}
-
-Er wordt gebruik gemaakt van de {\em GNU Multiprecision Library}, die de mogelijkheid biedt om met willekeurig grote getallen te werken. De C versie van het programma gebruikt ook GMP, en SWI-Prolog gebruikt het intern ook. In JCHR maken wordt de java.math.BigInteger klasse gebruikt. De resultaten kan u zien in figuur~\ref{fig:bench-fib}. De CCHR versie lijkt korter en korter bij de uitvoeringstijd van de C versie te komen. Dit kan te verklaren zijn door dat een groot deel van het rekenwerk door GMP gebeurt, en naarmate de getallen groter worden, meer en meer. Er blijft wel een duidelijk snelheidsverschil met JCHR en zeker SWI-Prolog.
+In elke taal is gebruik gemaakt van een bibliotheek om met grote getallen (willekeurige lengte) te kunnen werken. In C, CCHR en SWI-Prolog is dat GMP ({\em GNU Multiprecision Library}). De Java versie gebruikt de java.math.BigInteger klasse. De resultaten kan u zien in figuur~\ref{fig:bench-fib}. De uitvoeringstijd van de CCHR versie lijkt korter en korter bij de uitvoeringstijd van de C versie te komen. Dit kan te verklaren zijn door dat een groot deel van het rekenwerk door GMP gebeurt, en naarmate de getallen groter worden, meer en meer. Er blijft wel een duidelijk snelheidsverschil met JCHR en zeker SWI-Prolog.
 
 \section{Priemgetallen} \label{sec:bench-primes}
 
@@ -79,7 +78,7 @@ cchr {
 \caption{\label{code:primes} Priemgetallen in CCHR}
 \end{exCode}
 \benchfig{primes}{Primes benchmark}
-De resultaten zijn te vinden in figuur~\ref{fig:bench-primes}. De ``problem size'' komt overeen met het getal tot waar alle priemgetallen gevraagd zijn. Voor de C versie van het algoritme wordt een array bijgehouden van alle reeds gevonden priemgetallen, en daar \'e\'en voor \'e\'en opeenvolgende getallen aan toegevoegd, op voorwaarde dat er geen deelbaarheid is met \'e\'en van de vorige getallen. Het toenemende tijdsverschil tussen de CCHR en C versie, is te verklaren door de kleine toename in rekentijd die optreedt bij groter wordende constraint store en indexen, waar de C versie geen last van heeft.
+De resultaten zijn te vinden in figuur~\ref{fig:bench-primes}. De ``problem size'' komt overeen met het getal tot waar alle priemgetallen gevraagd zijn. Voor de C versie van het algoritme wordt een array bijgehouden van alle reeds gevonden priemgetallen, en daar \'e\'en voor \'e\'en opeenvolgende getallen aan toegevoegd, op voorwaarde dat er geen deelbaarheid is met \'e\'en van de vorige getallen. Het toenemende tijdsverschil tussen de CCHR en C versie is te verklaren door de kleine toename in rekentijd die optreedt bij groter wordende constraint store en indexen, waar de C versie geen last van heeft.
 
 Er bestaan trouwens veel betere algoritmes om dit te implementeren die nauwelijks moeilijker te implementeren zijn. Bijvoorbeeld slechts proberen te delen door priemgetallen tot en met $\sqrt{N}$ zorgt reeds voor hogere snelheid. Om gemakkelijker te kunnen vergelijken is in alle talen hier de tragere variant getest.
 
@@ -107,14 +106,14 @@ tak(X,Y,Z,A) ==> X > Y |
 \end{Verbatim}
 \caption{\label{code:tak} De Takeuchi functie in Prolog CHR}
 \end{exCode}
-Er was wat moeite nodig om een versie in C te schrijven van dit algoritme, dat sneller was dan CCHR. Uiteindelijk bleek de reeds berekende waarden in een hashtable bewaren (zie sectie~\ref{sec:hashtable}) voldoende. Bij een eerdere poging om alle eerder berekende waardes in een 3-dimensionele array te bewaren, bleken de hoge geheugenvereisten voor vertraging te zorgen.
+Er was wat moeite nodig om een versie in C te schrijven van dit algoritme die sneller was dan CCHR. Uiteindelijk bleek de reeds berekende waarden in een hashtable bewaren (zie sectie~\ref{sec:hashtable}) voldoende. Bij een eerdere poging om alle eerder berekende waardes in een 3-dimensionale array te bewaren, bleken de hoge geheugen-vereisten voor vertraging te zorgen.
 
 \benchfig{tak}{Takeuchi benchmark}
 De resultaten zijn te vinden in figuur~\ref{fig:bench-tak}. Bij probleemgrootte $N$, is de waarde van $tak(\lceil\frac{100}{81}N\rceil,\lceil\frac{10}{9}N\rceil,N)$ berekend.
 
 \section{Kleiner-dan-of-gelijk-aan} \label{sec:bench-leq}
 
-Het voorlaatste voorbeeld dat beschouwd wordt, is de kleiner-dan-of-gelijk-aan test. Er wordt een cyclus gebouwd van $N$ variabelen, die elk kleiner dan of gelijk aan de vorige zijn, inclusief de eerste kleiner of gelijk aan de laatste. Dit wordt als invoer gegeven aan een programma dat dan met behulp van de definitie van de orde-operator moet besluiten dat alle variabelen aan elkaar gelijk zijn. Hier wordt alweer enkel de code voor Prolog CHR gegeven, de versie voor CCHR vindt u in sectie~\ref{sec:leq-cchr}.
+Het voorlaatste voorbeeld dat beschouwd wordt, is de kleiner-dan-of-gelijk-aan test. Er wordt een cyclus gebouwd van $N$ variabelen, die elk kleiner dan of gelijk aan de vorige zijn, inclusief de eerste kleiner dan of gelijk aan de laatste. Dit wordt als invoer gegeven aan een programma dat dan met behulp van de definitie van de orde-operator moet besluiten dat alle variabelen aan elkaar gelijk zijn. Hier wordt alweer enkel de code voor Prolog CHR gegeven, de versie voor CCHR vindt u in sectie~\ref{sec:leq-cchr}.
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 :- chr_constraint leq/2.
@@ -137,9 +136,9 @@ Hierin wordt een simpel programmaatje dat van $N$ tot $0$ telt geladen, met $N$ 
 \benchfig{ram}{RAM benchmark}
 De resultaten zijn te vinden in figuur~\ref{fig:bench-ram}. Het opvallendste is het bijna perfect lineair zijn van het voorbeeld in alle talen behalve Java, met enkel constante factoren ertussen. In de C versie is het hele programma een enkele lus die een instructie leest, en binnen een {\em switch} uitvoert. Hierbij is de tijd nodig om een element in het geheugen op te zoeken herleid tot \'e\'en opzoeking in een array.
 
-\section{Overizcht} \label{sec:bench-end}
+\section{Overzicht} \label{sec:bench-end}
 
-Om een globaal overzicht te krijgen over de snelheden werden gemiddeldes bepaald voor elke combinatie van platform en test. Het gaat om het meetkundig gemiddelde van de verschillende tijdsmetingen, enkel voor de probleemgroottes waar de tijden voor elk platform bestonden en hoger lagen dan $2.5 * 10^{-5}$s. Uiteindelijk werden de getallen voor elke benchmark gescaleerd zodat het resultaat voor C gelijk werd aan 1. De bekomen resultaten zijn aldus een indicatie voor hoeveel elk CHR systeem trager is dan de C versie. Ze zijn te vinden in tabel~\ref{tbl:benches}.
+Om een globaal overzicht te krijgen over de snelheden werden gemiddeldes bepaald voor elke combinatie van platform en test. Het gaat om het meetkundig gemiddelde van de verschillende tijds-metingen, enkel voor de probleemgroottes waar de tijden voor elk platform bestonden en hoger lagen dan $2.5 * 10^{-5}$s. Uiteindelijk werden de getallen voor elke benchmark geschaald zodat het resultaat voor C gelijk werd aan 1. De bekomen resultaten zijn aldus een indicatie voor hoeveel elk CHR systeem trager is dan de C versie. Ze zijn te vinden in tabel~\ref{tbl:benches}.
 \begin{table}
 \begin{center}
 \begin{tabular}{c|rr@{.}lr@{.}l}

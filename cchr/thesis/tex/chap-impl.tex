@@ -6,14 +6,14 @@ In dit hoofdstuk wordt ingegaan op hoe ons CCHR systeem ontworpen en ge\"impleme
 
 Zoals reeds aangehaald bestaat de implementatie van een CHR systeem normaal uit twee delen: de {\em compiler} en de {\em runtime}. De compiler zorgt voor een vertaling van de CHR-syntax naar code die uitvoerbaar is op het host-platform, en de runtime bevat alles wat noodzakelijk is om de vertaalde code te kunnen uitvoeren (algemene routines, onderhouden van de constraint store, \ldots).
 
-Onze compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot normale C code, die dan verder door een standaard C compiler vertaald kan worden tot uitvoerbare code (machinetaal voor een specifiek platform). Bij C is het gebruikelijk dat er een volledige compilatie tot machinetaal gebeurt, in plaats van slechts een omzetting tot bytecode zoals in Java. Hierdoor duurt compileren langer, en is de uitvoer van de C compiler slechts op \'e\'en platform bruikbaar. Het voordeel is echter dat veel specifiekere machine-optimalisaties mogelijk zijn, waar CCHR ook van profiteert.
+De compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot normale C code, die dan verder door een standaard C compiler vertaald kan worden tot uitvoerbare code (machinetaal voor een specifiek platform). Bij C is het gebruikelijk dat er een volledige compilatie tot machinetaal gebeurt, in plaats van slechts een omzetting tot bytecode zoals in Java. Hierdoor duurt compileren langer, en is de uitvoer van de C compiler slechts op \'e\'en platform bruikbaar. Het voordeel is echter dat veel specifiekere machine-optimalisaties mogelijk zijn, waar CCHR ook van profiteert.
 
 \section{De Compiler} \label{sec:compiler}
 
 \Quote{If the programmer can simulate a construct faster then the compiler can implement the construct itself, then the compiler writer has blown it badly.}{Guy L. Steele Jr., Tartan Laboratories}
 
-De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: de CHR broncode wordt naar de host-language zelf vertaald, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren, en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke hosttaal. De precieze implementatie verschilt wel: \begin{itemize}
-  \item De CCHR compiler vertaalt naar C en niet naar Java
+De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: de CHR broncode wordt naar de host-taal zelf vertaald, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren, en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke hosttaal. De precieze implementatie verschilt wel: \begin{itemize}
+  \item De CCHR compiler vertaalt naar C en niet naar Java.
   \item De CCHR compiler is zelf ook in C geschreven. De JCHR compiler was zelf in Java gemaakt.
   \item De gebruikte lexer en parser zijn gegenereerd met {\em Flex} en {\em Bison}, in plaats van {\em ANTLR}.
   \item In plaats van een extern pakket voor de templates te gebruiken, worden standaard C macro's gebruikt.
@@ -38,7 +38,7 @@ De algemene werking van de CCHR compiler is als volgt: \begin{itemize}
 
 \subsection{De lexer} \label{sec:lexer}
 
-De lexer is geschreven met behulp van Flex. Op de website van Flex staat te lezen: \begin{quote}
+De lexer is geschreven met behulp van Flex (zie \cite{flex}). Op de website van Flex staat te lezen: \begin{quote}
   Flex is a fast lexical analyser generator. It is a tool for generating programs that perform pattern-matching on text.
 \end{quote}
 
@@ -48,7 +48,7 @@ De op deze wijze bekomen {\em lexer} vormt de eerste fase van het compilatie-pro
 
 \subsection{De parser} \label{sec:parser}
 
-De parser is geschreven met behulp van Bison. Op de website van Bison staat te lezen: \begin{quote}
+De parser is geschreven met behulp van Bison (zie \cite{bison}). Op de website van Bison staat te lezen: \begin{quote}
   Bison is a general-purpose parser generator that converts an annotated context-free grammar into an LALR(1) or GLR parser for that grammar.
 \end{quote}
 
@@ -68,8 +68,8 @@ De reden om de parser niet onmiddellijk via semantische acties deze tussenvorm t
 
 Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties doorgevoerd: \begin{itemize}
 \item Alle verwijzingen naar constraints, variabelen, opties, \ldots worden herkend.
-\item Alle regels worden omgezet naar HNF (Head Normal Form), waarbij alle expressies als parameters van contraints in de head die geen unieke variabelen zijn door een nieuwe variabele + een extra guard vervangen worden.
-\item Macros worden vervangen door hun definitie.
+\item Alle regels worden omgezet naar HNF (Head Normal Form), waarbij alle expressies als parameters van constraints in de head die geen unieke variabelen zijn door een nieuwe variabele + een extra guard vervangen worden.
+\item Macro's worden vervangen door hun definitie.
 \item Constraint occurrences worden bepaald (in welke rules en op welke plaats daarin elke constraint voorkomt).
 \item Variabele occurrences worden bepaald (in welke constraint occurrence en op welke plaats daarin elke variabele voorkomt).
 \item Afhankelijkheden tussen variabelen en statements worden bepaald.
@@ -80,11 +80,11 @@ Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties
 
 In de laatste fase van het vertalingsproces wordt de tussenvorm omgezet naar C code. Bij JCHR wordt van de template engine FreeMarker gebruik gemaakt. Het voordeel van templates te gebruiken is duidelijk: de code die door de compiler zelf gegenereerd moet worden is algemener en beschrijft het proces op hoger niveau. Implementatie details zoals datastructuren kunnen dan onafhankelijk van de compiler uitgewerkt worden, wat het geheel flexibeler maakt en de kans op fouten beperkt.
 
-In C bestaat echter reeds een gestandaardiseerd macro-systeem. Er is dan ook voor gekozen om deze C macros te gebruiken in plaats van een aparte template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
+In C bestaat echter reeds een gestandaardiseerd macro-systeem. Er is dan ook voor gekozen om deze C macro's te gebruiken in plaats van een aparte template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
 
-Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler is een sequentie van C macros in plaats van echte C code.
+Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler wordt een sequentie van C macros in plaats van echte C code.
 
-Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden die het gebruik van macros veroorzaakt bij het debuggen. Zo is het niet mogelijk de code die door de preprocessor geproduceerd wordt een verwijzing te laten bevatten naar de oorspronkelijke lijnnummers in het CCHR bronbestand. Daardoor zullen C syntax fouten in de body's van rules geen zinvolle waarschuwingen/foutmeldingen geven.
+Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden die het gebruik van macro's veroorzaakt bij het debuggen. Zo is het niet mogelijk de code die door de preprocessor geproduceerd wordt een verwijzing te laten bevatten naar de oorspronkelijke lijnnummers in het CCHR bronbestand. Daardoor zullen C syntax fouten in de body's van rules geen zinvolle waarschuwingen/foutmeldingen geven.
 
 De gegenereerde code wordt in detail uitgewerkt in sectie~\ref{sec:gencode}.
 
@@ -99,16 +99,16 @@ in de uitvoer gezet worden, die de C compiler hints geven over waar de code in h
 
 \section{Gegenereerde code} \label{sec:gencode}
 
-Zoals gezegd bestaat de gegenereerde code uit C macros. In dit stuk wordt ingegaan op de structuur van die gegenereerde code. Eerst wordt een inleiding gegeven op de C voorvertaler, en dan wordt een voorbeeld stap voor stap uitgewerkt, om te eindigen bij de effectieve gegenereerde code die in de appendix te vinden is.
+Zoals gezegd bestaat de gegenereerde code uit C macro's. In dit stuk wordt ingegaan op de structuur van die gegenereerde code. Eerst wordt een inleiding gegeven op de C voorvertaler, en dan wordt een voorbeeld stap voor stap uitgewerkt, om te eindigen bij de effectieve gegenereerde code die in de appendix te vinden is.
 
 \subsection{C voorvertaler} \label{sec:preproc}
 
 Eerst een korte inleiding over de C voorvertaler (``{\em preprocessor}'').
 
-Het is een component van het standaard C compilatieproces (preprocessor, compiler, assembler, linker), en vooral gebruikt om platform-afhankelijke definites in te voegen in C programma. Zo bijvoorbeeld kan met het preprocessor {\em directive} \begin{Verbatim}
+Het is een component van het standaard C compilatieproces (voorvertaler, compiler, assembler, linker), en vooral gebruikt om platform-afhankelijke definites in te voegen in C programma's. Zo bijvoorbeeld kan met het preprocessor {\em directive} \begin{Verbatim}
   #include <stdio.h>
 \end{Verbatim}
-Het {\em headerbestand} \code{stdio.h} ingeladen worden. Volgens de standaard zal dit bestand definities opnemen voor een aantal datatypes en functies nodig voor invoer/uitvoerroutines. 
+het {\em headerbestand} \code{stdio.h} ingeladen worden. Volgens de standaard zal dit bestand definities opnemen voor een aantal datatypes en functies nodig voor invoer/uitvoerroutines. 
 
 Alle ``instructies'' die deze preprocessor kent heten {\em directives} (directieven), en moeten op een aparte lijn in het bronbestand staan, te beginnen met een hekje (\code{\#}). De belangrijkste directives die wij gebruiken zijn \code{\#include}, en \code{\#define}. \code{\#define} dient om een macro te defini\"eren.
 

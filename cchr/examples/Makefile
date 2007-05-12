@@ -1,8 +1,8 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=athlon64
 DEFS :=
 
-MODE := normal
-#MODE := debug
+#MODE := normal
+MODE := debug
 #MODE := debugopt
 #MODE := efence
 
@@ -13,8 +13,8 @@ ifeq ($(MODE),debugopt)
 else
   ifeq ($(MODE),debug)
     DEFS := -DCSM_CONF_DEBUG -DDEBUG
-    CFLAGS := -O0 -ggdb3 $(DEFS)
-    LDFLAGS := 
+    CFLAGS := -O0 -ggdb3 $(DEFS) -fmudflap
+    LDFLAGS := -lmudflap
   else
     ifeq ($(MODE),efence)
       DEFS := -DUSE_EFENCE

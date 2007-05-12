@@ -1,6 +1,6 @@
 CC := gcc
-CFLAGS := -Wall -pipe -std=c99 -pedantic -march=athlon64
-LDFLAGS := -lm
+CFLAGS := -Wall -pipe -std=c99 -pedantic -march=athlon64 -fmudflap
+LDFLAGS := -lm -lmudflap
 
 INTDIR := intermediate
 

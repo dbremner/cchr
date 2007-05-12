@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
   return 0;
 }
 \end{Verbatim}
-\caption{\label{fib:exCode} Fibonacci-voorbeeld --- \code{fib.cchr}}
+\caption{\label{fib:exCode} Volledig fibonacci in CCHR --- \code{fib.cchr}}
 \end{exCode}
 
 \subsection{Het cchr-blok}
@@ -124,11 +124,15 @@ Lokale variabelen binnen een guard of body gebruiken kennen een eigen syntax, di
 
 \subsubsection{CHR Macros}
 
-Het is mogelijk om binnen het CCHR blok zelf verkorte notaties in te voeren voor gebruik binnen de body van CHR rules. Deze worden door de CHR compiler zelf verwerkt, wat verschilt van C macros die door de C voorverwerker behandeld worden. Een voorbeeldje: \begin{Verbatim}
+Het is mogelijk om binnen het CCHR blok zelf verkorte notaties in te voeren voor gebruik binnen de body van CHR rules. Deze worden door de CHR compiler zelf verwerkt, wat verschilt van C macros die door de C voorverwerker behandeld worden. Een voorbeeld is te vinden in codevoorbeeld~\ref{code:chrmacro}.
+\begin{exCode}
+\begin{Verbatim}[frame=single]
   chr_macro eqv(bigint_t,bigint_t) bigint_cmp($1,$2);
   chr_macro eqv(_,_) ($1==$2);
 \end{Verbatim}
-
+\caption{\code{chr\_macro} voorbeeld}
+\label{code:chrmacro}
+\end{exCode}
 Dit zal het mogelijk maken om 2 \code{bigint\_t} variabelen met elkaar te vergelijken mbv. \code{eqv(a,b)}, maar ook 2 andere variabelen met behulp van de C operator \code{==}. Het datatype \code{bigint\_t} zou elders gedefinieerd moeten zijn.
 
 Zoals te zien is laat deze techniek toe dat verschillende data-types als parameters gebruikt worden (een soort polymorfisme), of dat \code{\_} als joker voor elk willekeurig type kan dienen. Indien er meerdere macrodefinities van toepassing zijn, wordt de eerste gebruikt. De datatypes zijn echter enkel bekend voor pure variabelen, gedefini\"eerd in de head van een regel, of als lokale variabele. Expressies die geen loutere variabele zijn, kunnen enkel overeenkomen met het jokertype \code{\_}.
@@ -143,12 +147,16 @@ De macro \code{eq} is trouwens voorgedefinieerd om binaire equivalenties voor te
 
 In CCHR zijn CHR variabelen (of constraint argumenten) steeds onveranderlijk. Dat wilt zeggen dat de waarde die een argument krijgt bij de aanmaak van een constraint ongewijzigd zal blijven zolang die constraint suspension bestaat. Dit geldt niet voor lokale variabelen, wiens levensduur beperkt is tot de guard en body van een regel. De mogelijkheid bieden om argumenten aan te passen zou tot moeilijk te defini\"eren gedrag kunnen leiden.
 
-Het constant zijn van argumenten wilt echter niet zeggen dat constraints niet gebruikt kunnen worden om wijzigbare data in op te slagen. Constante variabelen kunnen verwijzen naar een niet-constant gegeven in C. Een constante integer kan bijvoorbeeld een index zijn in een array die informatie bevat. In CHR wordt het wijzigen van argumenten typisch gebruikt om resultaten van bewerkingen terug te geven. Een voorbeeldje (in Prolog CHR):
-\begin{Verbatim}
+Het constant zijn van argumenten wilt echter niet zeggen dat constraints niet gebruikt kunnen worden om wijzigbare data in op te slagen. Constante variabelen kunnen verwijzen naar een niet-constant gegeven in C. Een constante integer kan bijvoorbeeld een index zijn in een array die informatie bevat. In CHR wordt het wijzigen van argumenten typisch gebruikt om resultaten van bewerkingen terug te geven.
+\begin{exCode}
+\begin{Verbatim}[frame=single]
   calcMin1 @ min(N1,N2,R) <=> N1=<N2 | R=N1.
   calcMin2 @ min(_,N2,R) <=> R=N2.
 \end{Verbatim}
-In dit voorbeeld zal het toevoegen van \code{min(A,B,C)} tot gevolg hebben dat R ge\"unificeerd wordt met de kleinste van A en B.
+\caption{Minimum in Prolog CHR}
+\label{code:min-prologchr}
+\end{exCode}
+In codevoorbeeld~\ref{code:min-prologchr} zal het toevoegen van \code{min(A,B,C)} tot gevolg hebben dat R ge\"unificeerd wordt met de kleinste van A en B.
 
 Dit implementeren in CCHR wordt bemoeilijkt door de afwezigheid van wijzigbare argumenten. Er zijn echter wel manieren om dit te vermijden.
 
@@ -156,21 +164,30 @@ Dit implementeren in CCHR wordt bemoeilijkt door de afwezigheid van wijzigbare a
 
 Een van de belangrijkste opzichten waarin C van recentere programmeertalen verschilt, is de mogelijkheid tot direct geheugenbeheer. Een C-programmeur kan zijn programma eender wat laten doen met het deel virtueel geheugen dat het (kan) krijgen van het systeem. Aanspreken van geheugen is mogelijk door gebruik te maken van zogenaamde {\em pointers}. Dit zijn variabelen die het geheugenadres van een andere variabele kunnen bevatten. Of het gebruik ervan de begrijpbaarheid van de erin geschreven programmas ten goede komt, wordt hier in het midden gelaten, maar het blijft een taalconstructie die voor veel mogelijkheden zorgt.
 
-Pointers zijn 1 mogelijkheid om een constraint argument met vaste waarde toch van ``betekenis'' te doen veranderen. In CCHR zou bovenstaand voorbeeld opgelost kunnen als volgt: \begin{Verbatim}
+Pointers zijn 1 mogelijkheid om een constraint argument met vaste waarde toch van ``betekenis'' te doen veranderen. Codevoorbeeld~\ref{code:min-cchr} geeft aan hoe het \code{min} programma in CCHR ge\"implementeerd zou kunnen worden met behulp van pointers.
+\begin{exCode}
+\begin{Verbatim}[frame=single]
   constraint min(int,int,int*); /* int* = pointer to int */
   calcMin1 @ min(N1,N2,R) <=> N1<=N2 | { *(R)=N1 };
   calcMin2 @ min(_,N2,R) <=> { *(R)=N2 };
 \end{Verbatim}
+\caption{Minimum in CCHR met pointers}
+\label{code:min-cchr}
+\end{exCode}
 
 In dit voorbeeld is het laatste argument van \code{min} een pointer naar een \code{int} waarin het resultaat geplaatst wordt. De waarde van dat laatste argument blijft zolang de constraint bestaat hetzelfde, zijnde een verwijzing naar dezelfde geheugenplaats, maar de betekenis -- zijnde hetgeen op die bepaalde plaats staat -- wijzigt.
 
-In dit voorbeeld wordt de pointer louter gebruikt wordt om een waarde terug te geven, vrij vergelijkbaar met het call-by-reference principe in imperatieve programmeertalen. Wanneer de betekenis van een dergelijke indirecte variabele echter als guard gebruikt zou worden, ontstaan er problemen: \begin{Verbatim}
+In dit voorbeeld wordt de pointer louter gebruikt wordt om een waarde terug te geven, vrij vergelijkbaar met het call-by-reference principe in imperatieve programmeertalen. Wanneer de betekenis van een dergelijke indirecte variabele echter als guard gebruikt zou worden, ontstaan er problemen.
+\begin{exCode}
+\begin{Verbatim}[frame=single]
   constraint facmult(int*,int*), mults();
   calcFac @ facmult(N,V) \ mults() <=> *(N)>0 
           | { *(V) *= *(N); *(N)--; }, mults();
 \end{Verbatim}
-
-Volgens de CHR {\em refined operational semantics} $\omega_r$ moet een constraint suspension waar een regel op van toepassing kan zijn die een guard heeft die waar geworden kan zijn, gereactiveerd worden. In dit voorbeeld wilt dat zeggen dat indien er een \code{facmult(N,V)} constraint suspension bestaat en een \code{allowmult(M)} met $\code{M} > 0$, het verhogen van \code{*(N)} het reactiveren van de calcFac regel tot gevolg moet hebben. Hierbij zou \code{*(V)} met de oude waarde van \code{*(N)} vermenigvuldigd worden, en \code{*(N)} vervolgens met 1 verlaagd. Dit blijft doorgaan tot \code{*(N)} gelijk is aan $0$, waarbij \code{*(V)} dus vermenigvuldigd is met de faculteit van de oorspronkelijke waarde van \code{*(N)}. De \code{mults()} constraint is nodig in dit artificieel voorbeeld zodat de \code{calcFac} regel blijvend uitgevoerd kan worden.
+\caption{Faculteiten in CCHR met pointers}
+\label{code:fac-cchr}
+\end{exCode}
+Volgens de CHR {\em refined operational semantics} $\omega_r$ moet een constraint suspension waar een regel op van toepassing kan zijn die een guard heeft die waar geworden kan zijn, gereactiveerd worden. In codevoorbeeld~\ref{code:fac-cchr} wilt dat zeggen dat indien er een \code{facmult(N,V)} constraint suspension bestaat en een \code{allowmult(M)} met $\code{M} > 0$, het verhogen van \code{*(N)} het reactiveren van de calcFac regel tot gevolg moet hebben. Hierbij zou \code{*(V)} met de oude waarde van \code{*(N)} vermenigvuldigd worden, en \code{*(N)} vervolgens met 1 verlaagd. Dit blijft doorgaan tot \code{*(N)} gelijk is aan $0$, waarbij \code{*(V)} dus vermenigvuldigd is met de faculteit van de oorspronkelijke waarde van \code{*(N)}. De \code{mults()} constraint is nodig in dit artificieel voorbeeld zodat de \code{calcFac} regel blijvend uitgevoerd kan worden.
 
 Het is echter moeilijk, zo niet onmogelijk, om effici\"ent te controleren wanneer de waarde van een expressie gewijzigd kan zijn, zeker in combinate met bv. pointers die kunnen wijzen naar geheugenplaatsen die buiten de controle van het programma zelf kunnen wijzigen. Dit is zeker zo in combinatie bij multi-threaded applicaties of wanneer gebruik gemaakt wordt van {\em Shared Memory} (SHM) technieken waarbij een deel virtueel geheugen gedeeld kan worden tussen verschillende programmas.
 

@@ -134,7 +134,9 @@ In de komende tekst zal vaak verwezen worden naar macros, sommigen daarvan staan
 
 Met het oog de gegenereerde macro-code niet te overladen met informatie die over heel het programma hetzelfde is, zoals de lijst van alle chr-constraints, is ervoor gekozen om zoveel mogelijk \'e\'enmalig op te slagen. Dit vraagt een woordje uitleg.
 
-Stel dat dit CCHR blok vertaald moet worden: \begin{Verbatim}
+Veronderstel dat het CCHR blok uit codevoorbeeld~\ref{code:fib-cchr} vertaald moet worden.
+\begin{exCode}
+\begin{Verbatim}[frame=single]
 cchr {
   constraint fib(int,long long),init(int);
 
@@ -144,6 +146,9 @@ cchr {
     fib(N2+1, M1+M2);
 }
 \end{Verbatim}
+\caption{Fibonacci-getallen in CCHR}
+\label{code:fib-cchr}
+\end{exCode}
 De volledige compiler-uitvoer kan gevonden worden in sectie~\ref{sec:out-fib}.
 
 De eerste belangrijke lijn die gegenereerd wordt is deze: 

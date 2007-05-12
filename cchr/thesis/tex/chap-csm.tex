@@ -2,7 +2,7 @@
 
 In dit hoofdstuk wordt een overzicht gegeven van alle macros die gedefinieerd zijn in CSM. 
 
-CSM Macros voor iteratie: \\
+\begin{table}
 \begin{tabularx}{\textwidth}{|l|l|X|}
 \hline
 {\bf Macro} & {\bf argumenten} & {\bf Betekenis} \\
@@ -15,8 +15,11 @@ CSM Macros voor iteratie: \\
 \code{CSM\_LOOPNEXT} & {\em var} & Ga onmiddellijk naar volgende element bij het itereren in {\em var}. \\
 \hline
 \end{tabularx}
+\label{tab:csm-iter}
+\caption{CSM macros voor iteratie}
+\end{table}
 
-Overige CSM macros: \\
+\begin{table}
 \begin{tabularx}{\textwidth}{|l|l|X|}
 \hline
 {\bf Macro} & {\bf argumenten} & {\bf Betekenis} \\
@@ -41,8 +44,11 @@ Overige CSM macros: \\
 \code{CSM\_START} & & Het genereren van de eigenlijke code \\
 \hline
 \end{tabularx}
+\caption{Overige CSM macros}
+\label{tab:csm-rest}
+\end{table}
 
-Extra CSM macros voor het gebruik van indexen: \\
+\begin{table}
 \begin{tabularx}{\textwidth}{|l|l|X|}
 \hline
 {\bf Macro} & {\bf argumenten} & {\bf Betekenis} \\
@@ -56,3 +62,6 @@ Extra CSM macros voor het gebruik van indexen: \\
 \code{CSM\_UNIEND} & {\em constr}, {\em var} & Nodig bij het voortijdig be\"eindigen van een ``uni'' lus (juist voor een \code{CSM\_END} of \code{CSM\_LOOPNEXT} van een meer naar buiten gelegen lus.\\
 \hline
 \end{tabularx}
+\caption{CSM macros voor gebruik van indexen}
+\label{tab:csm-idx}
+\end{table}

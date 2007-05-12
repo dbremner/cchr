@@ -3,7 +3,7 @@
 In dit hoofdstuk wordt ingegaan op de taal ontwikkeld om CHR in C mogelijk te maken: CCHR.
 
 Het doel van deze thesis was een effici\"ente CHR implementatie te schrijven die nauw kon interageren met C. Daarom is het noodzakelijk om: \begin{itemize}
-  \item Een taal te ontwerpen die mogelijk maakt CHR en C te integreren: de CHR code moet C
+  \item Een taal te ontwerpen die het mogelijk maakt CHR en C te integreren: de CHR code moet C
         als host language kunnen gebruiken (C constructies als ``built-in constraints'' kunnen
 	behandelen), en de C code moet bijvoorbeeld omgekeerd ook CHR constraints kunnen laten toevoegen.
   \item De taal moet het mogelijk maken heel efficiente code te genereren.
@@ -15,7 +15,7 @@ Er wordt toegelaten een ``cchr'' blok binnen normale C code te plaatsen, dat een
 
 \section{Syntax} \label{sec:taal-syn}
 
-De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr}, waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een cchr-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macros te schrijven in de omliggende C code, die eveneens vanuit het cchr blok aan te roepen zijn.
+De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr}), waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een cchr-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macros te schrijven in de omliggende C code, die eveneens vanuit het cchr blok aan te roepen zijn.
 
 Om de syntax in te leiden, is het interessant te beginnen met een eenvoudig voorbeeld (zie voorbeeld~\ref{fib:exCode}). Dit programma berekent opeenvolgende {\em getallen van Fibonacci}. Deze getallen zijn gedefinieerd als een rij die begint met twee maal een \'e\'en en waarbij alle volgende getallen de som zijn van hun 2 voorgangers.
 

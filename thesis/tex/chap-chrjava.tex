@@ -4,7 +4,7 @@ In dit hoofdstuk wordt ingegaan op de bestaande implementaties van CHR in de pro
 
 \section{JaCK --- The Java Constraint Kit}
 
-JaCK is een project met als doel Constraint Solving mogelijkheden aan Java toevoegen. Het bestaat uit drie delen, JCHR, VisualCHR en JASE. JCHR maakt het mogelijk om CHR regels in een Java-achtige syntax te gebruiken in Java. JASE, ofwel Java Abstract Search Engine, breidt de mogelijkheden uit met zoekstrategie\"en. Hierdoor is het mogelijk om JaCK te gebruiken voor probleem waar Constraint Propagation geen volledige oplossing geeft. Het maakt zogenaamde parti\"ele solvers mogelijk. JaCK wordt beschreven in \cite{jack}.
+JaCK is een project met als doel Constraint Solving mogelijkheden aan Java toevoegen. Het bestaat uit drie delen, JCHR, VisualCHR en JASE. JCHR maakt het mogelijk om CHR regels in een Java-achtige syntax te gebruiken in Java. JASE, ofwel Java Abstract Search Engine, breidt de mogelijkheden uit met zoek-strategie\"en. JaCK kan daardoor gebruikt worden voor problemen waar Constraint Propagation geen volledige oplossing geeft. Het maakt zogenaamde parti\"ele solvers mogelijk. JaCK wordt beschreven in \cite{jack}.
 \begin{exCode}[bhp]
 \begin{Verbatim}[frame=single]
 handler leq {
@@ -22,14 +22,14 @@ handler leq {
   }
 }
 \end{Verbatim}
-\caption{Kleiner-dan-of-gelijk-aan in JaCK}
+\caption{Kleiner-dan-of-gelijk-aan in JaCK --- leq.jchr}
 \label{code:leq-jack}
 \end{exCode}
 Het opvallendste aan de syntax zoals die te zien is in codevoorbeeld~\ref{code:leq-jack}, is het afwijken van de standaard syntax voor CHR rules.
 
 \section{CHORD}
 
-CHORD\cite{chord} is een implementatie van CHR in Java, waarbij de CHR$^\vee$ uitbreiding ondersteund is. CHR$^\vee$ laat disjuncties toe binnen de body van CHR rules. Hierdoor ontstaan verschillende keuzemogelijkheden voor de uitvoering, waarbij toch backtracking noodzakelijk kan worden, indien de eerste mogelijkheid niet tot een oplossing leidt. Aldus combineert het de mogelijkheden van CHR met SLD-resolutie. In tegenstelling tot CHR is CHR$^\vee$ niet volledig {\em committed-choice}. CHR$^\vee$ wordt uitgebreider besproken in \cite{chrv}.
+CHORD is een implementatie van CHR in Java, waarbij de CHR$^\vee$ uitbreiding ondersteund is. CHR$^\vee$ laat disjuncties toe binnen de body van CHR rules. Hierdoor ontstaan verschillende keuzemogelijkheden voor de uitvoering, waarbij toch backtracking noodzakelijk kan worden, indien de eerste mogelijkheid niet tot een oplossing leidt. Aldus combineert het de mogelijkheden van CHR met SLD-resolutie. In tegenstelling tot CHR is CHR$^\vee$ niet volledig {\em committed-choice}, aangezien op gemaakte keuzes teruggekomen kan worden. CHR$^\vee$ wordt uitgebreider besproken in \cite{chrv}. CHORD zelf is te vinden bij \cite{chord}.
 
 \begin{exCode}[bhp]
 \begin{Verbatim}[frame=single]
@@ -44,7 +44,35 @@ person(G1,C), person(G2,C) ==> true | G1 = G2.
 father(F,C) ==> true | person(F,"male"), person(C,S).
 mother(M,C) ==> true | person(M,"female"), person(C,G).
 \end{Verbatim}
-\caption{Familie-relaties in CHORD}
+\caption{Familierelaties in CHORD --- family2.chr}
 \label{code:familie-chord}
 \end{exCode}
-Codevoorbeeld~\ref{code:familie-chord} toont hoe een eenvoudig familie-relatie programma ge\"implementeerd kan worden in CHORD. De allereerste regel maakt gebruikt van het disjunctie-symbool \code{;} om aan te geven dat een ouder ofwel een vader ofwel een moeder is.
+Codevoorbeeld~\ref{code:familie-chord} toont hoe een eenvoudig familierelatie programma ge\"implementeerd kan worden in CHORD. De allereerste regel maakt gebruik van het disjunctie-symbool \code{;} om aan te geven dat een ouder ofwel een vader ofwel een moeder is.
+
+\section{Het K.U.Leuven JCHR systeem}
+
+Het K.U.Leuven JCHR systeem werd in 2005 ontwikkeld door Peter van Weert voor zijn eindwerk \cite{jchr_thesis}. De doelstelling was een gebruiksvriendelijk, effici\"ent en flexibel CHR-systeem schrijven voor Java. Vanaf nu zal in deze tekst ``JCHR'' gebruikt worden om naar het K.U.Leuven JCHR systeem te verwijzen, en ``JaCK'' om naar de JCHR uit JaCK te verwijzen.
+
+De syntax is vaag nog gebaseerd op die van JaCK, maar de regels worden in een vorm geschreven die veel meer gelijkt op deze van originele CHR. In codevoorbeeld~\ref{code:leq-jchr} is te zien hoe de structuur van JaCK met de CHR syntax gecombineerd wordt.
+\begin{exCode}
+\begin{Verbatim}[frame=single]
+import runtime.*;
+import runtime.primitive.*;
+
+public handler leq {
+  solver IntEqualitySolver;
+
+  public constraint leq(LogicalInt, LogicalInt);
+
+  rules {
+    reflexivity  @ leq(X,X) <=> true.
+    antisymmetry @ leq(X,Y), leq(Y,X) <=> X = Y.
+    idempotence  @ leq(X,Y) \ leq(X,Y) <=> true.
+    transitivity @ leq(X,Y), leq(Y,Z) ==> X =< Z.
+  }
+}
+
+\end{Verbatim}
+\caption{Kleiner-dan-of-gelijk-aan in JCHR --- leq.jchr}
+\label{code:leq-jchr}
+\end{exCode}

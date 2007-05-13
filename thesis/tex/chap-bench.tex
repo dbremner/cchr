@@ -1,4 +1,4 @@
-\chapter{Voorbeelden en Vergelijkingen} \label{chap:bench}
+\chapter{Benchmarks} \label{chap:bench}
 
 \newcommand{\benchfig}[2]{
 \begin{figure}[htbp]
@@ -9,7 +9,7 @@
 \end{figure}
 }
 
-In dit hoofdstuk worden enkele voorbeelden bekeken en vergeleken hoe goed ze presteren in de verschillende CHR implementaties. Van elk van deze voorbeelden is een ook pure C implementatie geschreven, om een idee te hebben hoe ver CCHR er nog van af staat.
+In dit hoofdstuk worden enkele voorbeelden bekeken en vergeleken hoe goed ze presteren in de verschillende CHR implementaties. De gecontroleerde voorbeelden zijn CHR programma's die reeds bestonden als benchmark voor Prolog-CHR (zie \cite{tom:benchmarks}) en voor K.U.Leuven JCHR (\cite{peter:benchmarks}). Ze zijn vertaald naar CCHR en naar pure C zelf, om een idee te krijgen van hoe ver CHR implementaties nog staan van de snelheid van C programma's.
 
 Alle benchmarks zijn uitgevoerd op hetzelfde systeem, met zo min mogelijk andere taken op het zelfde moment lopende. Het gaat om een AMD Athlon64 3500+ processor met 1GiB PC3200 DDR geheugen, met als besturingssysteem Gentoo op een Linux 2.6.19 kernel. De gebruikte C compiler (voor zowel de C versies, als de gegenereerde C code) is GCC (Gnu Compiler Collection) 4.1.2. De gebruikte Java compiler en runtime zijn versie 1.5.0.11. Voor de SWI-Prolog benchmarks is gebruik gemaakt van SWI 5.6.17, met GMP ondersteuning. Er werd gebruik gemaakt van de GMP (GNU Multiprecision Library) versie 4.2.1.
 

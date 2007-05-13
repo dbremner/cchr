@@ -49,8 +49,46 @@ De volgende vorm van declaratief programmeren waar even op ingegaan wordt, heet 
 
 \subsection{Predikaatlogica}
 
-Predikaatlogica is een tak van de wiskunde die zich bezighoudt met het al dan niet waar zijn van logische formules. Het is een veralgemening van 
-\TODO{Stuk over Logic Programming}
+Predikaatlogica is een tak van de wiskunde die zich bezighoudt met het al dan niet waar zijn van logische formules. Het is een uitbreiding van de propositielogica. Propositielogica gebruikt formules waarin naar beweringen verwezen wordt, en verbanden over het al dan niet waar zijn ervan. Deze beweringen worden proposities genoemd, en de verbanden ertussen maken gebruik van operatoren als conjunctie (en; $\land$), disjunctie (of; $\lor$), negatie (niet; $\lnot$), implicatie (als \ldots, dan \ldots; $\Rightarrow$) en equivalentie (\ldots als en slechts als \ldots; $\Leftrightarrow$). Een typische uitspraak uit de propositielogica zou zijn ``als de zon schijnt dan regent het niet'', of meer formeel ``(de zon schijnt) $\Rightarrow$ $\lnot$ (het regent)''.
+
+Predikatenlogica breidt deze theorie uit door proposities afhankelijk te maken van objecten. Een predikaat wordt dan een bewering over nul of meer objecten. De geldige symbolen zijn dan deze van de propositielogica, met daarbij de kwantoren ``voor elke'' ($\forall$) en ``er bestaat'' ($\exists$).
+
+\subsection{Syntax}
+
+In een logisch programma kunnen {\em variabelen}, {\em functie}- en {\em predikaat}symbolen voorkomen. Een variabele is een symbool dat conventioneel met een hoofdletter begint. functie- en predikaatsymbolen zullen conventioneel beginnen met een kleine letter, of volledig uit speciale tekens bestaan. functies en predikaten kunnen een vast aantal argumenten krijgen. Indien naar de functie of het predikaat zelf verwezen wordt, noemen we dat een {\em functor} met een bepaalde {\em ariteit} (het aantal argumenten). Dit wordt als \code{\argu{functor}/\argu{ariteit}} genoteerd. Een {\em term} is een variabele, of een functie met argumenten, waarbij elk argument opnieuw een term is. Een {\em atom} is een predikaat met termen als argumenten. Een functie (of atoom) zonder argumenten wordt een constante genoemd.
+
+Logical Programming is gebaseerd op de predikaatlogica. Er wordt wel uitgegaan van een vereenvoudigde vorm. Zo zal een programma bestaan uit ``sentences''. Een sentence kan een head en een body hebben, die beiden eventueel leeg kunnen zijn. 
+Een sentence met een niet-lege head wordt een clause genoemd, en definieert wanneer een bepaald predikaat waar is. Een clause zonder body stelt dat zijn head zonder meer waar is. Bijvoorbeeld: \begin{Verbatim}
+  vader(jan,piet).
+  vader(piet,an).
+\end{Verbatim}
+Deze clause stelt dat jan de vader is van piet, en piet de vader van an. ``jan'', ``piet'' en ``an'' zijn hierbij constantes, die verwijzen naar objecten. In pure LP-talen zijn deze objecten niet getypeerd, en zijn hun enige eigenschappen de eventuele predikaten over hen die al dan niet waar zijn. Wanneer een clause wel een body heeft, stelt deze een voorwaarde waaronder het predikaat in de head waar is. Dit komt dan overeen met een logische implicatie. Bijvoorbeeld: \begin{Verbatim}
+  grootvader(X,Y) :- vader(X,Z), vader(Z,Y).
+\end{Verbatim}
+Deze clause stelt dat X de grootvader is van Y, op voorwaarde dat er een Z bestaat waarvoor geldt dat X de vader is van Z en Z de vader van Y. Merk op dat X, Y en Z in dit voorbeeld geen objecten meer zijn maar variabelen, die steeds een naam dragen die met een hoofdletter begint. De komma (\code{,}) wordt gebruikt voor conjunctie. Disjunctie is mogelijk door een tweede clause te geven: \begin{Verbatim}
+  grootvader(X,Y) :- vader(X,Z), moeder(Z,Y).
+\end{Verbatim}
+Beide vorige clauses samen stellen dan dat X de vader is van Y, indien X de vader is van een Z die ofwel vader ofwel moeder is van Y. Belangrijk is dat uitgegaan wordt van de ``closed world assumption'', met andere woorden dat er geen objecten bestaan buiten degene waar in het programma naar verwezen wordt. Zonder deze aanname zou het waar zijn van \code{grootvader(X,Y)} onbeslisbaar kunnen zijn. Er zou namelijk een niet-vernoemde Z kunnen bestaan die zoon is van X en vader van Y.
+
+Een LP programma bestaat nu uit een opsomming van dergelijke clauses, en men kan dan interactief vragen (of ``queries'') stellen aan het programma. Dat zijn sentences waarbij enkel een head en geen body is. Die dienen dan gelezen te worden als ``zoek of \ldots waar is''. Zo zou men kunnen vragen: \begin{Verbatim}
+  ?- grootvader(X,an).
+\end{Verbatim}
+waarop het programma zou antwoorden met ``X = jan.''. De gebruikte clauses worden ook {\em Horn clauses} genoemd, en de logica die gebruikt worden aldus {\em Horn clause logica}.
+
+\subsection{Unificatie}
+Bij het zoeken naar clauses die van toepassing zijn op een bepaalde uitdrukking, wordt gebruik gemaakt van zogenaamde unificatie. Een unifier van twee uitdrukkingen A en B is een substitutie die variabelen die in A en B voorkomen afbeeldt op andere termen, zodanig dat na substitutie beide uitdrukkingen aan elkaar gelijk zijn. Er kan aangetoond dat indien er een unifier bestaat voor twee uitdrukkingen, er ook een {\em most general unifier} (mgu) bestaat. Dit is een unifier waarvoor geldt dat elke andere unifier gezien kan worden als een combinatie van de mgu met een andere substitutie. Er bestaat een effici\"ent algoritme dat kan zoeken of twee uitdrukkingen ge\"unificeerd kunnen worden, en zo ja de mgu ervoor teruggeeft. Nu wordt een atoom ``waar'' indien het ge\"unificeerd (door middel van een mgu $\tau$) kan worden met de head van een clause, zodanig dat elk van de atoms in de body na toepassing van $\tau$ waar is.
+
+Dit krachtig principe van unificatie kan voor meer gebruikt worden dan enkel het zoeken van clauses die van toepassing zijn. Een logische variabele mag ongebonden zijn. Dit wilt zeggen, niet geassocieerd met een waarde. We kunnen dan in de body van een clause een expliciete unificatie stellen van 2 termen, met behulp van het gelijkheidsteken (\code{=}). Bijvoorbeeld: \begin{Verbatim}
+  foo(X,Y) :- X=bar(Y).
+\end{Verbatim}
+Een query \code{foo(A,B).} zou dan als resultaat ``A = foo(B)'' opleveren. Er is dus een unificatie gebeurd van die A op foo(B) afbeeldt, zonder dat A of B een echte waarde kregen.
+
+\subsection{Prolog}
+De programmeertaal Prolog is een logische programmeertaal die de voorgaande syntax gebruikt, en nog enkele andere dingen eraan toevoegt. Zo wordt de operationele semantiek ook vastgelegd, en niet enkel de betekenis van het programma (de semantiek). Voor de uitvoering wordt gebruik gemaakt SLD (Selected-literal Linear resolution for Definite Clauses). Definite Clauses zijn een andere naam voor Horn clauses. Als gezocht wordt welke unifier een gevraagde query waar maakt, worden alle atoms in de body \'e\'en voor \'e\'en geprobeerd. Hierbij worden alle clauses die het betrokken predikaat als head hebben in de volgorde van het programma afgelopen en geprobeerd te unificeren met het gevraagde atoom. Wanneer een unificatie faalt, wordt voortgegaan met de volgende clause die het betrokken predikaat als head heeft. Indien er geen clauses meer overblijven, wordt het eerder beschreven principe van backtracking gebruikt om de toestand van het zoeken te herstellen naar waar de vorige clause gekozen werd, enzovoort.
+
+Prolog breidt SLD nog verder uit met {\em Negation as Failure}, wat de mogelijkheid biedt om een negatie in het logisch programma te gebruiken. Hierbij kan een normal atom in een clause voorafgegaan worden door het sleutelwoord {\em not}. Dit geeft aan dat het atom dat volgt als nieuwe subgoal geprobeerd moet worden, en faalt wanneer deze subgoal tenminste \'e\'en oplossing heeft.
+
+Ten slotte bevat Prolog nog een hele hoop extra ingebouwde predikaten, onder andere predikaten die toelaten om lijsten te defini\"eren en te werken met getallen. Hierbij bestaat onder andere de \code{is} operator, die het linkerlid unificeert met de evaluatie van de term in het rechterlid, die op dat moment volledig {\em ground} moet zijn, wat wilt zeggen: alle variabelen reeds een waarde gekregen. Later in deze tekst volgen hier nog voorbeelden van.
 
 \section{Constraint Logic Programming}
 

@@ -41,12 +41,15 @@ Consistentie-technieken daarentegen beperken de zoekruimte snel, maar komen zeke
 
 Bij Look Back, worden consistentie technieken gebruikt tijdens het itereren, om zo conflicten tussen de variabelen die reeds een waarde toegewezen kregen te ontdekken. Backtracking is de eenvoudigste techniek hiervoor, die gewoon probeert inconsistenties te ontdekken en zo ja, voortgaat met de volgende waarde voor de laatste variabele. Backjumping verbetert deze techniek nog, door te analyseren welke variabelen het conflict veroorzaakten, en wanneer geen mogelijkheden overblijven terug te springen naar de conflicterende variabele in plaats van de laatste variabele. Er zijn nog enkele andere verbeteringen, zoals backchecking en backmarking, die gebaseerd zijn op het onthouden van conflicterende waardes, zodat ze niet opnieuw gecontroleerd moeten worden.
 
-Alle methodes ontdekken echter nog steeds pas een conflict nadat het optreedt. Daarom gaat men in Look Ahead schemas consistentie technieken gaan toepassen op combinaties van variabelen die reeds wel en variabelen die nog geen waarde toegekend kregen, om zo toekomstige mogelijkheden te gaan uitsluiten, nog voor ze optreden. Hier zijn verschillende varianten van, die meestal AC technieken gebruiken. Voor meer informatie verwijzen we naar de literatuur, bv. \cite{bartak01} en \cite{bartak99constraint}.
+Alle methodes ontdekken echter nog steeds pas een conflict nadat het optreedt. Daarom gaat men in Look Ahead schemas consistentie technieken gaan toepassen op combinaties van variabelen die reeds wel en variabelen die nog geen waarde toegekend kregen, om zo toekomstige mogelijkheden te gaan uitsluiten, nog voor ze optreden. Hier zijn verschillende varianten van, die meestal AC technieken gebruiken. Meer informatie kan gevonden worden in de literatuur, bv. \cite{bartak01} en \cite{bartak99constraint}.
 
 \section{Logic Programming}
 
-De volgende vorm van declaratief programmeren waar we even op zullen ingaan heet Logic Programming, of logisch programmeren. Deze techniek is gebaseerd op de wiskundige theorie van predikaatlogica.
+De volgende vorm van declaratief programmeren waar even op ingegaan wordt, heet Logic Programming, of logisch programmeren. Deze techniek is gebaseerd op de wiskundige theorie van predikaatlogica. Een uitgebreide uitleg kan gevonden worden in \cite{introlp}.
 
+\subsection{Predikaatlogica}
+
+Predikaatlogica is een tak van de wiskunde die zich bezighoudt met het al dan niet waar zijn van logische formules. Het is een veralgemening van 
 \TODO{Stuk over Logic Programming}
 
 \section{Constraint Logic Programming}

@@ -55,7 +55,7 @@ Het K.U.Leuven JCHR systeem werd in 2005 ontwikkeld door Peter van Weert voor zi
 
 \subsection{Syntax}
 
-De syntax is vaag nog gebaseerd op die van JaCK, maar de regels worden in een vorm geschreven die veel meer gelijkt op deze van originele CHR. In codevoorbeeld~\ref{code:leq-jchr} is te zien hoe de structuur van JaCK met de CHR syntax gecombineerd wordt.
+De syntax is vaag nog gebaseerd op die van JaCK, maar de regels worden in een vorm geschreven die veel meer lijkt op deze van originele CHR. In codevoorbeeld~\ref{code:leq-jchr} is te zien hoe de structuur van JaCK met de CHR syntax gecombineerd wordt.
 \begin{exCode}
 \begin{Verbatim}[frame=single]
 import runtime.*;
@@ -70,7 +70,7 @@ public handler leq {
     reflexivity  @ leq(X,X) <=> true.
     antisymmetry @ leq(X,Y), leq(Y,X) <=> X = Y.
     idempotence  @ leq(X,Y) \ leq(X,Y) <=> true.
-    transitivity @ leq(X,Y), leq(Y,Z) ==> X =< Z.
+    transitivity @ leq(X,Y), leq(Y,Z) ==> leq(X,Z).
   }
 }
 

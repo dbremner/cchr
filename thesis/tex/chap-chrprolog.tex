@@ -17,7 +17,13 @@ Constraints nemen de vorm aan van predikaten, met een naam en een ariteit. Ze mo
 \end{Verbatim}
 Hiermee wordt duidelijk gemaakt dat \code{upto/1} en \code{prime/1} geen predikaten maar constraints zijn. In dit specifiek voorbeeld wordt daarbij gesteld dat het argument ervan een \code{int} moet zijn, en dat dit altijd {\em ground} is, wat wilt zeggen, altijd reeds een waarde heeft op het moment dat de constraint aangeroepen wordt.
 
-Voor het specificeren van de CHR rules wordt volledig de syntax gevolgd die in sectie~\ref{sec:chr-syntax} gegeven werd. In de heads mogen alle vooraf gedeclareerde CHR constraints gebruikt worden, en als argumenten variabelen. Zoals gebruikelijk in Prolog zijn deze vereist te beginnen met een hoofdletter. Het is ook mogelijk een anonieme variabele te gebruiken, door de naam ervan met een underscore (\code{\_}) te laten beginnen. Een anonieme variabele wordt verondersteld slechts \'e\'enmalig per regel voor te komen, terwijl een normale variabele slechts \'e\'enmalig vermelden een waarschuwing zal geven. Dit duidt meestal op een fout van de programmeur.
+Voor het specificeren van de CHR regels wordt volledig de syntax gevolgd die in sectie~\ref{sec:chr-syntax} gegeven werd. In de heads mogen alle vooraf gedeclareerde CHR constraints gebruikt worden, en als argumenten variabelen. Zoals gebruikelijk in Prolog zijn deze vereist te beginnen met een hoofdletter. Het is ook mogelijk een anonieme variabele te gebruiken, door de naam ervan met een underscore (\code{\_}) te laten beginnen. Een anonieme variabele wordt verondersteld slechts \'e\'enmalig per regel voor te komen, terwijl een normale variabele slechts \'e\'enmalig vermelden een waarschuwing zal geven. Dit duidt meestal op een fout van de programmeur.
 
-Als body wordt alles toegestaan wat in een Prolog goal kan. Dat houdt ook CHR constraints in, die ook gelden als gebruiker-gedefinieerde predikaten. In de guard worden dezelfde dingen toegelaten, behalve CHR constraints. Dat houdt ook 
+Als body wordt alles toegestaan wat in een Prolog goal kan. Dat houdt ook CHR constraints in, die ook gelden als gebruiker-gedefinieerde predikaten. In de guard worden dezelfde dingen toegelaten, behalve CHR constraints.
+
+Typerend voor het K.U.Leuven CHR systeem is de grote hoeveelheid analyses en optimalisaties die uitgevoerd worden. In \cite{tomsphdthesis} wordt het compilatieschema uitgelegd, waar ook dat van CCHR op gebaseerd is (zie sectie~\ref{sec:gencode}). Daarna worden stap voor stap optimalisaties toegevoegd en verantwoord.
+
+\subsection{Compilatieschema}
+
+De CHR-Prolog compiler vertaalt de CHR regels
 

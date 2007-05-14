@@ -16,14 +16,14 @@ Een CHR programma zal normaal beginnen met een manier om de declareren welke nam
 
 Vervolgens moeten de CHR regels gegeven worden. Deze beschrijven hoe gebruiker-gedefinieerde constraints omgezet moeten worden naar built-in constraint en andere CHR constraints. Een constraints is hierbij een enkelvoudige constraint, of een conjunctie van verschillende constraints gescheiden door komma's. Een lege conjunctie van constraints wordt voorgesteld door het sleutelwoord {\em true}. 
 
-Er zijn drie types van CHR rules: \begin{itemize}
+Er zijn drie types van CHR regels: \begin{itemize}
 \item Simplification: \code{$naam$ @ $r$ <=> $g$ | $b$ .}
 \item Propagation: \code{$naam$ @ $k$ ==> $g$ | $b$ .}
 \item Simpagation: \code{$naam$ @ $k$ $\backslash$ $r$ <=> $g$ | $b$ .}
 \end{itemize}
 Elke regel begint met een $ naam @ $ prefix, om de naam van de regel aan te duiden. Dit is optioneel. Vervolgens worden enkele constraints met variabelen als argumenten vermeld. Deze $r$ en $k$, de {\em removed} en {\em kept} constraints, worden samen de {\em head} van de CHR regel genoemd. Dit zijn de constraints die aanwezig moeten zijnvooraleer de regel toegepast kan worden. De head kan enkel CHR constraints bevatten, en geen built-in constraints. Daarna volgt een scheidingsteken (\code{<=>} of \code{==>}) om het einde van de head aan te duiden. Vervolgens is er een optionele \code{$g$ |}, de guard genaamd. De guard dient om een voorwaarde op te geven waaraan de argumenten van de head constraints moeten voldoen. De guard mag enkel built-in constraints bevatten. Indien deze weggelaten wordt, wordt true verondersteld. Het laatste deel van een CHR regel is de {\em body} $b$, afgesloten met een punt. Dit beschrijft de constraints die toegevoegd moeten worden wanneer de regel uitgevoerd wordt. Dit mag zowel built-in als CHR constraints bevatten.
 
-Een simpagation regel met $k$ leeg is equivalent met een simplification regel, en een simpagation regel met $r$ leeg is equivalent met een propagation regel. Daarom kunnen simpagation rules gezien worden als de veralgemening van beide andere types. In wat volgt zullen alle regels dan ook beschouwd worden als veralgemeende simpagation rules, met eventueel $r$ of $k$ leeg. De logische betekenis van een dergelijke CHR regel is dat op voorwaarde dat voor elke combinatie van de CHR constraints vermeld in $k$ en $r$ er geldt dat $r$ equivalent is aan $b$ wanneer $g$ geldt.
+Een simpagation regel met $k$ leeg is equivalent met een simplification regel, en een simpagation regel met $r$ leeg is equivalent met een propagation regel. Daarom kunnen simpagation regels gezien worden als de veralgemening van beide andere types. In wat volgt zullen alle regels dan ook beschouwd worden als veralgemeende simpagation regels, met eventueel $r$ of $k$ leeg. De logische betekenis van een dergelijke CHR regel is dat op voorwaarde dat voor elke combinatie van de CHR constraints vermeld in $k$ en $r$ er geldt dat $r$ equivalent is aan $b$ wanneer $g$ geldt.
 
 Een voorbeeldje is te vinden in codevoorbeeld~\ref{code:primes-prolog}
 \begin{exCode}[bp]
@@ -57,7 +57,7 @@ Nu worden er 3 overgangen gedefinieerd: \begin{itemize}
 \item {\bf Apply} Wanneer alle constraints die vermeld zijn in de head van een CHR regel aanwezig zijn, en de argumenten ervan aan de bijhorende guard voldoen, kunnen de removed constraints daarvan verwijderd worden uit de store $S$, en de body constraints toegevoegd worden aan de goal $G$. Hierbij worden ook de volgnummers van de betrokken ge\"identificeerde constraints toegevoegd als item aan de propagation geschiedenis $T$, en wordt ge\"eist dat deze combinatie nog niet bestond in de propagation geschiedenis.
 \end{itemize}
 
-Deze overgangen worden toegepast in arbitraire volgorde, zolang er minstens \'e\'en toepasbaar is. De uitvoering stopt zodra er geen overgangen meer kunnen plaats vinden, wat optreedt nadat de goal $G$ leeg is en er geen CHR rules meer toegepast kunnen worden op $S$. Wanneer de CHR constraint store leeg is en alle constraints in de originele goal dus herleid zijn tot built-in constraints zijn er sowieso geen regels meer toepasbaar. De uitvoering stopt ook wanneer de built-in constraint store een inconsistentie opmerkt. In dat geval eindigt de CHR uitvoering als ``gefaald''.
+Deze overgangen worden toegepast in arbitraire volgorde, zolang er minstens \'e\'en toepasbaar is. De uitvoering stopt zodra er geen overgangen meer kunnen plaats vinden, wat optreedt nadat de goal $G$ leeg is en er geen CHR regels meer toegepast kunnen worden op $S$. Wanneer de CHR constraint store leeg is en alle constraints in de originele goal dus herleid zijn tot built-in constraints zijn er sowieso geen regels meer toepasbaar. De uitvoering stopt ook wanneer de built-in constraint store een inconsistentie opmerkt. In dat geval eindigt de CHR uitvoering als ``gefaald''.
 
 Over deze semantiek $\omega_t$ zijn verschillende theoretische eigenschappen bekend, zoals wanneer de volgorde waarin de overgangen toegepast worden irrelevant is (confluentie), en tijdscomplexiteit. Hier wordt uitgebreid op in gegaan in \cite{tomsphdthesis}.
 

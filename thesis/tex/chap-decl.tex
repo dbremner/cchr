@@ -45,11 +45,11 @@ Alle methodes ontdekken echter nog steeds pas een conflict nadat het optreedt. D
 
 \section{Logic Programming}
 
-De volgende vorm van declaratief programmeren waar even op ingegaan wordt, heet Logic Programming, of logisch programmeren. Deze techniek is gebaseerd op de wiskundige theorie van predikaatlogica. Een uitgebreide uitleg kan gevonden worden in \cite{introlp}.
+De volgende vorm van declaratief programmeren waar even op ingegaan wordt, heet Logic Programming, of logisch programmeren. Deze techniek is gebaseerd op de wiskundige theorie van predikatenlogica. Een uitgebreide uitleg kan gevonden worden in \cite{introlp}.
 
-\subsection{Predikaatlogica}
+\subsection{Predikatenlogica}
 
-Predikaatlogica is een tak van de wiskunde die zich bezighoudt met het al dan niet waar zijn van logische formules. Het is een uitbreiding van de propositielogica. Propositielogica gebruikt formules waarin naar beweringen verwezen wordt, en verbanden over het al dan niet waar zijn ervan. Deze beweringen worden proposities genoemd, en de verbanden ertussen maken gebruik van operatoren als conjunctie (en; $\land$), disjunctie (of; $\lor$), negatie (niet; $\lnot$), implicatie (als \ldots, dan \ldots; $\Rightarrow$) en equivalentie (\ldots als en slechts als \ldots; $\Leftrightarrow$). Een typische uitspraak uit de propositielogica zou zijn ``als de zon schijnt dan regent het niet'', of meer formeel ``(de zon schijnt) $\Rightarrow$ $\lnot$ (het regent)''.
+Predikatenlogica is een tak van de wiskunde die zich bezighoudt met het al dan niet waar zijn van logische formules. Het is een uitbreiding van de propositielogica. Propositielogica gebruikt formules waarin naar beweringen verwezen wordt, en verbanden over het al dan niet waar zijn ervan. Deze beweringen worden proposities genoemd, en de verbanden ertussen maken gebruik van operatoren als conjunctie (en; $\land$), disjunctie (of; $\lor$), negatie (niet; $\lnot$), implicatie (als \ldots, dan \ldots; $\Rightarrow$) en equivalentie (\ldots als en slechts als \ldots; $\Leftrightarrow$). Een typische uitspraak uit de propositielogica zou zijn ``als de zon schijnt dan regent het niet'', of meer formeel ``(de zon schijnt) $\Rightarrow$ $\lnot$ (het regent)''.
 
 Predikatenlogica breidt deze theorie uit door proposities afhankelijk te maken van objecten. Een predikaat wordt dan een bewering over nul of meer objecten. De geldige symbolen zijn dan deze van de propositielogica, met daarbij de kwantoren ``voor elke'' ($\forall$) en ``er bestaat'' ($\exists$).
 
@@ -57,7 +57,7 @@ Predikatenlogica breidt deze theorie uit door proposities afhankelijk te maken v
 
 In een logisch programma kunnen {\em variabelen}, {\em functie}- en {\em predikaat}symbolen voorkomen. Een variabele is een symbool dat conventioneel met een hoofdletter begint. functie- en predikaatsymbolen zullen conventioneel beginnen met een kleine letter, of volledig uit speciale tekens bestaan. Functies en predikaten kunnen een vast aantal argumenten krijgen. Indien naar de functie of het predikaat zelf verwezen wordt, noemen we dat een {\em functor} met een bepaalde {\em ariteit} (het aantal argumenten). Dit wordt als \code{\argu{functor}/\argu{ariteit}} genoteerd. Een {\em term} is een variabele, of een functie met argumenten, waarbij elk argument opnieuw een term is. Een {\em atom} is een predikaat met termen als argumenten. Een functie (of atoom) zonder argumenten wordt een constante genoemd.
 
-Logical Programming is gebaseerd op de predikaatlogica. Er wordt wel uitgegaan van een vereenvoudigde vorm. Zo zal een programma bestaan uit ``sentences''. Een sentence kan een head en een body hebben, die beiden eventueel leeg kunnen zijn. 
+Logical Programming is gebaseerd op eerste-orde predikaatlogica. Er wordt wel uitgegaan van een vereenvoudigde vorm. Zo zal een programma bestaan uit ``sentences''. Een sentence kan een head en een body hebben, die beiden eventueel leeg kunnen zijn. 
 Een sentence met een niet-lege head wordt een clause genoemd, en definieert wanneer een bepaald predikaat waar is. Een clause zonder body stelt dat zijn head zonder meer waar is. Bijvoorbeeld: \begin{Verbatim}
   vader(jan,piet).
   vader(piet,an).

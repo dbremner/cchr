@@ -15,7 +15,7 @@ Er wordt toegelaten een \code{cchr}-blok binnen normale C code te plaatsen, dat 
 
 \section{Syntax} \label{sec:taal-syn}
 
-De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr}), waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een \code{cchr}-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macros te schrijven in de omliggende C code, die eveneens vanuit het cchr blok aan te roepen zijn.
+De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr}), waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een \code{cchr}-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macro's te schrijven in de omliggende C code, die eveneens vanuit het cchr blok aan te roepen zijn.
 
 Om de syntax in te leiden, is het interessant te beginnen met een eenvoudig voorbeeld (zie voorbeeld~\ref{fib:exCode}). Dit programma berekent opeenvolgende {\em getallen van Fibonacci}. Deze getallen zijn gedefinieerd als een rij die begint met twee maal een \'e\'en en waarbij alle volgende getallen de som zijn van hun 2 voorgangers.
 
@@ -65,7 +65,7 @@ Constraints (zoals op lijn 7 van het voorbeeld), volgen JCHR's syntax: het \code
 
 Het is ook mogelijk om enkele opties aan te geven over constraints. Deze worden genoteerd door achter de argumenten van een constraint ``\code{option(}$optienaam$\code{,}$args$\ldots\code{)}'' te zetten (meerdere options mogelijk). Een lijstje van de
 toegelaten opties: \begin{itemize}
-  \item \code{fmt}: een standaard C printf formatstring, voor gebruik in debugmodus, om constraint suspensions te kunnen uitprinten. Na deze formatstring volgen de argumenten dat de formatstring zelf nodig heeft te komen, waarbij naar de argumenten van de uit te printen constraints verwezen kan worden met \code{\$1}, \code{\$2}, \ldots. \TODO{uitleg debugmodus}
+  \item \code{fmt}: een standaard C printf formatstring, voor gebruik in debug mode (zie sectie~\ref{sec:debug}), om constraint suspensions te kunnen tonen. Na deze formatstring volgen de argumenten dat de formatstring zelf nodig heeft, waarbij naar de argumenten van de uit te printen constraints verwezen kan worden met \code{\$1}, \code{\$2}, \ldots.
   \item \code{init}: Een stuk C code dat uitgevoerd wordt bij het aanmaken van een constraint suspension van dit type. het kan een functie, een macro of gewoon een stuk code zelf zijn.
   \item \code{destr}: Een stuk C code dat uitgevoerd wordt bij het vernietigen van een constraint suspension van dit type. 
   \item \code{add}: Een stuk C code dat uitgevoetd bij bij het toevoegen van een constraint suspension van dit type in de constraint store. Hierbij kan naar de huidige constraint suspension verwezen worden met \code{\$0} (\code{\$0} is van het type \code{cchr\_id\_t}).
@@ -119,7 +119,7 @@ Lokale variabelen binnen een guard of body gebruiken kennen een eigen syntax, di
 
 \subsubsection{CHR Macro's}
 
-Het is mogelijk om binnen het CCHR blok zelf verkorte notaties in te voeren voor gebruik binnen de body van CHR regels. Deze worden door de CHR compiler zelf verwerkt, wat verschilt van C macros die door de C voorverwerker behandeld worden. Een voorbeeld is te vinden in codevoorbeeld~\ref{code:chrmacro}.
+Het is mogelijk om binnen het CCHR blok zelf verkorte notaties in te voeren voor gebruik binnen de body van CHR regels. Deze worden door de CHR compiler zelf verwerkt, wat verschilt van C macro's die door de C voorverwerker behandeld worden. Een voorbeeld is te vinden in codevoorbeeld~\ref{code:chrmacro}.
 \begin{exCode}
 \begin{Verbatim}[frame=single]
   chr_macro eqv(bigint_t,bigint_t) bigint_cmp($1,$2);
@@ -132,7 +132,7 @@ Dit zal het mogelijk maken om twee \code{bigint\_t} variabelen met elkaar te ver
 
 Zoals te zien is laat deze techniek toe dat verschillende data-types als parameters gebruikt worden (een soort polymorfisme), of dat \code{\_} als joker voor elk willekeurig type kan dienen. Indien er meerdere macrodefinities van toepassing zijn, wordt de eerste gebruikt. De datatypes zijn echter enkel bekend voor CHR variabelen, gedefini\"eerd in de head van een regel, of als lokale variabele. Expressies die geen loutere variabele zijn, kunnen enkel overeenkomen met het jokertype \code{\_}.
 
-Het nut van deze macros is een equivalent voorzien voor de {\em built-in constraints} van JCHR. In een latere uitbreiding zouden deze CHR macro's automatisch gegenereerd kunnen worden door het inladen van een extra module.
+Het nut van deze macro's is een equivalent voorzien voor de {\em built-in constraints} van JCHR. In een latere uitbreiding zouden deze CHR macro's automatisch gegenereerd kunnen worden door het inladen van een extra module.
 
 De macro \code{eq} is trouwens voorgedefinieerd om binaire equivalenties voor te stellen. Dit is een uitbreiding van de C operator \code{==} voor samengestelde datatypes (zoals structs).
 

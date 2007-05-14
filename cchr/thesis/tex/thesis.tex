@@ -84,19 +84,23 @@ Hier komt mijn dankwoord.
 
 
 
-\cleardoublepage{}\phantomsection{}
-\addcontentsline{toc}{chapter}{Bijlagen}
+%\cleardoublepage{}\phantomsection{}
+\clearpage
 
+\addcontentsline{toc}{chapter}{Bijlagen}
 \input{part-app}
 
 %\backmatter
+
+\clearpage
 \addcontentsline{toc}{chapter}{Bibliografie}
-\bibliography{thesis}
 \bibliographystyle{alpha}
+\bibliography{thesis}
 
 \addcontentsline{toc}{chapter}{Lijst van figuren}
 \listoffigures
 \addcontentsline{toc}{chapter}{Lijst van tabellen}
+
 \listoftables
 \addcontentsline{toc}{chapter}{Lijst van codevoorbeelden}
 \listof{exCode}{Lijst van codevoorbeelden}

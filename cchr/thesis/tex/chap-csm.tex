@@ -9,7 +9,7 @@ In dit hoofdstuk wordt een overzicht gegeven van alle macro's die gedefinieerd z
 \hline
 \code{CSM\_DIFF} & {\em var1}, {\em var2} & Controleer of {\em var1} en {\em var2} verschillende constraint suspensions zijn. \\
 \code{CSM\_DIFFSELF} & {\em var} & Controleer of {\em var} een andere constraint suspension is dan de actieve constraint. \\
-\code{CSM\_HISTCHECK} & {\em rule}, {\em code}, {\em susps\ldots} & Voer {\em code} enkel uit wanneer {\em rule} nog niet uitgevoerd is met {\em susps\ldots}. \\
+\code{CSM\_HISTCHECK} & {\em regel}, {\em code}, {\em susps\ldots} & Voer {\em code} enkel uit wanneer {\em regel} nog niet uitgevoerd is met {\em susps\ldots}. \\
 \code{CSM\_IF} & {\em expr}, {\em code} & Voer {\em code} enkel uit wanneer aan {\em expr} voldaan is. \\
 \code{CSM\_LOOP} & {\em constr}, {\em var}, {\em code} & Voer {\em code} uit voor alle constraint suspensions van type {\em constr} waarbij variabele {\em var} zal verwijzen naar de betrokken constraint suspension. \\
 \code{CSM\_LOOPNEXT} & {\em var} & Ga onmiddellijk naar volgende element bij het itereren in {\em var}. \\
@@ -32,7 +32,7 @@ In dit hoofdstuk wordt een overzicht gegeven van alle macro's die gedefinieerd z
 \code{CSM\_DEFLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (wijzigbare) lokale variabele \\
 \code{CSM\_DESTRUCT} & {\em constr}, {\em args\ldots} & Roep de destructor aan voor constraint type {\em constr}, met argumenten {\em args\ldots}. \\
 \code{CSM\_END} & & Be\"eindig afhandeling actieve constraint \\
-\code{CSM\_HISTADD} & {\em rule}, {\em susps\ldots} & Voeg {\em susps\ldots} toe aan propagation geschiedenis voor regel {\em rule}, zodat \code{CSM\_HISTCHECK} vanaf nu deze combinatie niet meer toelaat. \\
+\code{CSM\_HISTADD} & {\em regel}, {\em susps\ldots} & Voeg {\em susps\ldots} toe aan propagation geschiedenis voor regel {\em regel}, zodat \code{CSM\_HISTCHECK} vanaf nu deze combinatie niet meer toelaat. \\
 \code{CSM\_IMMLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (onwijzigbare) lokale variabele \\
 \code{CSM\_KILL} & {\em var}, {\em constr} & Verwijder de niet-actieve constraint {\em var} (van type {\em constr}) uit de constraint store. Na deze aanroep mag {\em var} niet meer gebruikt worden, deze zou naar een onbestaande of zelfs andere constraint suspension kunnen verwijzen.\\
 \code{CSM\_KILLSELF} & {\em constr} & Verwijder de actieve constraint (van type {\em constr} uit constraint store). \\

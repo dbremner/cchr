@@ -1,6 +1,6 @@
 \chapter{Ontwerp en implementatie} \label{chap:impl}
 
-In dit hoofdstuk wordt ingegaan op hoe ons CCHR systeem ontworpen en ge\"implementeerd is.
+In dit hoofdstuk wordt ingegaan op het ontwerp en de implementatie van het CCHR systeem.
 
 \section{Algemeen} \label{sec:impl}
 
@@ -82,9 +82,9 @@ In de laatste fase van het vertalingsproces wordt de tussenvorm omgezet naar C c
 
 In C bestaat echter reeds een gestandaardiseerd macro-systeem. Er is dan ook voor gekozen om deze C macro's te gebruiken in plaats van een aparte template engine. Het programma dat de macro-vertalingen doet, de C preprocessor, is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
 
-Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler wordt een sequentie van C macros in plaats van echte C code.
+Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatie-schema, en de uitvoer van de CCHR compiler wordt een sequentie van C macro's in plaats van echte C code.
 
-Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren, enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden die het gebruik van macro's veroorzaakt bij het debuggen. Zo is het niet mogelijk de code die door de preprocessor geproduceerd wordt een verwijzing te laten bevatten naar de oorspronkelijke lijnnummers in het CCHR bronbestand. Daardoor zullen C syntax fouten in de body's van rules geen zinvolle waarschuwingen/foutmeldingen geven.
+Het voordeel hiervan is dat de uitvoer van de CCHR compiler heel leesbaar blijft, en onafhankelijk blijft van enkele details. Zo is het mogelijk om een debug-versie van het CCHR programmatie te cre\"eren zonder de CCHR compiler opnieuw te moeten uitvoeren (zie sectie~\ref{sec:debug}), enkel het resultaat ervan hercompileren met de C compiler en een andere optie volstaat. Het belangrijkste nadeel is de moeilijkheden die het gebruik van macro's veroorzaakt bij het debuggen. Zo is het niet mogelijk de code die door de preprocessor geproduceerd wordt een verwijzing te laten bevatten naar de oorspronkelijke lijnnummers in het CCHR bronbestand. Daardoor zullen C syntax fouten in de body's van rules geen zinvolle waarschuwingen/foutmeldingen geven.
 
 De gegenereerde code wordt in detail uitgewerkt in sectie~\ref{sec:gencode}.
 
@@ -101,7 +101,7 @@ in de uitvoer gezet worden, die de C compiler hints geven over waar de code in h
 
 Zoals gezegd bestaat de gegenereerde code uit C macro's. In dit stuk wordt ingegaan op de structuur van die gegenereerde code. Eerst wordt een inleiding gegeven op de C voorvertaler, en dan wordt een voorbeeld stap voor stap uitgewerkt, om te eindigen bij de effectieve gegenereerde code die in de appendix te vinden is.
 
-\subsection{C voorvertaler} \label{sec:preproc}
+\subsection{De C voorvertaler} \label{sec:preproc}
 
 Eerst een korte inleiding over de C voorvertaler (``{\em preprocessor}'').
 
@@ -128,7 +128,7 @@ Hier zal ``\code{\_\_VA\_ARGS\_\_}'' de plaats innemen van alle argumenten die n
 \end{Verbatim}
 De \code{\#\#} zorgt hier dat 2 tokens aan elkaar geplakt worden, en onderwerpt het resultaat terug aan macro-expansie. Zo zal in bovenstaand voorbeeld ``\code{BAR(1,2)}'' vervangen worden door ``\code{run(2)}'', maar ``\code{BAR(2,1)}'' door ``\code{test(1)}''.
 
-In de komende tekst zal vaak verwezen worden naar macro's, sommigen daarvan staan in het macro-definitie bestand, anderen worden door de compiler gegenereerd. Gegenereerde macros zullen daarom ook steeds ``gegenereerde macros'' genoemd worden, om verwarring te vermijden.
+In de komende tekst zal vaak verwezen worden naar macro's, sommigen daarvan staan in het macro-definitie bestand, anderen worden door de compiler gegenereerd. Gegenereerde macro's zullen daarom ook steeds ``gegenereerde macro's'' genoemd worden, om verwarring te vermijden.
 
 \subsection{Algemeen} \label{sec:gencode-alg}
 
@@ -161,7 +161,7 @@ Deze lijn defini\"eert welke CHR constraints allemaal bestaan. Ze is heel flexib
   CONSLIST(CB)
 \end{Verbatim}
 
-Deze techniek wordt echter voor meer gebruikt dan enkel het aanduiden van de bestaande CHR constraints. Er worden zulke index-macros gedefinieerd voor: \begin{itemize}
+Deze techniek wordt echter voor meer gebruikt dan enkel het aanduiden van de bestaande CHR constraints. Er worden zulke index-macro's gedefinieerd voor: \begin{itemize}
 \item Welke CHR constraints bestaan (\code{CONSLIST}).
 \item De occurrences van elke constraint (\code{RULELIST\_\argu{constraint}\_\argu{ariteit}}).
 \item Aantal kept/removed constraints in elke CHR regel (\code{RULE\_KEPT\_\argu{rule}}).
@@ -186,13 +186,13 @@ Als eerste versie wordt vertrokken van een imperatieve versie van de basisuitvoe
 \begin{enumerate}
   \item Eerst ervoor zorgen dat de actieve constraint bestaat (\code{CSM\_MAKE}), en toegevoegd is aan de constraint store (\code{CSM\_NEEDSELF}).
   \item Er wordt ge\"itereerd over alle partner constraints, zijnde de constraint occurrences in de huidige rule behalve de actieve, met \code{CSM\_LOOP}.
-  \item Er wordt controleerd of er geen dubbels zijn in de verschillende partner constraints (met \code{CSM\_DIFF} en \code{CSM\_DIFFSELF} binnen een \code{CSM\_IF}).
+  \item Er wordt gecontroleerd of er geen dubbels zijn in de verschillende partner constraints (met \code{CSM\_DIFF} en \code{CSM\_DIFFSELF} binnen een \code{CSM\_IF}).
   \item Er wordt controleerd of de gevonden combinatie nog niet reeds geprobeerd is (met \code{CSM\_CHECKHIST}).
   \item Alle lokale variabelen worden gedefinieerd, met \code{CSM\_DECLOCAL} en \code{CSM\_DEFLOCAL}.
   \item Er wordt gecontroleerd of aan alle guards voldaan is (met \code{CSM\_IF} en de constraint argumenten met \code{CSM\_ARG} en \code{CSM\_LARG} geschreven).
   \item De gevonden combinatie wordt toegevoegd aan de propagation geschiedenis (met \code{CSM\_HISTADD}).
   \item Eventuele removed constraints worden uit de constraint store verwijderd (met \code{CSM\_KILL} en \\ \code{CSM\_KILLSELF}).
-  \item De body van de CHR rule wordt uitgevoerd, met de verwijzingen naar lokale variabelen vervangen door \code{CSM\_LOCAL}-macros en de constraint argumenten door \code{CSM\_ARG} en \code{CSM\_LARG}.
+  \item De body van de CHR rule wordt uitgevoerd, met de verwijzingen naar lokale variabelen vervangen door \code{CSM\_LOCAL}-macro's en de constraint argumenten door \code{CSM\_ARG} en \code{CSM\_LARG}.
   \item Als de actieve constraint uit de constraint store verwijderd is, wordt de afhandeling gestopt (\code {CSM\_DEADSELF} en \code{CSM\_END}).
 \end{enumerate}
 
@@ -212,7 +212,7 @@ Deze eerste versie van het compilatieschema is voor verbetering vatbaar. Een aan
 
 {\bf Destruction}: Indien een destructor aangeroepen moet worden voor een bepaalde constraint suspension, is het niet nodig hiermee te wachten tot na de uitvoering van de gehele body. Dit kan gedaan worden zodra niet meer naar gelijk welke variabele van die constraint verwezen wordt in de regel. De CCHR compiler zal de \code{CSM\_DESTRUCT} macro dan ook plaatsen na het laatste stuk body dat naar een variabele ervan verwijst.
 
-{\bf Late Storage}: Het is wenselijk om het aanmaken van een constraint suspension, en zeker het eigenlijke toevoegen ervan aan de constraint store, zoveel mogelijk uit te stellen. Dit eerste bespaart geheugen, en dit tweede kan de snelheid ten goede komen, aangezien er ondertussen minder elementen in de store zijn om over te itereren. Er wordt voor gezorgd dat de suspension aangemaakt is juist voor het zoeken naar partner constraints van een propagate-overgang\footnote{Een propagate-overgang komt in onze uitvoer overeen met een occurrence-macro waarbij de actieve constraint geen removed constraint is}, door de \code{CSM\_MAKE} uit stap 1 enkel te plaatsen aan het begin van ``kept'' occurrence macros. Verder wordt er pas voor gezorgd dat de constraint suspension in de store zit aan het begin van de uitvoering van de body van zo'n propagate-overgang. De \code{CSM\_NEEDSELF} wordt dus geplaatst voor de body van zo'n occurrence.
+{\bf Late Storage}: Het is wenselijk om het aanmaken van een constraint suspension, en zeker het eigenlijke toevoegen ervan aan de constraint store, zoveel mogelijk uit te stellen. Dit eerste bespaart geheugen, en dit tweede kan de snelheid ten goede komen, aangezien er ondertussen minder elementen in de store zijn om over te itereren. Er wordt voor gezorgd dat de suspension aangemaakt is juist voor het zoeken naar partner constraints van een propagate-overgang\footnote{Een propagate-overgang komt in onze uitvoer overeen met een occurrence-macro waarbij de actieve constraint geen removed constraint is}, door de \code{CSM\_MAKE} uit stap 1 enkel te plaatsen aan het begin van ``kept'' occurrence macro's. Verder wordt er pas voor gezorgd dat de constraint suspension in de store zit aan het begin van de uitvoering van de body van zo'n propagate-overgang. De \code{CSM\_NEEDSELF} wordt dus geplaatst voor de body van zo'n occurrence.
 
 {\bf Simplification}: Bij simplificatie-overgangen is er zekerheid dat na uitvoering van de body de actieve constraint zich niet meer in de store zal bevinden. Er is dus geen \code{CSM\_DEADSELF} meer nodig in stap 10 om te controleren of een \code{CSM\_END} mag. Dit kan uitgebreid worden tot propagation-overgangen die partner constraints verwijderen. Hierbij kan de \code{CSM\_DEAD} conditie rond de \code{CSM\_LOOPNEXT} weggelaten worden. Daarbij komt nog dat na een dergelijke niet-conditionele \code{CSM\_END} of \code{CSM\_LOOPNEXT} geen verdere checks voor de diepere lussen meer nodig zijn, en dus volledig weggelaten kunnen worden. Het gebruik van deze expliciete \code{CSM\_LOOPNEXT} macro's komt overeen met wat eerder ``backjumping'' genoemd werd.
 
@@ -227,7 +227,7 @@ Een meer ingrijpende optimalisatie die aangebracht kan worden aan voorgaand comp
 In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor de uitvoering van de eigenlijke body, zo vroeg mogelijk te doen, dit wilt zeggen: binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
   \item Guards (ook impliciete, door HNF convertie)
   \item Controles op dubbele constraints
-  \item Propagation-history controles
+  \item Propagation-geschiedenis controles
   \item Definities van lokale variabelen
   \item Lokale statements in de guard, die tot hiertoe niet vermeld waren.
 \end{itemize}
@@ -318,7 +318,7 @@ Aangezien de datastructuur waarin de constraint suspensions bijgehouden worden d
 
 Om de propagation geschiedenis bij te houden wordt een zelf ge\"implementeerde hashtable gebruikt. Op de implementatie ervan wordt ingegaan in sectie~\ref{sec:hashtable}. Ze vereist dat de gebruiker van de hashtable een datatype aangeeft om in de hashtable te gebruiken, inclusief een manier om te controleren of zulk een datatype een ``gebruikte plaats'' voorstelt.
 
-Voor de propagation history wordt dus de \em{ID}s (niet de \em{PID}s) van de betrokken constraint suspensions opgeslagen, voorafgegaan door een $0$ of een $1$, die aangeeft of de plaats in gebruik is. Er zijn twee opties: \begin{enumerate}
+Voor de propagation geschiedenis wordt dus de \em{ID}s (niet de \em{PID}s) van de betrokken constraint suspensions opgeslagen, voorafgegaan door een $0$ of een $1$, die aangeeft of de plaats in gebruik is. Er zijn twee opties: \begin{enumerate}
   \item Alles opslagen in \'e\'en globale hashtable.
   \item Voor elke rule $R$ waarvoor propagation geschiedenis bijgehouden wordt (geen simplification of simpagation rules dus) \'e\'en van zijn constraint occurrences $O$ van constraint type $C$ kiezen, en in de constraint suspensions $S$ van type $C$ de elementen van de propagation geschiedenis opslagen voor rule $R$ die voor occurrence $O$ de suspension $S$ hebben.
 \end{enumerate}
@@ -326,11 +326,15 @@ Die tweede methode vraagt meer overhead (veel aparte hashtables in plaats van \'
 
 \subsection{De index} \label{sec:index}
 
-Voor de waardenindexen, die gebruikt worden met de \code{CSM\_IDXLOOP} en verwante macro's, wordt gebruik gemaakt van de hashtable implementatie die ook voor de propagation history gebruikt werd. Ze wordt zelfs twee maal in elkaar gebruikt: eerst een table om de verschillende waardes aan subtables te koppelen, en dan in die tables dan de betrokken constraint suspensions opslagen. Zowel de {\em ID}s als de {\em PID}s worden echter opgeslagen, waarbij de {\em ID}s als unieke sleutel in de hashtable gebruikt worden, terwijl de {\em PID}s als waarden gebruikt worden, om eens een bepaalde constraint gevonden, ze ook snel terug te vinden. Het opslagen van {\em ID}s was bij de propagation history niet nodig, aangezien enkel het snel kunnen controleren of een bepaalde (combinatie van) constraint suspension(s) aanwezig was vereist is, en het terugvinden van de suspensions zelf niet.
+Voor de waardenindexen, die gebruikt worden met de \code{CSM\_IDXLOOP} en verwante macro's, wordt gebruik gemaakt van de hashtable implementatie die ook voor de propagation geschiedenis gebruikt werd. Ze wordt zelfs twee maal in elkaar gebruikt: eerst een table om de verschillende waardes aan subtables te koppelen, en dan in die tables dan de betrokken constraint suspensions opslagen. Zowel de {\em ID}s als de {\em PID}s worden echter opgeslagen, waarbij de {\em ID}s als unieke sleutel in de hashtable gebruikt worden, terwijl de {\em PID}s als waarden gebruikt worden, om eens een bepaalde constraint gevonden, ze ook snel terug te vinden. Het opslagen van {\em ID}s was bij de propagation geschiedenis niet nodig, aangezien enkel het snel kunnen controleren of een bepaalde (combinatie van) constraint suspension(s) aanwezig was vereist is, en het terugvinden van de suspensions zelf niet.
 
 Voor \code{CSM\_IDXLOOP} wordt ge\"itereerd over de verschillende elementen, terwijl er voor \code{CSM\_IDXUNILOOP} eerst een kopie gemaakt wordt van de subtable, waar dan over ge\"itereerd wordt. Dit is nodig, omdat de hashtable implementatie geen wijzigingen tijdens het itereren toelaat. Zie sectie~\ref{sec:hashtable}.
 
 CSM zal automatisch alle indexen onderhouden die met de macro \code{HASHLIST\_\argu{constraint}\_\argu{ariteit}} gedefinieerd zijn, zowel het toevoegen van nieuwe waardes, nieuwe constraint suspensions bij de subtable voor een bestaande waarde toevoegen, het verwijderen van constraint suspensions uit de juiste subtable, en indien er voor een gegeven combinatie van waarden geen overeenkomstige suspensions meer zijn, het verwijderen van de volledige subtable voor die waarden.
+
+\subsection{Debug mode} \label{sec:debug}
+
+Om de gebruiker van CCHR in staat te stellen het precieze uitvoeringsmechanisme van zijn CCHR code te volgen, is een debug mode ge\"introduceerd. Door een optie mee te geven aan de C voorvertaler, kunnen voor bepaalde CSM definities andere versies gebruikt worden die tijdens de uitvoering alle stappen laten zien. Hiervoor is het vereist dat elke constraint definitie een \code{option(fmt,\ldots)} bevat, die informatie geeft hoe de argumenten van een constraint weer te geven. Ook tijdens het schrijven van het programma was dit een grote hulp om fouten te vinden in de gegenereerde code.
 
 \section{Runtime} \label{sec:runtime}
 
@@ -339,7 +343,7 @@ Als ``runtime'' worden alle software-componenten die gemeenschappelijk zijn voor
 Deze componenten behoren tot de runtime: \begin{itemize}
   \item De code voor de dubbel-gelinkte lijsten, die voor de constraint store gebruikt wordt.
   \item De code om met logische variabelen te werken.
-  \item De code om de hashtables te onderhouden die voor propagation history en indexen gebruikt wordt.
+  \item De code om de hashtables te onderhouden die voor propagation geschiedenis en indexen gebruikt wordt.
   \item De code voor de hashfunctie voor bovenstaande hashtable.
 \end{itemize}
 
@@ -388,7 +392,7 @@ Al deze elementen zijn verspreid over een structuur van C structs en unions, zod
 
 Een hashtable is in het algemeen een datastructuur die bedoeld is om elementen heel snel in op te slagen en op te zoeken. Het maakt gebruik een ``hashfunctie'' die de op te slagen elementen afbeeldt op een natuurlijk getal binnen een bepaald bereik. Elementen worden dan opgeslagen op een positie die afhankelijk is van het resultaat van deze hashfunctie. Deze hashfunctie is liefst zo grillig mogelijk, om patronen in de invoer geen patronen in de uitvoer te laten veroorzaken. Op deze hashfunctie wordt in sectie~\ref{sec:hashfunc} op ingegaan.
 
-Het grootste probleem met hashtables is het probleem van ``collisions''. Dat zijn verschillende elementen die op dezelfde plaats zouden terechtkomen in de tabel. De kans dat zulke collisions optreden, kan bepaald worden met wat het ``verjaardagsprobleem'' genoemd wordt --- gelijkaardig aan de kans bepalen dat twee mensen in een groep dezelfde verjaardag hebben. Vereenvoudigd kan gesteld worden dat een eerste collision ongeveer optreedt wanneer het aantal elementen $N$ ongeveer gelijk is aan $\sqrt{D}$, met $D$ het aantal plaatsen in de tabel.
+Het grootste probleem met hashtables is het probleem van ``collisions''. Dat zijn verschillende elementen die op dezelfde plaats zouden terechtkomen in de tabel. De kans dat zulke collisions optreden, kan bepaald worden met wat het ``verjaardagsprobleem'' genoemd wordt --- gelijkaardig aan de kans bepalen dat twee mensen in een groep dezelfde verjaardag hebben. Vereenvoudigd kan gesteld worden dat een eerste collision ongeveer optreedt wanneer het aantal elementen $N$ gelijk is aan $\sqrt{D}$, met $D$ het aantal plaatsen in de tabel.
 
 Hieruit volgt dat het onmogelijk is de tabel gevuld te houden eens er een redelijk aantal elementen in opgeslagen moeten worden. Er zijn verschillende traditionele oplossingen voor dit probleem: \begin{enumerate}
 \item De tabel wordt vergroot zodra een collision optreedt.

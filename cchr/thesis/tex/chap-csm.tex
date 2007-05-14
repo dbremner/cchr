@@ -32,7 +32,7 @@ In dit hoofdstuk wordt een overzicht gegeven van alle macro's die gedefinieerd z
 \code{CSM\_DEFLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (wijzigbare) lokale variabele \\
 \code{CSM\_DESTRUCT} & {\em constr}, {\em args\ldots} & Roep de destructor aan voor constraint type {\em constr}, met argumenten {\em args\ldots}. \\
 \code{CSM\_END} & & Be\"eindig afhandeling actieve constraint \\
-\code{CSM\_HISTADD} & {\em rule}, {\em susps\ldots} & Voeg {\em susps\ldots} toe aan propagation history voor rule {\em rule}, zodat \code{CSM\_HISTCHECK} vanaf nu deze combinatie niet meer toelaat. \\
+\code{CSM\_HISTADD} & {\em rule}, {\em susps\ldots} & Voeg {\em susps\ldots} toe aan propagation geschiedenis voor regel {\em rule}, zodat \code{CSM\_HISTCHECK} vanaf nu deze combinatie niet meer toelaat. \\
 \code{CSM\_IMMLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (onwijzigbare) lokale variabele \\
 \code{CSM\_KILL} & {\em var}, {\em constr} & Verwijder de niet-actieve constraint {\em var} (van type {\em constr}) uit de constraint store. Na deze aanroep mag {\em var} niet meer gebruikt worden, deze zou naar een onbestaande of zelfs andere constraint suspension kunnen verwijzen.\\
 \code{CSM\_KILLSELF} & {\em constr} & Verwijder de actieve constraint (van type {\em constr} uit constraint store). \\
@@ -44,7 +44,7 @@ In dit hoofdstuk wordt een overzicht gegeven van alle macro's die gedefinieerd z
 \code{CSM\_START} & & Het genereren van de eigenlijke code \\
 \hline
 \end{tabularx}
-\caption{Overige CSM macros}
+\caption{Overige CSM macro's}
 \label{tab:csm-rest}
 \end{table}
 
@@ -62,7 +62,7 @@ In dit hoofdstuk wordt een overzicht gegeven van alle macro's die gedefinieerd z
 \code{CSM\_UNIEND} & {\em constr}, {\em var} & Nodig bij het voortijdig be\"eindigen van een ``uni'' lus (juist voor een \code{CSM\_END} of \code{CSM\_LOOPNEXT} van een meer naar buiten gelegen lus.\\
 \hline
 \end{tabularx}
-\caption{CSM macros voor gebruik van indexen}
+\caption{CSM macro's voor gebruik van indexen}
 \label{tab:csm-idx}
 \end{table}
 

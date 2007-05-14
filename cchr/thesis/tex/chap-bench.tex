@@ -17,7 +17,7 @@ Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetp
 
 \section{Grootste gemene deler} \label{sec:bench-gcd}
 
-Het eerste voorbeeld dat beschouwd wordt, is een programma dat de grootste gemene deler van twee getallen bepaalt. Het werkt door zolang er twee getallen groter dan nul zijn, het kleinste van het grootste af te trekken. 
+Het eerste voorbeeld dat beschouwd wordt, is een programma dat de grootste gemene deler van twee getallen bepaalt, met behulp van het algoritme van Euclides. Het werkt door zolang er twee getallen groter dan nul zijn, het kleinste van het grootste af te trekken. 
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
 CCHR {
@@ -141,15 +141,15 @@ De resultaten zijn te vinden in figuur~\ref{fig:bench-ram}. Het opvallendste is 
 Om een globaal overzicht te krijgen over de snelheden werden gemiddeldes bepaald voor elke combinatie van platform en test. Het gaat om het meetkundig gemiddelde van de verschillende tijds-metingen, enkel voor de probleemgroottes waar de tijden voor elk platform bestonden en hoger lagen dan $2.5 * 10^{-5}$s. Uiteindelijk werden de getallen voor elke benchmark geschaald zodat het resultaat voor C gelijk werd aan 1. De bekomen resultaten zijn aldus een indicatie voor hoeveel elk CHR systeem trager is dan de C versie. Ze zijn te vinden in tabel~\ref{tbl:benches}.
 \begin{table}
 \begin{center}
-\begin{tabular}{c|rr@{.}lr@{.}l}
- & {\bf SWI} & \multicolumn{2}{c}{\bf JCHR} & \multicolumn{2}{c}{\bf CCHR} \\
+\begin{tabular}{c|rr@{.}lr@{.}lc}
+ & {\bf SWI} & \multicolumn{2}{c}{\bf JCHR} & \multicolumn{2}{c}{\bf CCHR} & {\bf C} \\
 \hline
-gcd    & 26300 & \multicolumn{2}{c}{-} &   2&87 \\
-fib    & 5570  &   289&0               &   5&50 \\
-primes & 257   &   647&0               &   5&64 \\
-tak    & 142   &    73&9               &   2&25 \\
-leq    & 1290  &   504&0               &  10&3 \\
-ram    & 4120  & 12200&0               &  92&3 \\
+gcd    & 26300 & \multicolumn{2}{c}{-} &   2&87  & 1 \\
+fib    & 5570  &   289&0               &   5&50  & 1 \\
+primes & 257   &   647&0               &   5&64  & 1 \\
+tak    & 142   &    73&9               &   2&25  & 1 \\
+leq    & 1290  &   504&0               &  10&3   & 1 \\
+ram    & 4120  & 12200&0               &  92&3   & 1 \\
 \end{tabular}
 \caption{Benchmark gemiddeldes}
 \label{tbl:benches}

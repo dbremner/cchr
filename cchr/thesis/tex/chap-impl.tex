@@ -419,7 +419,7 @@ Met de gebruikte hashtable is het vrij essentieel dat een goede hashfunctie gebr
 
 Voor de hasfunctie is gekozen voor ``lookup3'', een publiek-domein algoritme. Zie \cite{hashing} voor meer informatie.
 
-\section{Correctheid} \label{sec:correctheid}
+\section{Geschreven code} \label{sec:correctheid}
 
 \subsection{Standaarden} \label{sec:standards}
 
@@ -432,3 +432,15 @@ Alle code, zowel de compiler als de gegenereerde code, is C code, of iets dat er
 In beide gevallen wordt vaak gebruik gemaakt van het dynamisch geheugen dat deze taal aanbiedt, met behulp van de systeemfuncties \code{malloc()}, \code{free()} en \code{realloc()}. Het probleem met gebruik hiervan is dat de programmeur volledig zelf verantwoordelijk wordt voor het geheugenbeheer. Er moet voor gezorgd worden dat elke byte gealloceerd geheugen ook effectief vrijgegeven wordt, en dat er nooit naar niet-gealloceerd of reeds-vrijgegeven geheugen verwezen wordt. Om deze fouten te kunnen opsporen is gebruik gemaakt van de geheugen debuggers {\em valgrind} en {\em Electric Fence}, en met de  {\em boundschecking} patch voor GCC. Zowel de compiler zelf als de gegenereerde code zijn vaak met deze tools gecontroleerd, en in de uiteindelijke versie zijn dan ook geen ``geheugenlekken'' of gebruik van niet-gealloceerd geheugen meer gevonden.
 
 Uiteraard blijft de gebruiker van de CCHR compiler wel verantwoordelijk om zelf geen geheugenlekken te veroorzaken, bv. door C code die in de body van een CHR regel staat. Het is eventueel mogelijk om van niet-standaard geheugenbeheer bibliotheken gebruik te maken, zoals de Boehm collector (\cite{boehmgc}) gebruikt in libgc (\cite{libgc}), die de programmeur ontnemen van de verantwoordelijkheid alle zelf gealloceerd geheugen vrij te geven.
+
+\subsection{Cijfermateriaal} \label{sec:cijfer}
+
+Een overzicht van de geschreven code: \begin{itemize}
+\item De geschreven compiler bestaat uit 6 verschillende C-bronbestanden, 8 C-headerbestanden, een lexer in flex en een parser in bison, samen ongeveer 3700 lijnen code.
+\item Daarbij komen nog 5 C-headerbestanden die de CSM definities en de rest van de runtime bevatten, samen ongeveer 1300 lijnen code.
+\item Er zijn 14 CHR voorbeeldprogramma's vertaald naar CCHR, die echter niet allemaal voor benchmarks gebruikt zijn. Samen zijn ze goed voor 700 lijnen code.
+\item Voor benchmarks (zie hoofdstuk~\ref{chap:bench}) zijn nog 7 voorbeeldprogramma's zo effici\"ent mogelijk in C geschreven, samen 350 lijnen.
+\item Daarbuiten zijn er nog ongeveer 500 lijnen code geschreven in Makefiles, en scripts voor het uitvoeren van de benchmarks en het genereren van de grafieken ervan.
+\item Alles bij mekaar meer dan 6500 lijnen, de gegenereerde parser en lexer en de code van het lookup3 hash-algoritme niet meegerekend.
+\end{itemize}
+

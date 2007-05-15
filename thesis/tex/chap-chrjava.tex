@@ -78,3 +78,11 @@ public handler leq {
 \caption{Kleiner-dan-of-gelijk-aan in JCHR --- leq.jchr}
 \label{code:leq-jchr}
 \end{exCode}
+
+\subsection{Mogelijkheden}
+
+\begin{itemize}
+\item {\bf Arbitraire Java datatypes} 
+\item {\bf Arbitraire built-in solvers} Het is mogelijk om willekeurige built-in solvers te gebruiken, en is zeker niet beperkt tot enkel logische variabelen
+JCHR biedt de mogelijkheid om willekeurige, eventueel zelfgeschreven, built-in solvers te gebruiken. In voorgaand voorbeeld werd gebruik gemaakt van de ``IntEqualitySolver'', een meegeleverde solver die unificatie en gelijkheid over LogicalInt variabelen ondersteunt. Dit LogicalInt type is een logische versie van Java's ingebouwde int. Verder kunnen ook alle Java datatypes gebruikt worden als constraint argumenten
+\end{itemize}

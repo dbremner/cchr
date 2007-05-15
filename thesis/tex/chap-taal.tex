@@ -5,19 +5,19 @@ In dit hoofdstuk wordt ingegaan op de taal ontwikkeld om CHR in C mogelijk te ma
 Het doel van deze thesis was een effici\"ente CHR implementatie te schrijven die nauw kon interageren met C. Daarom is het noodzakelijk om: \begin{itemize}
   \item Een taal te ontwerpen die het mogelijk maakt CHR en C te integreren: de CHR code moet C
         als host-taal kunnen gebruiken (C constructies als ``built-in constraints'' kunnen
-	behandelen), en de C code moet bijvoorbeeld omgekeerd ook CHR constraints kunnen laten toevoegen.
+	behandelen) en de C code moet bijvoorbeeld omgekeerd ook CHR constraints kunnen laten toevoegen.
   \item De taal moet het mogelijk maken heel effici\"ente code te genereren.
 \end{itemize}
 
 \section{Algemeen} \label{sec:taal-gen}
 
-Er wordt toegelaten een \code{cchr}-blok binnen normale C code te plaatsen, dat een beschrijving van CHR constraints en regels kan bevatten. Dit stuk zal later door de CCHR compiler omgezet naar C code zelf. In die zin moet CCHR dan ook eerder als een taal-uitbreiding van C beschouwd worden, en niet als aparte taal. 
+Er wordt toegelaten een \code{cchr}-blok binnen normale C code te plaatsen, dat een beschrijving van CHR constraints en regels kan bevatten. Dit stuk zal later door de CCHR compiler omgezet naar C code zelf. In die zin moet CCHR dan ook eerder als een taal-uitbreiding van C beschouwd worden en niet als aparte taal. 
 
 \section{Syntax} \label{sec:taal-syn}
 
-De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr}), waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een \code{cchr}-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macro's te schrijven in de omliggende C code, die eveneens vanuit het cchr blok aan te roepen zijn.
+De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr}), waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een \code{cchr}-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling definities en functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macro's te schrijven in de omliggende C code, die eveneens vanuit het \code{cchr}-blok aan te roepen zijn.
 
-Om de syntax in te leiden, is het interessant te beginnen met een eenvoudig voorbeeld (zie voorbeeld~\ref{fib:exCode}). Dit programma berekent opeenvolgende {\em getallen van Fibonacci}. Deze getallen zijn gedefinieerd als een rij die begint met twee maal een \'e\'en en waarbij alle volgende getallen de som zijn van hun 2 voorgangers.
+Om de syntax in te leiden, is het interessant te beginnen met een eenvoudig voorbeeld (zie codefragment~\ref{fib:exCode}). Dit programma berekent opeenvolgende {\em getallen van Fibonacci}. Deze getallen zijn gedefinieerd als een rij die begint met twee maal een \'e\'en en waarbij alle volgende getallen de som zijn van hun 2 voorgangers.
 
 \begin{exCode}
 \begin{Verbatim}[frame=single,numbers=left]
@@ -47,21 +47,21 @@ int main(int argc, char **argv) {
   return 0;
 }
 \end{Verbatim}
-\caption{\label{fib:exCode} Volledig fibonacci in CCHR --- \code{fib.cchr}}
+\caption{\label{fib:exCode} \code{fib.cchr} --- Fibonacci in CCHR}
 \end{exCode}
 
 \subsection{Het \code{cchr}-blok}
 
-Een CCHR bronbestand bevat steeds een \code{cchr}-blok, ingeluid met het sleutelwoord \code{cchr} en gevolgd door een stuk code tussen accolades. Dit stuk code zal vervangen worden door een equivalent stuk C broncode. Er zal tevens een header gegenereerd worden met dezelfde bestandsnaam als het bronbestand, maar \code{.cchr} vervangen door \code{\_cchr.h}, en definities bevatten zodat met de CHR code ge\"interageerd kan worden. In voorbeeld~\ref{fib:exCode} kan u het \code{cchr}-blok zien op lijn 6 tot lijn 13. Lijn 4 bevat de opname van dat header bestand. Om problemen met recursieve definities op te lossen, is het nodig dit bestand op te nemen voor het \code{cchr}-blok.
+Een CCHR bronbestand bevat steeds een \code{cchr}-blok, ingeluid met het sleutelwoord \code{cchr} en gevolgd door een stuk code tussen accolades. Dit stuk code zal vervangen worden door een equivalent stuk C broncode. Er zal tevens een header gegenereerd worden met dezelfde bestandsnaam als het bronbestand, maar \code{.cchr} vervangen door \code{\_cchr.h} die definities bevat hoe met de CHR code ge\"interageerd kan worden. In voorbeeld~\ref{fib:exCode} kan u het \code{cchr}-blok zien op lijn 6 tot lijn 13. Lijn 4 bevat de opname van dat header bestand. Om problemen met recursieve definities op te lossen, is het nodig dit bestand op te nemen voor het \code{cchr}-blok.
 
 Binnen het \code{cchr}-blok gelden dezelfde algemene regels als in C zelf: \begin{itemize}
-  \item Commentaar wordt begonnen door \code{//} (tot op het einde van de lijn), of door \code{/*} (tot aan de eerstvolgende \code{*/}).
+  \item Commentaar wordt begonnen door \code{//} (tot op het einde van de lijn) of door \code{/*} (tot aan de eerstvolgende \code{*/}).
   \item Spaties en andere witruimte (nieuwe lijnen) hebben geen betekenis (tenzij als scheiding tussen 2 symboolnamen of operatoren).
 \end{itemize}
 
 \subsection{Constraints}
 
-Constraints (zoals op lijn 7 van het voorbeeld), volgen JCHR's syntax: het \code{constraint} sleutelwoord gevolgd door een lijst van \'e\'en of meer constraint-namen, met tussen haakjes hun respectievelijke argumenten-types. Constraints zonder argument vereisen nog steeds \code{()} erachter, net zoals C een lege argumentenlijst vereist voor functies zonder argumenten (dit verschilt van JCHR).
+Constraints (zoals op lijn 7 van het voorbeeld), volgen JCHR's syntax: het \code{constraint} sleutelwoord gevolgd door een lijst van \'e\'en of meer constraint-namen, met tussen haakjes hun respectievelijke argumenttypes. Constraints zonder argument vereisen nog steeds \code{()} erachter, net zoals C een lege argumentenlijst vereist voor functies zonder argumenten (dit verschilt van JCHR).
 
 Het is ook mogelijk om enkele opties aan te geven over constraints. Deze worden genoteerd door achter de argumenten van een constraint ``\code{option(}$optienaam$\code{,}$args$\ldots\code{)}'' te zetten (meerdere options mogelijk). Een lijstje van de
 toegelaten opties: \begin{itemize}
@@ -98,22 +98,22 @@ Er zijn enkele verschillen met JCHR: \begin{itemize}
 
 \subsubsection{Head}
 
-De ``head'' constraints van een CHR regel (bestaande uit removed constraints en kept constraints) worden zoals vermeld genoteerd door met komma's gescheiden lijsten. Alle constraint-namen moeten in hetzelfde cchr-blok gedeclareerd zijn met het \code{constraint} sleutelwoord, en hun aantal argumenten (de ariteit) moet overeenkomen. Het is toegelaten meerdere constraints met dezelfde naam maar verschillende ariteit te hebben. Als argument kan een CHR variabele of een expressie gebruikt worden. Door een nog niet eerder gebruikte variabelenaam te schrijven wordt dit een CHR variabele. Elke andere uitdrukking wordt als expressie beschouwd. In een expressie is het niet mogelijk om een CHR variabele te definieren.
+De ``head'' constraints van een CHR regel (bestaande uit removed constraints en kept constraints) worden zoals vermeld genoteerd door met komma's gescheiden lijsten. Alle constraint-namen moeten in hetzelfde \code{cchr}-blok gedeclareerd zijn met het \code{constraint} sleutelwoord en hun aantal argumenten (de ariteit) moet overeenkomen. Het is toegelaten meerdere constraints met dezelfde naam maar verschillende ariteit te hebben. Als argument kan een CHR variabele of een expressie gebruikt worden. Door een nog niet eerder gebruikte variabelenaam te schrijven wordt dit een CHR variabele. Elke andere uitdrukking wordt als expressie beschouwd. In een expressie is het niet mogelijk om een CHR variabele te definieren.
 
 Variabelen die met een underscore (\code{\_}) beginnen, worden als anoniem beschouwd. Dat wilt zeggen dat ze niet meer verder gebruikt zullen worden. Dit gedrag komt overeen met Prolog's anonieme variabele (de underscore zelf), maar net zoals in JCHR en Prolog wordt toegestaan dat er nog andere letters volgen, wat leesbaarheid ten goede kan komen.
 
 \subsubsection{Guard en Body}
 
 Er is grote vrijheid aan wat als guard of body gebruikt mag worden in CCHR: \begin{enumerate}
-  \item Een willekeurige C expressie, die tot 0 of niet-0 evalueert (false of true) \em{enkel guard}
-  \item Een lokale variabele definitie. \em{zowel guard als body}
-  \item Een stuk arbitraire C code (tussen accolades). \em{zowel guard als body}
-  \item Een toe te voegen constraint (CHR of built-in). \em{enkel body}
+  \item Een willekeurige C expressie, die tot 0 of niet-0 evalueert (false of true) {\em enkel guard}
+  \item Een lokale variabele definitie. {\em zowel guard als body}
+  \item Een stuk arbitraire C code (tussen accolades). {\em zowel guard als body}
+  \item Een toe te voegen constraint (CHR of built-in). {\em enkel body}
 \end{enumerate}
 
 Binnen een guard wordt het sleutelwoord \code{alt} toegelaten. Dit geeft de mogelijkheid om twee of meer verschillende equivalente expressies te geven, om meer optimalisatie mogelijk te maken. In codefragment~\ref{fib:exCode} is hier een voorbeeld van te vinden op lijn 11. De betrekking als \code{N2==N1+1} en \code{N2-1==N1} schrijven maakt het de compiler mogelijk \code{N2} uit \code{N1} af te leiden maar ook \code{N1} uit \code{N2}. Zulke betrekkingen zouden in principe soms automatisch afgeleid kunnen worden, maar de CCHR compiler doet dit niet.
 
-Lokale variabelen binnen een guard of body gebruiken kennen een eigen syntax, die verschilt van die van JCHR. Het volstaat om een datatype, gevolgd door een variabelenaam, een gelijkheidsteken, en eventueel een expressie voor initializatie te noteren. De naam van een dergelijke lokale variabele hoeft niet met een hoofdletter te beginnen. Een voorbeeldje: \begin{Verbatim}
+Lokale variabelen binnen een guard of body gebruiken kennen een eigen syntax, die verschilt van die van JCHR. Het volstaat om een datatype, gevolgd door een variabelenaam, een gelijkheidsteken en eventueel een expressie voor initializatie te noteren. De naam van een dergelijke lokale variabele hoeft niet met een hoofdletter te beginnen. Een voorbeeldje: \begin{Verbatim}
   calc @ init(Max), fib(N,A) \ fib(N+1,B) <=> int sum=A+B, fib(N+2,sum);
 \end{Verbatim}
 
@@ -130,7 +130,7 @@ Het is mogelijk om binnen het CCHR blok zelf verkorte notaties in te voeren voor
 \end{exCode}
 Dit zal het mogelijk maken om twee \code{bigint\_t} variabelen met elkaar te vergelijken met \code{eqv(a,b)}, maar ook twee andere variabelen met behulp van de C operator \code{==}. Het datatype \code{bigint\_t} zou elders gedefinieerd moeten zijn.
 
-Zoals te zien is laat deze techniek toe dat verschillende data-types als parameters gebruikt worden (een soort polymorfisme), of dat \code{\_} als joker voor elk willekeurig type kan dienen. Indien er meerdere macrodefinities van toepassing zijn, wordt de eerste gebruikt. De datatypes zijn echter enkel bekend voor CHR variabelen, gedefini\"eerd in de head van een regel, of als lokale variabele. Expressies die geen loutere variabele zijn, kunnen enkel overeenkomen met het jokertype \code{\_}.
+Zoals te zien is laat deze techniek toe dat verschillende datatypes als parameters gebruikt worden (een soort polymorfisme) of dat \code{\_} als joker voor elk willekeurig type kan dienen. Indien er meerdere macrodefinities van toepassing zijn, wordt de eerste gebruikt. De datatypes zijn echter enkel bekend voor CHR variabelen, gedefini\"eerd in de head van een regel, of voor lokale variabelen. Expressies die geen loutere variabele zijn, kunnen enkel overeenkomen met het jokertype \code{\_}.
 
 Het nut van deze macro's is een equivalent voorzien voor de {\em built-in constraints} van JCHR. In een latere uitbreiding zouden deze CHR macro's automatisch gegenereerd kunnen worden door het inladen van een extra module.
 
@@ -182,7 +182,7 @@ In dit voorbeeld wordt de pointer louter gebruikt wordt om een waarde terug te g
 \caption{Faculteiten in CCHR met pointers}
 \label{code:fac-cchr}
 \end{exCode}
-Volgens de CHR {\em refined operational semantics} $\omega_r$ moet een constraint suspension waar een regel op van toepassing kan zijn die een guard heeft die waar geworden kan zijn, gereactiveerd worden. In codefragment~\ref{code:fac-cchr} wilt dat zeggen dat indien er een \code{facmult(N,V)} constraint suspension bestaat en een \code{mults()}, het verhogen van \code{*(N)} het reactiveren van de calcFac regel tot gevolg moet hebben. Hierbij zou \code{*(V)} met de oude waarde van \code{*(N)} vermenigvuldigd worden, en \code{*(N)} vervolgens met \'e\'en verlaagd. Dit blijft doorgaan tot \code{*(N)} gelijk is aan $0$, waarbij \code{*(V)} dus vermenigvuldigd is met de faculteit van de oorspronkelijke waarde van \code{*(N)}. De \code{mults()} constraint is nodig in dit artificieel voorbeeld zodat de \code{calcFac} regel blijvend uitgevoerd kan worden.
+Volgens de CHR {\em refined operational semantics} $\omega_r$ moet een constraint suspension waar een regel op van toepassing kan zijn die een guard heeft die waar geworden kan zijn, gereactiveerd worden. In codefragment~\ref{code:fac-cchr} wilt dat zeggen dat indien er een \code{facmult(N,V)} constraint suspension bestaat en een \code{mults()}, het verhogen van \code{*(N)} het reactiveren van de calcFac regel tot gevolg moet hebben. Hierbij zou \code{*(V)} met de oude waarde van \code{*(N)} vermenigvuldigd worden en \code{*(N)} vervolgens met \'e\'en verlaagd. Dit blijft doorgaan tot \code{*(N)} gelijk is aan $0$, waarbij \code{*(V)} dus vermenigvuldigd is met de faculteit van de oorspronkelijke waarde van \code{*(N)}. De \code{mults()} constraint is nodig in dit artificieel voorbeeld zodat de \code{calcFac} regel blijvend uitgevoerd kan worden.
 
 Het is echter moeilijk, zo niet onmogelijk, om effici\"ent te controleren wanneer de waarde van een expressie gewijzigd kan zijn, zeker in combinate met pointers die kunnen wijzen naar geheugenplaatsen die buiten de controle van het programma zelf kunnen wijzigen. Dit is zeker zo in combinatie met multi-threaded applicaties of wanneer gebruik gemaakt wordt van {\em Shared Memory} (SHM) technieken waarbij een deel virtueel geheugen gedeeld kan worden tussen verschillende programma's.
 
@@ -201,7 +201,7 @@ Logische variabelen hebben ook de mogelijkheid om door de programmeur gespecifie
 
 \section{C routines}
 
-Tot hiertoe werden enkel de mogelijkheden beschreven die CCHR code biedt. Het is echter ook noodzakelijk te specifi\"eren hoe C code kan interageren met de CCHR constraints. Er wordt ingegaan op de C routines die ter beschikking gesteld worden. Deze routines zullen in praktijk C functies of macro's zijn. Sommigen zijn algemeen voor een \code{cchr}-blok, en andere zijn specifiek voor bepaalde constraints.
+Tot hiertoe werden enkel de mogelijkheden beschreven die CCHR code biedt. Het is echter ook noodzakelijk te specifi\"eren hoe C code kan interageren met de CCHR constraints. Er wordt ingegaan op de C routines die ter beschikking gesteld worden. Deze routines zullen in praktijk C functies of macro's zijn. Sommigen zijn algemeen voor een \code{cchr}-blok en andere zijn specifiek voor bepaalde constraints.
 
 \subsection{Initializatie en terminatie}
 

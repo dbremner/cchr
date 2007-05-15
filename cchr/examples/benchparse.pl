@@ -3,6 +3,7 @@
 use strict;
 
 my %DATA;
+my %PDATA;
 my %ORDER;
 
 open PIPE,"| gnuplot";
@@ -13,9 +14,6 @@ for my $file (@ARGV) {
     chomp;
     if ($_ =~ /\A\s*(\w+)\/(\w+):(\d+)\s+\(([^,]+),([^\)]+)\)\*(\d+)\s+/) {
       my ($sys,$bench,$num,$val,$low,$mul)=($1,$2,$3,$4,$5,$6);
-      if (!defined($DATA{$bench}->{$sys}->{low}) || $low<$DATA{$bench}->{$sys}->{low}) {
-        $DATA{$bench}->{$sys}->{low}=$low;
-      }
       my $emul=0;
       my $eval=0;
       if (defined($DATA{$bench}->{$sys}->{$num}->[0])) {
@@ -33,6 +31,30 @@ for my $file (@ARGV) {
 
 for my $bench (keys %DATA) {
   my $benchdata=$DATA{$bench};
+  for my $sys (keys %{$benchdata}) {
+    my $bsdata=$benchdata->{$sys};
+    my $low=undef;
+    my $lowp=undef;
+    for my $size (keys %{$bsdata}) {
+      my $val=($bsdata->{$size}->[0])/($bsdata->{$size}->[1]);
+      if (!defined($low) || $low>$val) {
+        $low=$val;
+        $lowp=$size;
+      }
+    }
+    print "# $bench/$sys low=$low, size>$lowp";
+    for my $size (sort { $a<=>$b} (keys %{$bsdata})) {
+      if ($size>$lowp) {
+        $PDATA{$bench}->{$sys}->{$size}=($bsdata->{$size}->[0]/$bsdata->{$size}->[1])-$low;
+#	printf " ,%i",$size;
+      } 
+    }
+    print "\n";
+  }
+}
+
+for my $bench (keys %PDATA) {
+  my $benchdata=$PDATA{$bench};
   my $bsdata=$benchdata->{c};
   my @SYS=keys %{$benchdata};
   my %uvals;
@@ -41,34 +63,32 @@ for my $bench (keys %DATA) {
     $uvals{$sys}=1;
   }
   for my $size (keys %{$bsdata}) {
-    if ($size ne 'low') {
-      my %vals;
-      my $nvals=0;
-      for my $sys (@SYS) {
-        if (defined ($benchdata->{$sys}->{$size})) {
-	  $vals{$sys}=($benchdata->{$sys}->{$size}->[0]/$benchdata->{$sys}->{$size}->[1]-$benchdata->{$sys}->{low});
-	  $nvals++ if ($vals{$sys}>0.000025);
-	}
-      }
-      if ($nvals == $#SYS+1) {
-        for my $sys (@SYS) {
-	  $uvals{$sys} += log($vals{$sys});
-	}
-	$nuvals++;
+    my %vals;
+    my $nvals=0;
+    for my $sys (@SYS) {
+      if (defined ($benchdata->{$sys}->{$size})) {
+        $vals{$sys}=$benchdata->{$sys}->{$size};
+        $nvals++ if ($vals{$sys}>0.000025);
       }
     }
+    if ($nvals == $#SYS+1) {
+      for my $sys (@SYS) {
+        $uvals{$sys} += log($vals{$sys});
+      }
+      $nuvals++;
+    }
   }
-  print "AVG $bench\[$nuvals\] : ";
+  print "AVG $bench\[$nuvals\] :";
   my $loww;
   for my $sys (@SYS) {
     my $lw=$uvals{$sys}/$nuvals if ($nuvals>0);
     $loww=$lw if (!defined($loww) || $lw<$loww);
   }
-  for my $sys (sort { $uvals{$b}<=>$uvals{$a} } (@SYS)) {
+  for my $sys (sort { $uvals{$a}<=>$uvals{$b} } (@SYS)) {
     if ($nuvals>0) {
-      print "$sys=".exp($uvals{$sys}/$nuvals-$loww)." ";
-      push @{$ORDER{$bench}},$sys;
+      print "\t$sys=".exp($uvals{$sys}/$nuvals-$loww)."";
     }
+    unshift @{$ORDER{$bench}},$sys;
   }
   print "\n";
 }
@@ -78,16 +98,15 @@ print PIPE "set ylabel \"time\"\n";
 print PIPE "set logscale xy\n";
 print PIPE "set key bot right\n";
 
-for my $bench (keys %DATA) {
-  my $benchdata=$DATA{$bench};
+for my $bench (keys %PDATA) {
+  my $benchdata=$PDATA{$bench};
   print PIPE "set title \"Benchmark $bench\"\n";
   my @plots;
   for my $sys (@{$ORDER{$bench}}) {
     my $data=$benchdata->{$sys};
-    my $low=$data->{low};
     open FILE,">bench-$bench-$sys.dat";
     for my $num (sort { $a <=> $b } (grep {/^\d/} (keys %{$data}))) {
-      printf FILE ("%i %.16f %i\n",$num,($data->{$num}->[0]/$data->{$num}->[1])-$low,$data->{$num}->[1]);
+      printf FILE ("%i %.16f\n",$num,$data->{$num});
     }
     close FILE;
     push @plots,"\"bench-$bench-$sys.dat\" using 1:2 title \"$sys\" with line";

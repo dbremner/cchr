@@ -72,7 +72,7 @@ cchr {
   extern eq;
   
   logical log_int_t log_int_cb;
-  macro eq(log_int_t,log_int_t) log_int_t_testeq($1,$2);
+  chr_macro eq(log_int_t,log_int_t) log_int_t_testeq($1,$2);
   
   reflexivity @ leq(X,Y) <=> eq(X,Y) | true;
   antisymmetry @ leq(X1,Y1), leq(Y2,X2) <=> eq(X1,X2),eq(Y1,Y2) | {log_int_t_seteq(X1,Y1);};

@@ -224,7 +224,7 @@ Deze eerste versie van het compilatieschema is voor verbetering vatbaar. Een aan
 
 Een meer ingrijpende optimalisatie die aangebracht kan worden aan voorgaand compilatieschema, is wat men ``join ordering'' noemt, zoals vermeld in \cite{duck:optimizing}. Tot hiertoe werd de volgorde waarin ge\"itereerd wordt over de verschillende partner constraints ongedefinieerd gelaten, maar een juiste keuze kan veel versnelling bij de uitvoering mogelijk maken. De ideale volgorde bepalen kan niet altijd, maar het is meestal wel mogelijk een betere keuze te maken dan simpelweg van links naar rechts de head constraints te overlopen.
 
-In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor de uitvoering van de eigenlijke body, zo vroeg mogelijk te doen, dit wilt zeggen: binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
+In het algemeen komt het neer op zoveel mogelijk statements en voorwaardes die gecontroleerd worden voor de uitvoering van de eigenlijke body, zo vroeg mogelijk te doen, dit wil zeggen: binnen zo weinig mogelijk lussen. Een overzicht: \begin{itemize}
   \item Guards (ook impliciete, door HNF convertie)
   \item Controles op dubbele constraints
   \item Propagation-geschiedenis controles

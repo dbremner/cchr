@@ -17,14 +17,14 @@ logical_code(int64_t,int,log_int_t,log_int_cb)
 /* the cchr block */
 cchr {
   /* some macro's (overloaded!) to simplify usage of logical variables */
-  macro set(log_int_t,log_int_t) log_int_t_seteq($1,$2);
-  macro set(log_int_t,_) log_int_t_setval($1,$2);
-  macro set(log_int_t) log_int_t_hasval($1);
-  macro get(log_int_t) log_int_t_getval($1);
-  macro copy(log_int_t) log_int_t_copy($1);
-  macro new(log_int_t) log_int_t_create();
-  macro del(log_int_t) log_int_t_destruct($1);
-  macro cb(log_int_t,_,_) log_int_t_setcb($1,$2,$3);
+  chr_macro set(log_int_t,log_int_t) log_int_t_seteq($1,$2);
+  chr_macro set(log_int_t,_) log_int_t_setval($1,$2);
+  chr_macro set(log_int_t) log_int_t_hasval($1);
+  chr_macro get(log_int_t) log_int_t_getval($1);
+  chr_macro copy(log_int_t) log_int_t_copy($1);
+  chr_macro new(log_int_t) log_int_t_create();
+  chr_macro del(log_int_t) log_int_t_destruct($1);
+  chr_macro cb(log_int_t,_,_) log_int_t_setcb($1,$2,$3);
 
   constraint tak(int64_t,int64_t,int64_t,log_int_t) destr( {del($4);} ) fmt("tak(%lli,%lli,%lli,%p)");
 

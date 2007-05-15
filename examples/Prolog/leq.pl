@@ -39,7 +39,7 @@ reflexivity  @ leq(X,X) <=> true.
 antisymmetry @ leq(X,Y), leq(Y,X) <=> X = Y.
 idempotence  @ leq(X,Y) \ leq(X,Y) <=> true.
 transitivity @ leq(X,Y), leq(Y,Z) ==> leq(X,Z).
-
+test @ leq(_X,_Y) \ leq(_X,_Y) <=> true.
 
 testcycle(F,P,[E|R]) :- leq(P,E), testcycle(F,E,R).
 testcycle(F,P,[E]) :- leq(P,E), leq(E,F).

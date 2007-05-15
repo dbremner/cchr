@@ -69,7 +69,7 @@ De reden om de parser niet onmiddellijk via semantische acties deze tussenvorm t
 Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties doorgevoerd: \begin{itemize}
 \item Alle verwijzingen naar constraints, variabelen, opties, \ldots worden herkend.
 \item Alle regels worden omgezet naar HNF (Head Normal Form), waarbij alle expressies als parameters van constraints in de head die geen unieke variabelen zijn door een nieuwe variabele + een extra guard vervangen worden.
-\item Macro's worden vervangen door hun definitie.
+\item CHR Macro's worden vervangen door hun definitie (zie \ref{sec:rules}).
 \item Constraint occurrences worden bepaald (in welke regels en op welke plaats daarin elke constraint voorkomt).
 \item Variabele occurrences worden bepaald (in welke constraint occurrence en op welke plaats daarin elke variabele voorkomt).
 \item Afhankelijkheden tussen variabelen en statements worden bepaald.
@@ -182,7 +182,7 @@ De naam van de gegenereerde macro voor een constraint occurrence moet van de vor
 
 Bij de inhoud van de macro's komt het voordeel van een template-gebaseerde code generatie tot uiting: het algoritme wordt niet als C code gegenereerd, maar als een sequentie van macro's. De verzameling van toegelaten macro's is CSM gedoopt (Constraint Solver Macros), en een volledige lijst beschikbare macro's kan gevonden worden in appendix~\ref{chap:csm}. Het kan nuttig zijn de lijst erbij te nemen bij de komende uitleg, aangezien de precieze betekenis van de CSM macro's hier niet meer uitgelegd wordt.
 
-Als eerste versie wordt vertrokken van een imperatieve versie van de basisuitvoering, zoals beschreven in \cite{tomsphdthesis}:
+Als eerste versie wordt vertrokken van een imperatieve versie van de basisuitvoering, zoals beschreven in \cite{tomsphdthesis} en aangehaald in sectie~\ref{sec:schema}:
 \begin{enumerate}
   \item Eerst ervoor zorgen dat de actieve constraint bestaat (\code{CSM\_MAKE}), en toegevoegd is aan de constraint store (\code{CSM\_NEEDSELF}).
   \item Er wordt ge\"itereerd over alle partner constraints, zijnde de constraint occurrences in de huidige regel behalve de actieve, met \code{CSM\_LOOP}.

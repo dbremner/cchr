@@ -51,7 +51,7 @@ codefragment~\ref{code:familie-chord} toont hoe een eenvoudig familierelatie pro
 
 \section{Het K.U.Leuven JCHR systeem}
 
-Het K.U.Leuven JCHR systeem werd in 2005 ontwikkeld door Peter van Weert voor zijn eindwerk \cite{jchr_thesis}. De doelstelling was een gebruiksvriendelijk, effici\"ent en flexibel CHR-systeem schrijven voor Java. Vanaf nu zal in deze tekst ``JCHR'' gebruikt worden om naar het K.U.Leuven JCHR systeem te verwijzen, en ``JaCK'' om naar de JCHR uit JaCK te verwijzen.
+Het K.U.Leuven JCHR systeem werd in 2005 ontwikkeld door Peter van Weert voor zijn eindwerk \cite{jchr_thesis}. De doelstelling was een gebruiksvriendelijk, effici\"ent en flexibel CHR-systeem schrijven voor Java. Vanaf nu zal in deze tekst ``JCHR'' gebruikt worden om naar het K.U.Leuven JCHR systeem te verwijzen en ``JaCK'' om naar de JCHR uit JaCK te verwijzen.
 
 \subsection{Syntax}
 
@@ -83,13 +83,13 @@ public handler leq {
 
 \begin{itemize}
 \item {\bf Arbitraire Java datatypes} Het is mogelijk om constraints te defini\"eren met gelijk welk Java datatype als argument.
-\item {\bf Arbitraire built-in solvers} Het is mogelijk om willekeurige built-in solvers te gebruiken, en is zeker niet beperkt tot enkel logische variabelen. Deze built-in solvers zijn ook eenvoudig zelf te schrijven.
+\item {\bf Arbitraire built-in solvers} Het is mogelijk om willekeurige built-in solvers te gebruiken en is zeker niet beperkt tot enkel logische variabelen. Deze built-in solvers zijn ook eenvoudig zelf te schrijven.
 \item {\bf Volledig conform aan $\omega_r$} De gegenereerde solvers volgen de verfijnde operationele semantiek.
 \item {\bf Effici\"entie} Er wordt een heel aantal statische analyses uitgevoerd op de JCHR code, waardoor ge\"optimaliseerde compilatie mogelijk is. Het is resultaat is vergelijkbaar met Prolog-CHR oplossingen voor hetzelfde probleem.
 \end{itemize}
 
 \subsection{Implementatie}
 
-Het K.U.Leuven JCHR systeem bestaat zoals gebruikelijk uit een compiler en een runtime. De compiler maakt gebruik van een ANTLR parser voor het inlezen van de JCHR broncode, bouwt daarmee een tussenvorm die CIF gedoopt is (CHR Intermediate Form). Hierop worden analyses uitgevoerd, en uiteindelijk met behulp van de FreeMarker template engine Java klasses gegenereerd. Deze klasses kunnen dan vanuit gewone Java code gebruikt worden om constraintproblemen op te lossen.
+Het K.U.Leuven JCHR systeem bestaat zoals gebruikelijk uit een compiler en een runtime. De compiler maakt gebruik van een ANTLR parser voor het inlezen van de JCHR broncode en bouwt daarmee een tussenvorm die CIF gedoopt is (CHR Intermediate Form). Hierop worden analyses uitgevoerd en uiteindelijk met behulp van de FreeMarker template engine Java klasses gegenereerd. Deze klasses kunnen dan vanuit gewone Java code gebruikt worden om constraintproblemen op te lossen.
 
-De runtime bevat definities voor verschillende logische datatypes, built-in solvers, en linked-list en hastable implementaties. Deze worden door de gegenereerde code gebruikt.
+De runtime bevat definities voor verschillende logische datatypes, built-in solvers en gelinkte lijst en hastable implementaties. Deze worden door de gegenereerde code gebruikt.

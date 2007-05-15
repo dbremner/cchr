@@ -1,5 +1,5 @@
 TEXSOURCES := $(shell find -name '*.tex' -o -name '*.bib' -o -name '*.sty')
-IMGSOURCES := $(shell find cover/ fig/ -name '*.pdf' -o -name '*.eps')
+IMGSOURCES := $(shell find cover/ fig/ -name '*.pdf' -o -name '*.ps')
 TEXOUT := out
 
 ALLSOURCES := $(TEXSOURCES) $(IMGSOURCES) Makefile $(TEXOUT)/thesis.pdf 

@@ -13,7 +13,7 @@ In dit hoofdstuk worden enkele voorbeelden bekeken en vergeleken hoe goed ze pre
 
 Alle benchmarks zijn uitgevoerd op hetzelfde systeem, met zo min mogelijk andere taken op het zelfde moment lopende. Het gaat om een AMD Athlon64 3500+ processor met 1GiB PC3200 DDR geheugen, waarvan gebruikte software-omgeving vermeld is in bijlage~\ref{chap:progs}.
 
-Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, benchmark en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden, en werd uiteindelijk de totale gebruikte CPU tijd gemeten (dus niet de klok tijd, maar het aantal seconden effectieve CPU belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit verminderen was nodig zodat de constante tijd (inladen uitvoerbaar bestand, compileren van CHR naar Prolog, opstarten Java JAM en JUT compilatie) niet in rekening gebracht werd bij de tests. De uiteindelijke resultaten werden met behulp van GnuPlot uitgezet op grafieken.
+Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, benchmark en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden, en werd uiteindelijk de totale gebruikte CPU tijd gemeten (dus niet de klok tijd, maar het aantal seconden effectieve CPU belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit verminderen was nodig zodat de constante tijd (inladen uitvoerbaar bestand, compileren van CHR naar Prolog, opstarten Java JAM en JUT compilatie) niet in rekening gebracht werd bij de tests. Hierdoor zijn de grafieken voor de systemen met hoge opstarttijd (JCHR en Prolog) minder nauwkeurig, aangezien veel tijd verloren ging aan het telkens opnieuw uitvoeren vanDe uiteindelijke resultaten werden met behulp van GnuPlot uitgezet op grafieken.
 
 \section{Grootste gemene deler} \label{sec:bench-gcd}
 
@@ -134,25 +134,25 @@ De resultaten zijn te vinden in figuur~\ref{fig:bench-leq}. Opvallend is de hell
 Het laatste testvoorbeeld dat beschouwd wordt is de RAM simulator in CHR, zoals beschreven in \cite{jon:complexity:chr05}.
 Hierin wordt een simpel programmaatje dat van $N$ tot $0$ telt geladen, met $N$ de ``problem size''. De code is bijna identiek aan de Prolog versie, en is te vinden in sectie~\ref{sec:ram-cchr}.
 \benchfig{ram}{RAM benchmark}
-De resultaten zijn te vinden in figuur~\ref{fig:bench-ram}. Het opvallendste is het bijna perfect lineair zijn van het voorbeeld in alle talen behalve Java, met enkel constante factoren ertussen. In de C versie is het hele programma een enkele lus die een instructie leest, en binnen een {\em switch} uitvoert. Hierbij is de tijd nodig om een element in het geheugen op te zoeken herleid tot \'e\'en opzoeking in een array.
+De resultaten zijn te vinden in figuur~\ref{fig:bench-ram}. Het opvallendste is het bijna perfect lineair zijn van het voorbeeld in alle talen behalve Java, met enkel constante factoren ertussen. In de C versie is het hele programma een enkele lus die een instructie leest, en binnen een {\em switch} uitvoert. Hierbij is de tijd nodig om een element in het geheugen op te zoeken herleid tot \'e\'en opzoeking in een array. Dit in vergelijking met alle CHR implementaties die de inhoud van het geheugen voorstellen als een aantal constraint suspensions in de constraint store.
 
 \section{Overzicht} \label{sec:bench-end}
 
-Om een globaal overzicht te krijgen over de snelheden werden gemiddeldes bepaald voor elke combinatie van platform en test. Het gaat om het meetkundig gemiddelde van de verschillende tijds-metingen, enkel voor de probleemgroottes waar de tijden voor elk platform bestonden en hoger lagen dan $2.5 * 10^{-5}$s. Uiteindelijk werden de getallen voor elke benchmark geschaald zodat het resultaat voor C gelijk werd aan 1. De bekomen resultaten zijn aldus een indicatie voor hoeveel elk CHR systeem trager is dan de C versie. Ze zijn te vinden in tabel~\ref{tbl:benches}.
+Om een globaal overzicht te krijgen over de snelheden werden gemiddeldes bepaald voor elke combinatie van platform en test. Het gaat om het meetkundig gemiddelde van de verschillende tijdsmetingen, enkel voor de probleemgroottes waar de tijden voor elk platform bestonden en hoger lagen dan $2.5 * 10^{-5}$s. Uiteindelijk werden de getallen voor elke benchmark geschaald zodat het resultaat voor C gelijk werd aan 1. De bekomen resultaten zijn aldus een indicatie voor hoeveel elk CHR systeem trager is dan de C versie. Ze zijn te vinden in tabel~\ref{tbl:benches}.
 \begin{table}
 \begin{center}
-\begin{tabular}{c|rr@{.}lr@{.}lc}
- & {\bf SWI} & \multicolumn{2}{c}{\bf JCHR} & \multicolumn{2}{c}{\bf CCHR} & {\bf C} \\
+\begin{tabular}{c|rrr@{.}lr}
+ & {\bf SWI} & {\bf JCHR} & \multicolumn{2}{c}{\bf CCHR} & {\bf C} \\
 \hline
-gcd    & 26300 & \multicolumn{2}{c}{-} &   2&87  & 1 \\
-fib    & 5570  &   289&0               &   5&50  & 1 \\
-primes & 257   &   647&0               &   5&64  & 1 \\
-tak    & 142   &    73&9               &   2&25  & 1 \\
-leq    & 1290  &   504&0               &  10&3   & 1 \\
-ram    & 4120  & 12200&0               &  92&3   & 1 \\
+gcd    & 22000 & -     &   3&4  & 1 \\
+fib    & 21000 & 940   &   8&5  & 1 \\
+primes & 310   & 490   &   6&9  & 1 \\
+tak    & 210   & 110   &   4&3  & 1 \\
+leq    & 1100  & 440   &   9&8  & 1 \\
+ram    & 4700  & 11000 &  120&0 & 1 \\
 \end{tabular}
 \caption{Benchmark gemiddeldes}
 \label{tbl:benches}
 \end{center}
 \end{table}
-De gemeten tijden zijn voor CCHR nog steeds 2 tot 100 maal deze van de C versies, maar wel steeds duidelijk sneller dan de respectievelijke JCHR of Prolog CHR versies.
+De gemeten tijden zijn voor CCHR nog steeds 3 tot 120 maal deze van de C versies, maar wel steeds duidelijk sneller dan de respectievelijke JCHR of Prolog CHR versies.

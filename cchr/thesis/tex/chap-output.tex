@@ -21,40 +21,24 @@ cchr {
 
 {\scriptsize
 \begin{Verbatim}[frame=single,numbers=left]
-#undef CONSLIST
 #define CONSLIST(CB) CB##_D(fib_2) CB##_S CB##_D(init_1)
 
-#undef PROPHIST_begin
 #define PROPHIST_begin(CB,Pid1,...) CB##_I(Pid1,__VA_ARGS__,)
-#undef PROPHIST_HOOK_begin
 #define PROPHIST_HOOK_begin init_1
-#undef RULE_KEPT_begin
 #define RULE_KEPT_begin (1)
-#undef RULE_REM_begin
 #define RULE_REM_begin (0)
-#undef ARGLIST_fib_2
 #define ARGLIST_fib_2(CB,...) CB##_D(arg1,int,__VA_ARGS__) CB##_S CB##_D(arg2,long long,__VA_ARGS__)
-#undef RULELIST_fib_2
 #define RULELIST_fib_2(CB) CB##_D(fib_2_calc_R1) CB##_S CB##_D(fib_2_calc_K2)
-#undef RELATEDLIST_fib_2
 #define RELATEDLIST_fib_2(CB) CS##_D(init_1) CB##_S CS##_D(fib_2)
-#undef FORMAT_fib_2
 #define FORMAT_fib_2 "fib_2()"
-#undef FORMATARGS_fib_2
 #define FORMATARGS_fib_2 
 
-#undef DESTRUCT_fib_2
 #define DESTRUCT_fib_2(arg1,arg2) 
-#undef CONSTRUCT_fib_2
 #define CONSTRUCT_fib_2 
-#undef ADD_fib_2
 #define ADD_fib_2(PID) 
-#undef KILL_fib_2
 #define KILL_fib_2(PID) 
-#undef RULEHOOKS_fib_2
 #define RULEHOOKS_fib_2(CB,...) 
 
-#undef CODELIST_fib_2_calc_R1
 #define CODELIST_fib_2_calc_R1  \
   CSM_IMMLOCAL(int,N1,CSM_ARG(fib_2,arg1)) \
   CSM_IMMLOCAL(long long,M1,CSM_ARG(fib_2,arg2)) \
@@ -77,7 +61,6 @@ cchr {
   ) \
 
 
-#undef CODELIST_fib_2_calc_K2
 #define CODELIST_fib_2_calc_K2  \
   CSM_MAKE(fib_2) \
   CSM_IMMLOCAL(int,N2,CSM_ARG(fib_2,arg1)) \
@@ -99,39 +82,24 @@ cchr {
             CSM_UNIEND(fib_2,R1) \
             CSM_END \
           ) \
-          CSM_DEAD(R1, \
-            CSM_LOOPNEXT(R1) \
-          ) \
+          CSM_LOOPNEXT(R1) \
         ) \
       ) \
     ) \
   ) \
 
-
-
-#undef ARGLIST_init_1
 #define ARGLIST_init_1(CB,...) CB##_D(arg1,int,__VA_ARGS__)
-#undef RULELIST_init_1
 #define RULELIST_init_1(CB) CB##_D(init_1_begin_K1) CB##_S CB##_D(init_1_calc_K1)
-#undef RELATEDLIST_init_1
 #define RELATEDLIST_init_1(CB) CS##_D(fib_2)
-#undef FORMAT_init_1
 #define FORMAT_init_1 "init_1()"
-#undef FORMATARGS_init_1
 #define FORMATARGS_init_1 
 
-#undef DESTRUCT_init_1
 #define DESTRUCT_init_1(arg1) 
-#undef CONSTRUCT_init_1
 #define CONSTRUCT_init_1 
-#undef ADD_init_1
 #define ADD_init_1(PID) 
-#undef KILL_init_1
 #define KILL_init_1(PID) 
-#undef RULEHOOKS_init_1
 #define RULEHOOKS_init_1(CB,...) CB##_D(init_1,begin,__VA_ARGS__)
 
-#undef CODELIST_init_1_begin_K1
 #define CODELIST_init_1_begin_K1  \
   CSM_MAKE(init_1) \
   CSM_IMMLOCAL(int,_0,CSM_ARG(init_1,arg1)) \
@@ -146,32 +114,27 @@ cchr {
   ,self_) \
 
 
-#undef CODELIST_init_1_calc_K1
 #define CODELIST_init_1_calc_K1  \
   CSM_MAKE(init_1) \
   CSM_IMMLOCAL(int,Max,CSM_ARG(init_1,arg1)) \
-  CSM_LOOP(fib_2,K2, \
-    CSM_IMMLOCAL(int,N2,CSM_LARG(fib_2,K2,arg1)) \
-    CSM_IMMLOCAL(long long,M2,CSM_LARG(fib_2,K2,arg2)) \
-    CSM_IF(CSM_LOCAL(N2)<CSM_LOCAL(Max), \
-      CSM_DEFIDXVAR(fib_2,idx1,R1) \
-      CSM_SETIDXVAR(fib_2,idx1,R1,arg1,CSM_LOCAL(N2) -1) \
-      CSM_IDXUNILOOP(fib_2,idx1,R1, \
-        CSM_IF(CSM_DIFF(K2,R1), \
-          CSM_IMMLOCAL(int,N1,CSM_LARG(fib_2,R1,arg1)) \
-          CSM_IMMLOCAL(long long,M1,CSM_LARG(fib_2,R1,arg2)) \
+  CSM_LOOP(fib_2,R1, \
+    CSM_IMMLOCAL(int,N1,CSM_LARG(fib_2,R1,arg1)) \
+    CSM_IMMLOCAL(long long,M1,CSM_LARG(fib_2,R1,arg2)) \
+    CSM_DEFIDXVAR(fib_2,idx1,K2) \
+    CSM_SETIDXVAR(fib_2,idx1,K2,arg1,CSM_LOCAL(N1)+1) \
+    CSM_IDXLOOP(fib_2,idx1,K2, \
+      CSM_IF(CSM_DIFF(R1,K2), \
+        CSM_IMMLOCAL(int,N2,CSM_LARG(fib_2,K2,arg1)) \
+        CSM_IMMLOCAL(long long,M2,CSM_LARG(fib_2,K2,arg2)) \
+        CSM_IF(CSM_LOCAL(N2)<CSM_LOCAL(Max), \
           CSM_KILL(R1,fib_2) \
           CSM_NEEDSELF(init_1) \
           CSM_ADD(fib_2,CSM_LOCAL(N2)+1,CSM_LOCAL(M1)+CSM_LOCAL(M2)) \
           CSM_DESTRUCT(fib_2,CSM_LOCAL(N1),CSM_LOCAL(M1)) \
           CSM_DEADSELF( \
-            CSM_UNIEND(fib_2,R1) \
             CSM_END \
           ) \
-          CSM_DEAD(K2, \
-            CSM_UNIEND(fib_2,R1) \
-            CSM_LOOPNEXT(K2) \
-          ) \
+          CSM_LOOPNEXT(R1) \
         ) \
       ) \
     ) \
@@ -179,12 +142,9 @@ cchr {
 
 
 
-#undef HASHLIST_fib_2
 #define HASHLIST_fib_2(CB,...) CB##_D(idx1,__VA_ARGS__) 
-#undef HASHDEF_fib_2_idx1
 #define HASHDEF_fib_2_idx1(CB,...) CB##_D(arg1,int,__VA_ARGS__) 
 
-#undef HASHLIST_init_1
 #define HASHLIST_init_1(CB,...) 
 
 CSM_START

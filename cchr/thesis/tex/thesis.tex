@@ -55,6 +55,9 @@
 
 \begin{document}
 
+\pagenumbering{roman}
+\includepdf[pages={1,2},noautoscale=true]{THcover}
+
 %\includegraphics{THcover}
 %\cleardoublepage
 
@@ -62,7 +65,8 @@
 
 Hier komt mijn dankwoord. 
 
-\newpage
+\clearpage
+\addcontentsline{toc}{chapter}{Inhoudsopgave}
 \tableofcontents
 
 % Set paragraph layout
@@ -70,8 +74,17 @@ Hier komt mijn dankwoord.
 \setlength{\parskip}{3mm}
 
 
-\newpage
+\addcontentsline{toc}{chapter}{Lijst van figuren}
+\listoffigures \clearpage
+\addcontentsline{toc}{chapter}{Lijst van tabellen}
+
+\listoftables \clearpage
+\addcontentsline{toc}{chapter}{Lijst van codevoorbeelden}
+\listof{exCode}{Lijst van codevoorbeelden} \clearpage
+
+\pagenumbering{arabic}
 %\mainmatter
+
 \input{chap-begin}
 \input{part-situ}
 \input{part-cchr}
@@ -96,13 +109,5 @@ Hier komt mijn dankwoord.
 \addcontentsline{toc}{chapter}{Bibliografie}
 \bibliographystyle{alpha}
 \bibliography{thesis}
-
-\addcontentsline{toc}{chapter}{Lijst van figuren}
-\listoffigures
-\addcontentsline{toc}{chapter}{Lijst van tabellen}
-
-\listoftables
-\addcontentsline{toc}{chapter}{Lijst van codevoorbeelden}
-\listof{exCode}{Lijst van codevoorbeelden}
 
 \end{document}

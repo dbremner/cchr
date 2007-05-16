@@ -4,7 +4,7 @@ In dit hoofdstuk wordt ingegaan op de bestaande implementaties van CHR in de pro
 
 \section{JaCK --- The Java Constraint Kit}
 
-JaCK is een project met als doel Constraint Solving mogelijkheden aan Java toevoegen. Het bestaat uit drie delen, JCHR, VisualCHR en JASE. JCHR maakt het mogelijk om CHR regels in een Java-achtige syntax te gebruiken in Java. JASE, ofwel Java Abstract Search Engine, breidt de mogelijkheden uit met zoek-strategie\"en. JaCK kan daardoor gebruikt worden voor problemen waar Constraint Propagation geen volledige oplossing geeft. Het maakt zogenaamde parti\"ele solvers mogelijk. JaCK wordt beschreven in \cite{jack}.
+JaCK is een project met als doel Constraint Solving mogelijkheden aan Java toevoegen. Het bestaat uit drie delen, JCHR, VisualCHR en JASE. JCHR maakt het mogelijk om CHR regels in een Java-achtige syntax te gebruiken in Java. JASE, ofwel Java Abstract Search Engine, breidt de mogelijkheden uit met zoekstrategie\"en. JaCK kan daardoor gebruikt worden voor problemen waar Constraint Propagation geen volledige oplossing geeft. Het maakt zogenaamde parti\"ele solvers mogelijk. JaCK wordt beschreven in \cite{jack}.
 \begin{exCode}[bhp]
 \begin{Verbatim}[frame=single]
 handler leq {
@@ -18,7 +18,7 @@ handler leq {
     if (X = Y) { leq(X,Y) } <=> { true } reflexivity;
     { leq(X, Y) && leq(Y, X) } <=> { X = Y } antisymmetry;
     { leq(X, Y) &\& leq(X, Y) } <=> { true } idempotence;
-    { leq(X, Y) && leq(Y, Z) } ==> { leq(X, Z) } transitivty;
+    { leq(X, Y) && leq(Y, Z) } ==> { leq(X, Z) } transitivity;
   }
 }
 \end{Verbatim}
@@ -47,9 +47,9 @@ mother(M,C) ==> true | person(M,"female"), person(C,G).
 \caption{Familierelaties in CHORD --- family2.chr}
 \label{code:familie-chord}
 \end{exCode}
-codefragment~\ref{code:familie-chord} toont hoe een eenvoudig familierelatie programma ge\"implementeerd kan worden in CHORD. De allereerste regel maakt gebruik van het disjunctie-symbool \code{;} om aan te geven dat een ouder ofwel een vader ofwel een moeder is.
+Codefragment~\ref{code:familie-chord} toont hoe een eenvoudig familierelatie programma ge\"implementeerd kan worden in CHORD. De allereerste regel maakt gebruik van het disjunctiesymbool (\code{;}) om aan te geven dat een ouder ofwel een vader ofwel een moeder is.
 
-\section{Het K.U.Leuven JCHR systeem}
+\section{Het K.U.Leuven JCHR systeem} \label{sec:kuljchr}
 
 Het K.U.Leuven JCHR systeem werd in 2005 ontwikkeld door Peter van Weert voor zijn eindwerk \cite{jchr_thesis}. De doelstelling was een gebruiksvriendelijk, effici\"ent en flexibel CHR-systeem schrijven voor Java. Vanaf nu zal in deze tekst ``JCHR'' gebruikt worden om naar het K.U.Leuven JCHR systeem te verwijzen en ``JaCK'' om naar de JCHR uit JaCK te verwijzen.
 
@@ -85,7 +85,7 @@ public handler leq {
 \item {\bf Arbitraire Java datatypes} Het is mogelijk om constraints te defini\"eren met gelijk welk Java datatype als argument.
 \item {\bf Arbitraire built-in solvers} Het is mogelijk om willekeurige built-in solvers te gebruiken en is zeker niet beperkt tot enkel logische variabelen. Deze built-in solvers zijn ook eenvoudig zelf te schrijven.
 \item {\bf Volledig conform aan $\omega_r$} De gegenereerde solvers volgen de verfijnde operationele semantiek.
-\item {\bf Effici\"entie} Er wordt een heel aantal statische analyses uitgevoerd op de JCHR code, waardoor ge\"optimaliseerde compilatie mogelijk is. Het is resultaat is vergelijkbaar met Prolog-CHR oplossingen voor hetzelfde probleem.
+\item {\bf Effici\"entie} Er wordt een heel aantal statische analyses uitgevoerd op de JCHR code, waardoor geoptimaliseerde compilatie mogelijk is. Het resultaat is vergelijkbaar met Prolog-CHR oplossingen voor hetzelfde probleem.
 \end{itemize}
 
 \subsection{Implementatie}

@@ -11,11 +11,11 @@ Het doel van deze thesis was een effici\"ente CHR implementatie te schrijven die
 
 \section{Algemeen} \label{sec:taal-gen}
 
-Er wordt toegelaten een \code{cchr}-blok binnen normale C code te plaatsen, dat een beschrijving van CHR constraints en regels kan bevatten. Dit stuk zal later door de CCHR compiler omgezet naar C code zelf. In die zin moet CCHR dan ook eerder als een taal-uitbreiding van C beschouwd worden en niet als aparte taal. 
+Er wordt toegelaten een \code{cchr}-blok binnen normale C code te plaatsen, dat een beschrijving van CHR constraints en regels kan bevatten. Dit stuk zal later door de CCHR compiler omgezet worden naar C code zelf. In die zin moet CCHR dan ook eerder als een taaluitbreiding van C beschouwd worden en niet als aparte taal. 
 
 \section{Syntax} \label{sec:taal-syn}
 
-De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr}), waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een \code{cchr}-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling definities en functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macro's te schrijven in de omliggende C code, die eveneens vanuit het \code{cchr}-blok aan te roepen zijn.
+De algemene syntax bedacht om CHR met C te kunnen integreren, is sterk ge\"inspireerd door K.U.Leuven JCHR (zie \cite{peter:jchr} en sectie~\ref{sec:kuljchr}), waar CHR handlers geschreven worden binnen een specifiek blok in een bestand met \code{.jchr} extensie. In CCHR zal echter niet ge\"eist worden dat de CHR code zich in een apart bestand bevindt. In C is het veel minder de conventie om code te splitsen over verschillende bestanden dan in Java. Een \code{cchr}-blok stelt in C dan ook geen apart geheel voor, zoals een klasse, maar enkel een verzameling definities en functies die op hetzelfde niveau komen te staan als de omliggende code. Hiermee is het ook mogelijk macro's te schrijven in de omliggende C code, die eveneens vanuit het \code{cchr}-blok aan te roepen zijn.
 
 Om de syntax in te leiden, is het interessant te beginnen met een eenvoudig voorbeeld (zie codefragment~\ref{fib:exCode}). Dit programma berekent opeenvolgende {\em getallen van Fibonacci}. Deze getallen zijn gedefinieerd als een rij die begint met twee maal een \'e\'en en waarbij alle volgende getallen de som zijn van hun 2 voorgangers.
 
@@ -56,14 +56,14 @@ Een CCHR bronbestand bevat steeds een \code{cchr}-blok, ingeluid met het sleutel
 
 Binnen het \code{cchr}-blok gelden dezelfde algemene regels als in C zelf: \begin{itemize}
   \item Commentaar wordt begonnen door \code{//} (tot op het einde van de lijn) of door \code{/*} (tot aan de eerstvolgende \code{*/}).
-  \item Spaties en andere witruimte (nieuwe lijnen) hebben geen betekenis (tenzij als scheiding tussen 2 symboolnamen of operatoren).
+  \item Spaties en andere witruimte (nieuwe lijnen) hebben geen betekenis, tenzij als scheiding tussen 2 symboolnamen of operatoren.
 \end{itemize}
 
 \subsection{Constraints}
 
-Constraints (zoals op lijn 7 van het voorbeeld), volgen JCHR's syntax: het \code{constraint} sleutelwoord gevolgd door een lijst van \'e\'en of meer constraint-namen, met tussen haakjes hun respectievelijke argumenttypes. Constraints zonder argument vereisen nog steeds \code{()} erachter, net zoals C een lege argumentenlijst vereist voor functies zonder argumenten (dit verschilt van JCHR).
+Constraints (zoals op lijn 7 van het voorbeeld), volgen JCHR's syntax: het \code{constraint} sleutelwoord gevolgd door een lijst van \'e\'en of meer constraintnamen, met tussen haakjes hun respectievelijke argumenttypes. Constraints zonder argument vereisen nog steeds \code{()} erachter, net zoals C een lege argumentenlijst vereist voor functies zonder argumenten (dit verschilt van JCHR).
 
-Het is ook mogelijk om enkele opties aan te geven over constraints. Deze worden genoteerd door achter de argumenten van een constraint ``\code{option(}$optienaam$\code{,}$args$\ldots\code{)}'' te zetten (meerdere options mogelijk). Een lijstje van de
+Het is ook mogelijk om enkele opties aan te geven over constraints. Deze worden genoteerd door achter de argumenten van een constraint een ``\code{option(}$optienaam$\code{,}$args$\ldots\code{)}'' te zetten (meerdere opties mogelijk). Een lijstje van de
 toegelaten opties: \begin{itemize}
   \item \code{fmt}: een standaard C printf formatstring, voor gebruik in debug mode (zie sectie~\ref{sec:debug}), om constraint suspensions te kunnen tonen. Na deze formatstring volgen de argumenten dat de formatstring zelf nodig heeft, waarbij naar de argumenten van de uit te printen constraints verwezen kan worden met \code{\$1}, \code{\$2}, \ldots.
   \item \code{init}: Een stuk C code dat uitgevoerd wordt bij het aanmaken van een constraint suspension van dit type. het kan een functie, een macro of gewoon een stuk code zelf zijn.
@@ -83,8 +83,8 @@ Geldige namen voor constraints, functies, variabelen en andere C symbolen zijn l
 De syntax voor het noteren van CCHR regels is grotendeels gebaseerd op JCHR, waarvan de syntax sterk aanleunt bij de
 originele CHR syntax. Ze bestaat uit \begin{enumerate}
   \item Een (optionele) benaming voor de regel, gevolgd door een \code{@}-symbool.
-  \item Een of meerdere head-constraints, met argumenten (CHR variabelen of C expressies, zie verder), gescheiden door komma's.
-  \item Eventueel een backslash (\code{$\backslash$}) gevolgd door nog \'e\'en of meer head-constraints (removed constraints, in geval van simpagation regel)
+  \item Een of meerdere headconstraints, met argumenten (CHR variabelen of C expressies, zie verder), gescheiden door komma's.
+  \item Eventueel een backslash (\code{$\backslash$}) gevolgd door nog \'e\'en of meer headconstraints (removed constraints, in geval van simpagation regel)
   \item Een regel-type aanduider (\code{==>} voor propagation of \code{<=>} voor simplification of simpagation).
   \item Eventueel een guard gevolgd door een vertikaal streepje (\code{|}).
   \item De body van de CHR regel.
@@ -98,9 +98,9 @@ Er zijn enkele verschillen met JCHR: \begin{itemize}
 
 \subsubsection{Head}
 
-De ``head'' constraints van een CHR regel (bestaande uit removed constraints en kept constraints) worden zoals vermeld genoteerd door met komma's gescheiden lijsten. Alle constraint-namen moeten in hetzelfde \code{cchr}-blok gedeclareerd zijn met het \code{constraint} sleutelwoord en hun aantal argumenten (de ariteit) moet overeenkomen. Het is toegelaten meerdere constraints met dezelfde naam maar verschillende ariteit te hebben. Als argument kan een CHR variabele of een expressie gebruikt worden. Door een nog niet eerder gebruikte variabelenaam te schrijven wordt dit een CHR variabele. Elke andere uitdrukking wordt als expressie beschouwd. In een expressie is het niet mogelijk om een CHR variabele te definieren.
+De ``head'' constraints van een CHR regel (bestaande uit removed constraints en kept constraints) worden zoals vermeld genoteerd door met komma's gescheiden lijsten. Alle constraintnamen moeten in hetzelfde \code{cchr}-blok gedeclareerd zijn met het \code{constraint} sleutelwoord en hun aantal argumenten (de ariteit) moet overeenkomen. Het is toegelaten meerdere constraints met dezelfde naam maar verschillende ariteit te hebben. Als argument kan een CHR variabele of een expressie gebruikt worden. Door een nog niet eerder gebruikte variabelenaam te schrijven wordt dit een CHR variabele. Elke andere uitdrukking wordt als expressie beschouwd. In een expressie is het niet mogelijk om een CHR variabele te definieren.
 
-Variabelen die met een underscore (\code{\_}) beginnen, worden als anoniem beschouwd. Dat wilt zeggen dat ze niet meer verder gebruikt zullen worden. Dit gedrag komt overeen met Prologss anonieme variabele (de underscore zelf), maar net zoals in JCHR en Prolog wordt toegestaan dat er nog andere letters volgen, wat leesbaarheid ten goede kan komen.
+Variabelen die met een underscore (\code{\_}) beginnen, worden als anoniem beschouwd. Dat wilt zeggen dat ze hun waarde genegeerd zal worden. Dit gedrag komt overeen met Prologs anonieme variabele (de underscore zelf), maar net zoals in JCHR en Prolog wordt toegestaan dat er nog andere letters volgen, wat leesbaarheid ten goede kan komen.
 
 \subsubsection{Guard en Body}
 
@@ -151,13 +151,13 @@ Het constant zijn van argumenten wilt echter niet zeggen dat constraints niet ge
 \caption{Minimum in Prolog CHR}
 \label{code:min-prologchr}
 \end{exCode}
-In codefragment~\ref{code:min-prologchr} zal het toevoegen van \code{min(A,B,C)} tot gevolg hebben dat R ge\"unificeerd wordt met de kleinste van A en B.
+In codefragment~\ref{code:min-prologchr} zal het toevoegen van \code{min(A,B,C)} tot gevolg hebben dat C ge\"unificeerd wordt met de kleinste van A en B.
 
 Dit implementeren in CCHR wordt bemoeilijkt door de afwezigheid van wijzigbare argumenten. Er zijn echter wel manieren om dit te vermijden.
 
 \subsection{Pointers}
 
-Een van de belangrijkste opzichten waarin C van recentere programmeertalen verschilt, is de mogelijkheid tot direct geheugenbeheer. Een C-programmeur kan zijn programma eender wat laten doen met het deel virtueel geheugen dat het (kan) krijgen van het systeem. Aanspreken van geheugen is mogelijk door gebruik te maken van zogenaamde {\em pointers}. Dit zijn variabelen die het geheugenadres van een andere variabele kunnen bevatten. Of het gebruik ervan de begrijpbaarheid van de erin geschreven programmas ten goede komt, wordt hier in het midden gelaten, maar het blijft een taalconstructie die voor veel mogelijkheden zorgt.
+Een van de belangrijkste opzichten waarin C van recentere programmeertalen verschilt, is de mogelijkheid tot direct geheugenbeheer. Een C-programmeur kan zijn programma eender wat laten doen met het deel virtueel geheugen dat het (kan) krijgen van het systeem. Aanspreken van geheugen is mogelijk door gebruik te maken van zogenaamde {\em pointers}. Dit zijn variabelen die het geheugenadres van een andere variabele kunnen bevatten. Of het gebruik ervan de begrijpbaarheid van de erin geschreven programma's ten goede komt, wordt hier in het midden gelaten, maar het blijft een taalconstructie die voor veel mogelijkheden zorgt.
 
 Pointers zijn \'e\'en mogelijkheid om een constraint argument met vaste waarde toch van ``betekenis'' te doen veranderen. codefragment~\ref{code:min-cchr} geeft aan hoe het \code{min} programma in CCHR ge\"implementeerd zou kunnen worden met behulp van pointers.
 \begin{exCode}

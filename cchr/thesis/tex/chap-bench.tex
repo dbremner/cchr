@@ -13,7 +13,7 @@ In dit hoofdstuk worden enkele voorbeelden bekeken en vergeleken hoe goed ze pre
 
 Alle benchmarks zijn uitgevoerd op hetzelfde systeem, met zo min mogelijk andere taken op het zelfde moment lopende. Het gaat om een AMD Athlon64 3500+ processor met 1GiB PC3200 DDR geheugen, waarvan gebruikte software-omgeving vermeld is in bijlage~\ref{chap:progs}.
 
-Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, benchmark en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden en werd uiteindelijk de totale gebruikte CPU tijd gemeten (dus niet de kloktijd maar het aantal seconden effectieve CPU belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten tijd over alle verschillende probleemgroottes. Dit verminderen was nodig zodat de constante tijd (inladen uitvoerbaar bestand, compileren van CHR naar Prolog, opstarten Java JVM en JIT compilatie) niet in rekening gebracht werd bij de tests. Hierdoor zijn de grafieken voor de systemen met hoge opstarttijd (JCHR en Prolog) minder nauwkeurig, aangezien veel tijd verloren ging aan het telkens opnieuw uitvoeren vanDe uiteindelijke resultaten werden met behulp van GnuPlot uitgezet op grafieken.
+Voor het uitvoeren van de benchmarks zorgde een script ervoor dat voor elk meetpunt (een combinatie van platform, benchmark en probleemgrootte) tenminste 30 seconden lang benchmarks gedraaid werden en werd uiteindelijk de totale gebruikte CPU tijd gemeten (dus niet de kloktijd maar het aantal seconden effectieve CPU belasting), gedeeld door het aantal keer dat de benchmark in kwestie uitgevoerd werd. Dit resultaat werd uiteindelijk verminderd met de kortst opgemeten gemiddelde tijd over alle verschillende probleemgroottes. Dit verminderen was nodig zodat de constante tijd (inladen uitvoerbaar bestand, compileren van CHR naar Prolog, opstarten Java JVM en JIT compilatie) niet in rekening gebracht werd bij de tests. Hierdoor zijn de grafieken voor de systemen met hoge opstarttijd (JCHR en Prolog) minder nauwkeurig, aangezien veel tijd verloren ging aan het telkens opnieuw uitvoeren vanDe uiteindelijke resultaten werden met behulp van GnuPlot uitgezet op grafieken.
 
 \section{Grootste gemene deler} \label{sec:bench-gcd}
 
@@ -30,7 +30,7 @@ CCHR {
 \caption{\label{code:gcd} Grootste gemene deler in CCHR}
 \end{exCode}
 \benchfig{gcd}{Grootste gemene deler benchmark}
-De benchmark resultaten vindt u in figuur~\ref{fig:bench-gcd}. Op de grafiek is te zien hoe de CCHR versie slechts een factor drie ongeveer trager is dan de pure C implementatie. Het verschil met de SWI-Prolog versie is heel groot, meer dan een factor 1000. Dit is vooral te wijten aan de extreem snelle lussen die in C mogelijk zijn in vergelijking met Prolog. De eigenlijke uitvoering van het algoritme komt immers neer op een variabele die van een groot getal aftelt tot nul. Merk op dat hier de ineffici\"ente versie van het algoritme gebruikt wordt, gebruik makende van een aftrekking in plaats van een modulus-bewerking wordt. Dit om de uitvoeringstijd van het algoritme meetbaar te houden. De berekende waardes zijn $gcd(5,1000 X)$, met $X$ de ``problem size''. Deze test in JCHR uitvoeren zorgde dat Java zeer snel een stack overflow gaf.
+De benchmark resultaten vindt u in figuur~\ref{fig:bench-gcd}. Op de grafiek is te zien hoe de CCHR versie slechts een factor drie ongeveer trager is dan de pure C implementatie. Het verschil met de SWI-Prolog versie is heel groot, meer dan een factor 1000. Dit is vooral te wijten aan de extreem snelle lussen die in C mogelijk zijn in vergelijking met Prolog. De eigenlijke uitvoering van het algoritme komt immers neer op een variabele die van een groot getal aftelt tot nul. Merk op dat hier de ineffici\"ente versie van het algoritme gebruikt wordt, gebruik makende van een aftrekking in plaats van een modulus-bewerking wordt. Dit om de uitvoeringstijd van het algoritme meetbaar te houden. De berekende waardes zijn $gcd(5,1000 X)$, met $X$ de ``problem size''. Deze test in JCHR uitvoeren zorgde dat Java zeer snel een stack overflow gaf, en is daarom niet mee gebeurd hier.
 
 \section{Fibonacci getallen} \label{sec:bench-fib}
 
@@ -61,6 +61,7 @@ cchr {
 \caption{\label{code:fibgmp} Fibonacci met GMP in CCHR --- fib-gmp.cchr}
 \end{exCode}
 \benchfig{fib}{Fibonacci benchmark}
+
 In elke taal is gebruik gemaakt van een bibliotheek om met grote getallen (willekeurige lengte) te kunnen werken. In C, CCHR en SWI-Prolog is dat GMP ({\em GNU Multiprecision Library}). De Java versie gebruikt de java.math.BigInteger klasse. De resultaten kan u zien in figuur~\ref{fig:bench-fib}. De uitvoeringstijd van de CCHR versie lijkt korter en korter bij de uitvoeringstijd van de C versie te komen. Dit kan te verklaren zijn door dat een groot deel van het rekenwerk door GMP gebeurt en naarmate de getallen groter worden, meer en meer. Er blijft wel een duidelijk snelheidsverschil met JCHR en zeker SWI-Prolog.
 
 \section{Priemgetallen} \label{sec:bench-primes}
@@ -78,9 +79,10 @@ cchr {
 \caption{\label{code:primes} Priemgetallen in CCHR}
 \end{exCode}
 \benchfig{primes}{Primes benchmark}
+
 De resultaten zijn te vinden in figuur~\ref{fig:bench-primes}. De ``problem size'' komt overeen met het getal tot waar alle priemgetallen gevraagd zijn. Voor de C versie van het algoritme wordt een array bijgehouden van alle reeds gevonden priemgetallen en daar \'e\'en voor \'e\'en opeenvolgende getallen aan toegevoegd, op voorwaarde dat er geen deelbaarheid is met \'e\'en van de vorige getallen. Het toenemende tijdsverschil tussen de CCHR en C versie is te verklaren door de kleine toename in rekentijd die optreedt bij groter wordende constraint store en indexen, waar de C versie geen last van heeft.
 
-Er bestaan trouwens veel betere algoritmes om dit te implementeren die nauwelijks moeilijker te implementeren zijn. Bijvoorbeeld slechts proberen te delen door priemgetallen tot en met $\sqrt{N}$ zorgt reeds voor hogere snelheid. Om gemakkelijker te kunnen vergelijken is in alle talen hier de tragere variant getest.
+Er bestaan trouwens veel betere algoritmes hiervoor die nauwelijks moeilijker te implementeren zijn. Bijvoorbeeld slechts proberen te delen door priemgetallen tot en met $\sqrt{N}$ zorgt reeds voor hogere snelheid. Om gemakkelijker te kunnen vergelijken is in alle talen hier de tragere variant getest.
 
 \section{Takeuchi functie} \label{sec:bench-tak}
 
@@ -125,7 +127,7 @@ transitivity @ leq(X,Y), leq(Y,Z) ==> leq(X,Z).
 \end{Verbatim}
 \caption{\label{code:leq} LEQ in Prolog CHR}
 \end{exCode}
-Na enkele pogingen een snelle C versie van dit algoritme te schrijven, is besloten de CCHR compiler output letterlijk naar C te vertalen, maar met gebruik van geschiktere datastructuren. In het bijzonder is hier in plaats van een constraint store slechts een matrix van $N$ op $N$ (met $N$ het aantal variabelen) gebruikt, waarvan elke cel aangeeft hoe vaak een constraint die een $\leq$ uitdrukt geactiveerd werd. Om gelijkheden te controleren worden dezelfde logische variabelen gebruikt als in CCHR. De code is eveneens te vinden in sectie~\ref{code:leq-c}.
+Na enkele pogingen om een snelle C versie van dit algoritme te schrijven, is besloten de CCHR compiler output letterlijk naar C te vertalen, maar met gebruik van geschiktere datastructuren. In het bijzonder is hier in plaats van een constraint store slechts een matrix van $N$ op $N$ (met $N$ het aantal variabelen) gebruikt, waarvan elke cel aangeeft hoe vaak een constraint die een $\leq$ uitdrukt geactiveerd werd. Om gelijkheden te controleren worden dezelfde logische variabelen gebruikt als in CCHR. De code is eveneens te vinden in sectie~\ref{code:leq-c}.
 \benchfig{leq}{LEQ benchmark}
 De resultaten zijn te vinden in figuur~\ref{fig:bench-leq}. Opvallend is de helling die bij CCHR hoger is dan bij C, veroorzaakt door de vele overbodige reactivaties. De JCHR en Prolog versie zijn wel trager, maar het is niet duidelijk of ze dezelfde sterkere helling vertonen.
 

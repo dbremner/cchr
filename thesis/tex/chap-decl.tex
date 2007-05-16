@@ -1,4 +1,5 @@
 \hyphenation{trash-ing}
+\hyphenation{consistentie-technieken}
 
 \chapter{Declaratief Programmeren} \label{chap:decl}
 
@@ -27,7 +28,7 @@ Bij het zoeken naar oplossingen voor CSP, kan het zijn dat men ge\"interesseerd 
 \subsection{Systematisch zoeken}
 
 De eenvoudigste manier om een CSP op te lossen is simpelweg mogelijkheden af te lopen en te controleren of aan de beperkingen voldaan is. Deze methode heet ``Generate and Test''. Indien er een conflict gevonden wordt (een constraint waar niet aan voldaan is), wordt een nieuwe waardetoewijzing gezocht.
-Het is een heel simpele methode die zekerheid biedt \'e\'en of zelfs alle oplossingen te vinden, maar is heel ineffici\"ent. Het is mogelijk deze techniek te versnellen, door het genereren intelligenter te maken en zo minder conflicterende mogelijkheden te genereren. Een andere mogelijkheid is de variabelen niet allen tegelijk, maar \'e\'en voor \'e\'en een waardetoewijzing geven en zodra alle variabelen betrokken in een bepaalde constraint een waarde toegewezen hebben, de geldigheid van deze constraint nagaan. Indien dan een conflict optreedt, wordt naar de laatste variabele waar nog niet alle mogelijkheden voor geprobeerd waren teruggekeerd en daarvoor de volgende mogelijkheid gekozen. Deze techniek, die ``backtracking'' genoemd wordt, is duidelijk beter dan pure Generate and Test, want er worden hele deelverzamelingen oplossingen reeds op voorhand uitgesloten. Backtracking is echter zelden de meest effici\"ente methode, maar ze is eenvoudig te implementeren.
+Het is een heel simpele methode die zekerheid biedt \'e\'en of zelfs alle oplossingen te vinden, maar is heel ineffici\"ent. Het is mogelijk deze techniek te versnellen, door het genereren intelligenter te maken en zo minder conflicterende mogelijkheden te genereren. Een andere mogelijkheid is de variabelen niet allen tegelijk, maar \'e\'en voor \'e\'en een waardetoewijzing geven en zodra alle variabelen betrokken in een bepaalde constraint een waarde toegewezen hebben, de geldigheid van deze constraint nagaan. Indien dan een conflict optreedt, wordt naar de laatste variabele waar nog niet alle mogelijkheden voor geprobeerd waren teruggekeerd en daarvoor de volgende mogelijkheid gekozen. Deze techniek, die ``backtracking'' genoemd wordt, is duidelijk beter dan pure Generate and Test, want er worden hele deelverzamelingen mogelijkheden reeds op voorhand uitgesloten. Backtracking is echter zelden de meest effici\"ente methode, maar ze is eenvoudig te implementeren.
 
 \subsection{Consistentietechnieken}
 
@@ -41,13 +42,13 @@ Systematisch zoeken is in staat altijd een oplossing te vinden, maar kan daar ze
 
 Consistentietechnieken daarentegen beperken de zoekruimte snel, maar komen zeker niet altijd tot de oplossing. Daarom worden ze zoals gezegd meestal samen gebruikt. Er zijn hierbij 2 basistechnieken, Look Back en Look Ahead schema's.
 
-Bij Look Back worden consistentietechnieken gebruikt tijdens het itereren om zo conflicten tussen de variabelen die reeds een waarde toegewezen kregen te ontdekken. Backtracking is de eenvoudigste techniek hiervoor, die gewoon probeert inconsistenties te ontdekken en zo ja, voortgaat met de volgende waarde voor de laatste variabele. Backjumping verbetert deze techniek nog, door te analyseren welke variabele het conflict veroorzaakt en wanneer geen mogelijkheden overblijven terug te springen naar de conflicterende variabele in plaats van de laatste variabele. Er zijn nog enkele andere verbeteringen, zoals backchecking en backmarking, die gebaseerd zijn op het onthouden van conflicterende waardes, zodat ze niet opnieuw gecontroleerd moeten worden.
+Bij Look Back worden consistentietechnieken gebruikt tijdens het itereren om zo conflicten tussen de variabelen die reeds een waarde toegewezen kregen te ontdekken. Backtracking is de eenvoudigste techniek hiervoor, die gewoon probeert inconsistenties te ontdekken en zo ja, voortgaat met de volgende waarde voor de laatste variabele. Backjumping verbetert deze techniek nog, door te analyseren welke variabele het conflict veroorzaakt en wanneer geen mogelijkheden overblijven, terug te springen naar de conflicterende variabele in plaats van de laatste variabele. Er zijn nog enkele andere verbeteringen, zoals backchecking en backmarking, die gebaseerd zijn op het onthouden van conflicterende waardes, zodat ze niet opnieuw gecontroleerd moeten worden.
 
-Alle methodes ontdekken echter nog steeds pas een conflict nadat het optreedt. Daarom gaat men in Look Ahead schemas consistentietechnieken gaan toepassen op combinaties van variabelen die reeds wel en variabelen die nog geen waarde toegekend kregen, om zo toekomstige mogelijkheden te gaan uitsluiten, nog voor ze optreden. Hier zijn verschillende varianten van, die meestal AC technieken gebruiken. Meer informatie kan gevonden worden in de literatuur, bv. \cite{bartak01} en \cite{bartak99constraint}.
+Alle methodes ontdekken echter nog steeds pas een conflict nadat het optreedt. Daarom gaat men in Look Ahead schemas consistentietechnieken gaan toepassen op combinaties van variabelen die reeds wel en variabelen die nog geen waarde toegekend kregen, om zo toekomstige mogelijkheden te gaan uitsluiten, nog voor ze optreden. Hier zijn verschillende varianten van, die meestal AC technieken gebruiken. Meer informatie kan gevonden worden in de literatuur, zie \cite{bartak01} en \cite{bartak99constraint}.
 
 \section{Logic Programming}
 
-De volgende vorm van declaratief programmeren waar even op ingegaan wordt heet Logic Programming of logisch programmeren. Deze techniek is gebaseerd op de wiskundige theorie van predikatenlogica. Een uitgebreide uitleg kan gevonden worden in \cite{introlp}.
+De volgende vorm van declaratief programmeren waar even op ingegaan wordt heet Logic Programming of logisch programmeren. Deze techniek is gebaseerd op de wiskundige theorie van eerste-orde predikatenlogica. Een uitgebreide uitleg kan gevonden worden in \cite{introlp}.
 
 \subsection{Predikatenlogica}
 
@@ -59,7 +60,7 @@ Predikatenlogica breidt deze theorie uit door proposities afhankelijk te maken v
 
 In een logisch programma kunnen {\em variabelen}, {\em functie}- en {\em predikaat}symbolen voorkomen. Een variabele is een symbool dat conventioneel met een hoofdletter begint. functie- en predikaatsymbolen zullen conventioneel beginnen met een kleine letter of volledig uit speciale tekens bestaan. Functies en predikaten kunnen een vast aantal argumenten krijgen. Indien naar de functie of het predikaat zelf verwezen wordt, noemen we dat een {\em functor} met een bepaalde {\em ariteit} (het aantal argumenten). Dit wordt als \code{\argu{functor}/\argu{ariteit}} genoteerd. Een {\em term} is een variabele of een functie met argumenten, waarbij elk argument opnieuw een term is. Een {\em atom} is een predikaat met termen als argumenten. Een functie (of atoom) zonder argumenten wordt een constante genoemd.
 
-Logical Programming is gebaseerd op eerste-orde predikaatlogica. Er wordt wel uitgegaan van een vereenvoudigde vorm. Zo zal een programma bestaan uit ``sentences''. Een sentence kan een head en een body hebben, die beiden eventueel leeg kunnen zijn. 
+Logical Programming is gebaseerd op eerste-orde predikatenlogica. Er wordt wel uitgegaan van een vereenvoudigde vorm. Zo zal een programma bestaan uit ``sentences''. Een sentence kan een head en een body hebben, die beiden eventueel leeg kunnen zijn. 
 Een sentence met een niet-lege head wordt een clause genoemd en definieert wanneer een bepaald predikaat waar is. Een clause zonder body stelt dat zijn head zonder meer waar is. Bijvoorbeeld: \begin{Verbatim}
   vader(jan,piet).
   vader(piet,an).
@@ -72,7 +73,7 @@ Deze clause stelt dat X de grootvader is van Y, op voorwaarde dat er een Z besta
 \end{Verbatim}
 Beide vorige clauses samen stellen dan dat X de grootvader is van Y, indien X de vader is van een Z die ofwel vader ofwel moeder is van Y. Belangrijk is dat uitgegaan wordt van de ``closed world assumption'', met andere woorden dat er geen objecten bestaan buiten degene waar in het programma naar verwezen wordt. Zonder deze aanname zou het waar zijn van \code{grootvader(X,Y)} onbeslisbaar kunnen zijn. Er zou namelijk een niet-vernoemde Z kunnen bestaan die zoon is van X en vader van Y.
 
-Een LP programma bestaat nu uit een opsomming van dergelijke clauses en men kan dan interactief vragen (of ``queries'') stellen aan het programma. Dat zijn sentences waarbij enkel een head en geen body is. Die dienen dan gelezen te worden als ``zoek of \ldots waar is''. Zo zou men kunnen vragen: \begin{Verbatim}
+Een LP programma bestaat nu uit een opsomming van dergelijke clauses en men kan dan interactief vragen (of ``queries'') stellen aan het programma. Dat zijn sentences waarbij enkel een head en geen body is, ook {\em goal}s genaamd. Die dienen dan gelezen te worden als ``zoek of \ldots waar is''. Zo zou men kunnen vragen: \begin{Verbatim}
   ?- grootvader(X,an).
 \end{Verbatim}
 waarop het programma zou antwoorden met ``X = jan.''. De gebruikte clauses worden ook {\em Horn clauses} genoemd en de logica die gebruikt wordt aldus {\em Horn clause logica}.
@@ -80,10 +81,10 @@ waarop het programma zou antwoorden met ``X = jan.''. De gebruikte clauses worde
 \subsection{Unificatie}
 Bij het zoeken naar clauses die van toepassing zijn op een bepaalde uitdrukking, wordt gebruik gemaakt van zogenaamde unificatie. Een unifier van twee uitdrukkingen A en B is een substitutie die variabelen die in A en B voorkomen afbeeldt op andere termen, zodanig dat na substitutie beide uitdrukkingen aan elkaar gelijk zijn. Een unifier van \code{test(X,1)} en \code{test(2,Y)} zou bijvoorbeeld \code{X=1, Y=2.} kunnen zijn. Er kan aangetoond dat indien er een unifier bestaat voor twee uitdrukkingen, er ook een {\em most general unifier} (mgu) bestaat. Dit is een unifier waarvoor geldt dat elke andere unifier gezien kan worden als een combinatie van de mgu met een andere substitutie. Er bestaat een effici\"ent algoritme dat kan zoeken of twee uitdrukkingen ge\"unificeerd kunnen worden en zo ja de mgu ervoor teruggeeft. Nu wordt een atoom ``waar'' indien het ge\"unificeerd (door middel van een mgu $\tau$) kan worden met de head van een clause, zodanig dat elk van de atoms in de body na toepassing van $\tau$ waar is.
 
-Dit krachtig principe van unificatie kan voor meer gebruikt worden dan enkel het zoeken van clauses die van toepassing zijn. Een logische variabele mag ongebonden zijn. dit wil zeggen, niet geassocieerd met een waarde. We kunnen dan in de body van een clause een expliciete unificatie stellen van 2 termen, met behulp van het gelijkheidsteken (\code{=}). Bijvoorbeeld: \begin{Verbatim}
+Dit krachtig principe van unificatie kan voor meer gebruikt worden dan enkel het zoeken van clauses die van toepassing zijn. Een logische variabele mag ongebonden zijn. Dit wil zeggen, niet geassocieerd met een waarde. We kunnen dan in de body van een clause een expliciete unificatie stellen van 2 termen, met behulp van het gelijkheidsteken (\code{=}). Bijvoorbeeld: \begin{Verbatim}
   foo(X,Y) :- X=bar(Y).
 \end{Verbatim}
-Een query \code{foo(A,B).} zou dan als resultaat ``A = bar(B)'' opleveren. Er is dus een unificatie gebeurd van die A op bar(B) afbeeldt, zonder dat A of B een echte waarde kregen.
+Een query \code{foo(A,B).} zou dan als resultaat ``A = bar(B)'' opleveren. Er is dus een unificatie gebeurd die A op bar(B) afbeeldt, zonder dat A of B een echte waarde kregen.
 
 \subsection{Prolog}
 De programmeertaal Prolog is een logische programmeertaal die de voorgaande syntax gebruikt en nog enkele andere dingen eraan toevoegt. Zo wordt de operationele semantiek ook vastgelegd en niet enkel de betekenis van het programma (de logische semantiek). Voor de uitvoering wordt gebruik gemaakt SLD resolutie (Selected-literal Linear resolution for Definite Clauses). Definite Clauses zijn een andere naam voor Horn clauses. Als gezocht wordt welke unifier een gevraagde query waar maakt, worden alle atoms in de body \'e\'en voor \'e\'en geprobeerd. Hierbij worden alle clauses die het betrokken predikaat als head hebben in de volgorde van het programma afgelopen en geprobeerd te unificeren met het gevraagde atoom. Wanneer een unificatie faalt, wordt voortgegaan met de volgende clause die het betrokken predikaat als head heeft. Indien er geen clauses meer overblijven, wordt het eerder beschreven principe van backtracking gebruikt om de toestand van het zoeken te herstellen naar waar de vorige clause gekozen werd, enzovoort.

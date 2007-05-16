@@ -12,7 +12,7 @@ De compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot 
 
 \Quote{If the programmer can simulate a construct faster then the compiler can implement the construct itself, then the compiler writer has blown it badly.}{Guy L. Steele Jr., Tartan Laboratories}
 
-De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: de CHR broncode wordt naar de host-taal zelf vertaald, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke host-taal. De precieze implementatie verschilt wel: \begin{itemize}
+De compiler is het belangrijkste deel van het CCHR systeem. Het algemene concept is sterk gebaseerd op JCHR: de CHR broncode wordt naar de hosttaal zelf vertaald, die dan door de bestaande compilers voor die taal verder gecompileerd kan worden tot een echt uitvoerbaar programma. De compiler zelf begint met een parser en lexer om de taalstructuur van de CHR broncode te achterhalen, gevolgd door een omzetting naar een tussenvorm waarop enkele analyses gebeuren en eindigt met een {\em template}-gebaseerde vertaling naar de uiteindelijke hosttaal. De precieze implementatie verschilt wel: \begin{itemize}
   \item De CCHR compiler vertaalt naar C en niet naar Java.
   \item De CCHR compiler is zelf ook in C geschreven. De JCHR compiler was zelf in Java gemaakt.
   \item De gebruikte lexer en parser zijn gegenereerd met {\em Flex} en {\em Bison}, in plaats van {\em ANTLR}.

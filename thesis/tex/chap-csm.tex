@@ -29,11 +29,11 @@ In dit hoofdstuk wordt een overzicht gegeven van alle macro's die gedefinieerd z
 \code{CSM\_DEADSELF} & {\em code} & Voer {\em code} enkel uit als de actieve constraint ``dood'' is (niet in constraint store of reeds gereactiveerd).\\
 \code{CSM\_DEAD} & {\em var}, {\em code} & Voer {\em code} enkel uit als de niet-actieve constraint {\em var} ``dood'' is (niet in constraint store).\\
 \code{CSM\_DECLOCAL} & {\em type}, {\em naam} & Definieer een (wijzigbare) lokale variabele \\
-\code{CSM\_DEFLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (wijzigbare) lokale variabele \\
+\code{CSM\_DEFLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initialiseer een (wijzigbare) lokale variabele \\
 \code{CSM\_DESTRUCT} & {\em constr}, {\em args\ldots} & Roep de destructor aan voor constraint type {\em constr}, met argumenten {\em args\ldots}. \\
 \code{CSM\_END} & & Be\"eindig afhandeling actieve constraint \\
 \code{CSM\_HISTADD} & {\em regel}, {\em susps\ldots} & Voeg {\em susps\ldots} toe aan propagation geschiedenis voor regel {\em regel}, zodat \code{CSM\_HISTCHECK} vanaf nu deze combinatie niet meer toelaat. \\
-\code{CSM\_IMMLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initializeer een (onwijzigbare) lokale variabele \\
+\code{CSM\_IMMLOCAL} & {\em type}, {\em naam}, {\em waarde} & Definieer en initialiseer een (onwijzigbare) lokale variabele \\
 \code{CSM\_KILL} & {\em var}, {\em constr} & Verwijder de niet-actieve constraint {\em var} (van type {\em constr}) uit de constraint store. Na deze aanroep mag {\em var} niet meer gebruikt worden, deze zou naar een onbestaande of zelfs andere constraint suspension kunnen verwijzen.\\
 \code{CSM\_KILLSELF} & {\em constr} & Verwijder de actieve constraint (van type {\em constr}) uit constraint store. \\
 \code{CSM\_LARG} & {\em constr}, {\em var}, {\em naam} & Argument {\em naam} van niet-actieve constraint {\em var} (type {\em constr}) opvragen. \\

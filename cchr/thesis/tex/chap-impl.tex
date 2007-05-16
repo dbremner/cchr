@@ -4,7 +4,7 @@ In dit hoofdstuk wordt ingegaan op het ontwerp en de implementatie van het CCHR 
 
 \section{Algemeen} \label{sec:impl}
 
-Zoals reeds aangehaald bestaat de implementatie van een CHR systeem normaal uit twee delen: de {\em compiler} en de {\em runtime}. De compiler zorgt voor een vertaling van de CHR-syntax naar code die uitvoerbaar is op het host-platform en de runtime bevat alles wat noodzakelijk is om de vertaalde code te kunnen uitvoeren (algemene routines, onderhouden van de constraint store, \ldots).
+Zoals reeds aangehaald bestaat de implementatie van een CHR systeem normaal uit twee delen: de {\em compiler} en de {\em runtime}. De compiler zorgt voor een vertaling van de CHR-syntax naar code die uitvoerbaar is op het hostplatform en de runtime bevat alles wat noodzakelijk is om de vertaalde code te kunnen uitvoeren (algemene routines, onderhouden van de constraint store, \ldots).
 
 De compiler is zelf in C geschreven en vertaalt CCHR code in enkele stappen tot normale C code, die dan verder door een standaard C compiler vertaald kan worden tot uitvoerbare code: machinetaal voor een specifiek platform. Bij C is het gebruikelijk dat er een volledige compilatie tot machinetaal gebeurt, in plaats van slechts een omzetting tot bytecode zoals in Java. Hierdoor duurt compileren langer en is de uitvoer van de C compiler slechts op \'e\'en platform bruikbaar. Het voordeel is echter dat veel specifiekere machine-optimalisaties mogelijk zijn, waar ook CCHR voordeel uit haalt.
 
@@ -64,23 +64,23 @@ Het resultaat hiervan is dus een AST, die echter helemaal niet geschikt is om er
 
 Na deze stap wordt de AST omgezet naar een nieuwe datastructuur, waarbij constraints, variabelen, regels, \ldots als specifieke structuren in plaats van als tekenreeksen beschreven worden. 
 
-De reden om de parser niet onmiddellijk via semantische acties deze tussenvorm te laten genereren is meer vrijheid in de taal te kunnen toelaten. Zo is het nu bijvoorbeeld mogelijk om een constraint pas te defini\"eren nadat die in een CHR regel gebruikt is, of een CCHR variabele pas als argument in een head gebruiken nadat deze variabele al in een expressie is voorgekomen.
+De reden om de parser niet onmiddellijk via semantische acties deze tussenvorm te laten genereren is meer vrijheid in de taal te kunnen toelaten. Zo is het nu bijvoorbeeld mogelijk om een constraint pas te defini\"eren nadat die in een CHR regel gebruikt is, of een CHR variabele pas als argument in een head gebruiken nadat deze variabele al in een expressie is voorgekomen.
 
 Tijdens de omzetting van AST naar deze tussenvorm worden volgende transformaties doorgevoerd: \begin{itemize}
 \item Alle verwijzingen naar constraints, variabelen, opties, \ldots worden herkend.
 \item Alle regels worden omgezet naar HNF (Head Normal Form), waarbij alle expressies als parameters van constraints in de head die geen unieke variabelen zijn door een nieuwe variabele plus een extra guard vervangen worden.
-\item CHR Macro's worden vervangen door hun definitie (zie sectie~\ref{sec:rules}).
+\item CHR macro's worden vervangen door hun definitie (zie sectie~\ref{sec:rules}).
 \item Constraint occurrences worden bepaald (in welke regels en op welke plaats daarin elke constraint voorkomt).
 \item Variabele occurrences worden bepaald (in welke constraint occurrence en op welke plaats daarin elke variabele voorkomt).
 \item Afhankelijkheden tussen variabelen en statements worden bepaald.
 \item Met deze afhankelijkheden wordt voor elke constraint occurrence een goede ``join ordering'' bepaald (zie sectie~\ref{sec:joinorder}).
 \end{itemize}
 
-\subsection{Code generatie} \label{sec:codegen}
+\subsection{Codegeneratie} \label{sec:codegen}
 
 In de laatste fase van het vertalingsproces wordt de tussenvorm omgezet naar C code. Bij JCHR wordt van de template engine FreeMarker gebruik gemaakt. Het voordeel van templates te gebruiken is duidelijk: de code die door de compiler zelf gegenereerd moet worden is algemener en beschrijft het proces op hoger niveau. Implementatie details zoals datastructuren kunnen dan onafhankelijk van de compiler uitgewerkt worden, wat het geheel flexibeler maakt en de kans op fouten beperkt.
 
-In C bestaat echter reeds een gestandaardiseerd macrosysteem. Er is dan ook voor gekozen om deze C macro's te gebruiken in plaats van een aparte template engine. Het programma dat de macro-vertalingen doet, de C voorverwerker (of {\em preprocessor), is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
+In C bestaat echter reeds een gestandaardiseerd macrosysteem. Er is dan ook voor gekozen om deze C macro's te gebruiken in plaats van een aparte template engine. Het programma dat de macro-vertalingen doet, de C voorverwerker (of {\em preprocessor}), is standaard deel van het compilatieschema van C, waardoor het overbodig is om in de CCHR compiler deze vertaling te doen.
 
 Het resultaat is dat het volledige template-vertaalproces verschoven wordt van de CCHR compiler naar het C compilatieschema en de uitvoer van de CCHR compiler wordt een sequentie van C macro's in plaats van echte C code.
 
@@ -429,7 +429,7 @@ Alle code, zowel de compiler als de gegenereerde code, is C code of iets dat ern
 
 \Quote{It's no use carrying an umbrella if your shoes are leaking.}{Irish proverb}
 
-In beide gevallen wordt vaak gebruik gemaakt van het dynamisch geheugen dat deze taal aanbiedt, met behulp van de systeemfuncties \code{malloc()}, \code{free()} en \code{realloc()}. Het probleem met gebruik hiervan is dat de programmeur volledig zelf verantwoordelijk wordt voor het geheugenbeheer. Er moet voor gezorgd worden dat elke byte gealloceerd geheugen ook effectief vrijgegeven wordt en dat er nooit naar niet-gealloceerd of reeds-vrijgegeven geheugen verwezen wordt. Om deze fouten te kunnen opsporen is gebruik gemaakt van de geheugendebuggers {\em valgrind} en {\em Electric Fence} en met de  {\em boundschecking} patch voor GCC. Zowel de compiler zelf als de gegenereerde code zijn vaak met deze tools gecontroleerd en in de uiteindelijke versie zijn dan ook geen ``geheugenlekken'' of gebruik van niet-gealloceerd geheugen meer gevonden.
+In beide gevallen wordt vaak gebruik gemaakt van het dynamisch geheugen dat deze taal aanbiedt, met behulp van de systeemfuncties \code{malloc()}, \code{free()} en \code{realloc()}. Het probleem met gebruik hiervan is dat de programmeur volledig zelf verantwoordelijk wordt voor het geheugenbeheer. Er moet voor gezorgd worden dat elke byte gealloceerd geheugen ook effectief vrijgegeven wordt en dat er nooit naar niet-gealloceerd of reeds-vrijgegeven geheugen verwezen wordt. Om deze fouten te kunnen opsporen is gebruik gemaakt van de geheugendebuggers {\em valgrind} en {\em Electric Fence} en van de {\em boundschecking} patch voor GCC. Zowel de compiler zelf als de gegenereerde code zijn vaak met deze tools gecontroleerd en in de uiteindelijke versie zijn dan ook geen ``geheugenlekken'' of gebruik van niet-gealloceerd geheugen meer gevonden.
 
 Uiteraard blijft de gebruiker van de CCHR compiler wel verantwoordelijk om zelf geen geheugenlekken te veroorzaken, bv. door C code die in de body van een CHR regel staat. Het is eventueel mogelijk om van niet-standaard geheugenbeheer bibliotheken gebruik te maken, zoals de Boehm collector (\cite{boehmgc}) gebruikt in libgc (\cite{libgc}), die de programmeur de verantwoordelijkheid alle zelf gealloceerd geheugen vrij te geven ontnemen.
 

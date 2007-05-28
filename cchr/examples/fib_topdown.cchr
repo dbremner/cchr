@@ -4,36 +4,33 @@
 #include <stdint.h>
 
 #include "logical.h"
+#include "fib_topdown_cchr.h"
+
+#define log_int_cb_created(val)
+#define log_int_cb_merged(val1,val2)
+#define log_int_cb_destrval(val)
+#define log_int_cb_destrtag(tag)
+#define log_int_cb_changed(val)
 
 /* define a log_int_t to be a logical int64_t, with no destructor */
-logical_code(int32_t,log_int_t,logical_nodestr)
+logical_header(int,int,log_int_t)
 
 /* the cchr block */
 cchr {
-  /* some macro's (overloaded!) to simplify usage of logical variables */
-  macro set(log_int_t,log_int_t) log_int_t_seteq($1,$2);
-  macro set(log_int_t,_) log_int_t_setval($1,$2);
-  macro set(log_int_t) log_int_t_hasval($1);
-  macro get(log_int_t) log_int_t_getval($1);
-  macro copy(log_int_t) log_int_t_copy($1);
-  macro new(log_int_t) log_int_t_create();
-  macro del(log_int_t) log_int_t_destruct($1);
-  macro cb(log_int_t,_,_) log_int_t_setcb($1,$2,$3);
+  constraint fib(int,log_int_t)
+          option(destr,{log_int_t_destruct($2);})
+	  option(init,{log_int_t_copy($2);});
 
-  /* declare the constraint fib(A,B), with a destructor and a debug-output-format */
-  constraint fib(int,log_int_t) destr({del($2);}) init({copy($2);}) fmt("fib(%i,%p)");
-
-  /* the 4 chr rules */
-  dup @ fib(N,M1) \ fib(N,M2) <=> { set(M1,M2); };
-  f0 @ fib(0,M) ==> { set(M,1); };
-  f1 @ fib(1,M) ==> { set(M,1); };
-  fn @ fib(N,M) ==> N>1 | 
-    log_int_t M1=new(M1), log_int_t M2=new(M2), /* create 2 logical variables */
-    // {cb(M1,cchr_reactivate_all,NULL); cb(M2,cchr_reactivate_all,NULL);}, /* initialize reactivation callbacks */
-    fib(N-2,M1), fib(N-1,M2), /* add two constraints (to solve lower-valued fib's) */
-    { set(M,get(M1)+get(M2)); },
-    { del(M1); del(M2); }; /* destroy M1 and M2 */
+  dup @ fib(N,M1) \ fib(N,M2) <=> { log_int_t_seteq(M1,M2); };
+  f01 @ fib(N,M) ==> N<2 | { log_int_t_setval(M,1); };
+  fn  @ fib(N,M) ==> N>1 | 
+    log_int_t M1=log_int_t_create(), log_int_t M2=log_int_t_create(),
+    fib(N-2,M1), fib(N-1,M2),
+    { log_int_t_setval(M,log_int_t_getval(M1)+log_int_t_getval(M2)); },
+    { log_int_t_destruct(M1); log_int_t_destruct(M2); };
 }
+
+logical_code(int,int,log_int_t,log_int_cb)
 
 int main(int argc, char **argv) {
   cchr_runtime_init();

@@ -15,9 +15,5 @@ december.pdf: december.dvi
 december.dvi: december.tex
 	latex december.tex && latex december.tex
 
-verdediging.dvi: verdediging.tex fig/*.eps fig/*.tex
-	latex verdediging.tex && latex verdediging.tex
-
-verdediging.pdf: verdediging.dvi
-	dvipdf verdediging.dvi
-
+verdediging.pdf: verdediging.tex fig/*.pdf
+	pdflatex verdediging.tex && pdflatex verdediging.tex

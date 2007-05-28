@@ -1,15 +1,15 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=athlon64
 DEFS :=
 
-MODE := normal
+#MODE := normal
 #MODE := debug
-#MODE := debugopt
+MODE := debugopt
 #MODE := efence
 
 ifeq ($(MODE),debugopt)
   DEFS := -DCSM_CONF_DEBUG -DDEBUG
   CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers $(DEFS)
-  LDFLAGS := 
+  LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
 else
   ifeq ($(MODE),debug)
     DEFS := -DCSM_CONF_DEBUG -DDEBUG

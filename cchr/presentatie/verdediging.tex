@@ -24,10 +24,6 @@
 }
 
 \usepackage{amsmath}
-\usepackage{pst-tree}
-\usepackage{pst-node}
-\usepackage{pst-eps}
-\usepackage{pstcol}
 \usepackage{pstricks}
 \usepackage{listings}
 \usepackage{color}
@@ -39,16 +35,18 @@
 \renewcommand{\emph}[1]{\textit{{#1}}}
 \definecolor{dgreen}{rgb}{0,0.7,0}
 \definecolor{dbrown}{rgb}{0.4,0.3,0.1}
+\definecolor{dred}{rgb}{0.5,0,0}
 \newcommand{\bs}{$\backslash$}
 \newcommand{\cConstr}[1]{\textcolor{blue}{#1}}
-\newcommand{\cMacro}[1]{\textcolor{red}{#1}}
+\newcommand{\cMacro}[1]{\textcolor{dred}{#1}}
 \newcommand{\cComment}[1]{\textcolor{dgreen}{#1}}
 \newcommand{\cLogic}[1]{\textcolor{dbrown}{#1}}
+\newcommand{\cFront}[1]{\textcolor{black}{#1}}
 \newcommand{\code}[1]{{\tt #1}}
 
 \setbeamercolor{background canvas}{bg=white}
 \setbeamertemplate{footline}[frame number]
-%\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{navigation symbols}{}
 
 \title{CCHR: De snelste CHR implementatie}
 \subtitle{Pieter Wuille}
@@ -67,14 +65,14 @@ Dr. ir. Tom Schrijvers}
 
 \begin{frame}
   \frametitle{Overzicht}
-  \tableofcontents
+  \tableofcontents[hideothersubsections]
 \end{frame}
 
 \AtBeginSection[]
 {
   \begin{frame}<beamer>
     \frametitle{Overzicht}
-    \tableofcontents[current,currentsubsection]
+    \tableofcontents[currentsection,currentsection,hideothersubsections]
   \end{frame}
 }
 
@@ -115,9 +113,9 @@ prime(X) \ prime(Y) <=> Z is Y mod X, Z==0 | true.
     \begin{itemize}
       \item Regels voor herschrijven CHR constraint store
       \item Simplification, propagation en simpagation regels \begin{itemize}
-        \item Simplification: {\em Rem} \code{<=>} {\em Guard} \code{|} {Body}
-        \item Propagation: {\em Kept} \code{==>} {\em Guard} \code{|} {Body}
-        \item Simpagation: {\em Kept} \bs {\em Rem} \code{<=>} {\em Guard} \code{|} {Body}
+        \item Simplification: {Rem} \code{<=>} {Guard} \code{|} {Body}
+        \item Propagation: {Kept} \code{==>} {Guard} \code{|} {Body}
+        \item Simpagation: {Kept} \bs {Rem} \code{<=>} {Guard} \code{|} {Body}
       \end{itemize}
     \end{itemize}
   \end{block}
@@ -126,8 +124,8 @@ prime(X) \ prime(Y) <=> Z is Y mod X, Z==0 | true.
 \subsection{Doelstellingen}
 
 \begin{frame}
-  \frametitle{CCHR}
-  \begin{block}{CCHR}
+  \frametitle{Doelstellingen CCHR}
+  \begin{block}{Doelstellingen}
     \begin{itemize}
       \item Een zo effici\"ent mogelijke CHR implementatie schrijven
       \item C als hosttaal gebruiken
@@ -139,6 +137,7 @@ prime(X) \ prime(Y) <=> Z is Y mod X, Z==0 | true.
       \item Veel vrijheid datastructuren
       \item Directe geheugentoegang
       \item Bestaande optimaliserende compilers
+      \item Bindings is veel andere talen
     \end{itemize}
   \end{block}
 
@@ -174,7 +173,7 @@ prime(X) \ prime(Y) <=> Z is Y mod X, Z==0 | true.
 \cMacro{#include "fib_cchr.h"} \cComment{/* header gegenereerd door CCHR compiler */}
 
 cchr \{
-  constraint \cConstr{fib}(int,long),\cConstr{init}(int);
+  constraint \cConstr{fib}(int,long),\cConstr{upto}(int);
 
   begin @ \cConstr{upto}(_) ==> \cConstr{fib}(0,1L), \cConstr{fib}(1,1L);
   calc @  \cConstr{upto}(Max), \cConstr{fib}(N2,M2) \bs \cConstr{fib}(N1,M1) <=> alt(N2==N1+1,N2-1==N1), N2<Max |
@@ -248,36 +247,191 @@ cchr \{
 
 \begin{frame}
   \frametitle{CCHR Compiler}
-  \begin{block}{Componenten compiler}
-    \begin{enumerate}
-      \item Main routine: C code kopi\"eren en CCHR blokken detecteren
-      \item Lexen van CCHR blok
-      \item Parsen van CCHR blok, opbouwen AST
-      \item Converteren van AST naar semantic tree
-      \item Analyseren ST
-      \item Berekenen goede ``join ordering''
-      \item Genereren C macro's
-      \item Uitvoermodule
-    \end{enumerate}
+  \includegraphics[width=1\textwidth]{fig/compil}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Lexer en Parser}
+  \begin{block}{Lexer}
+    \begin{itemize}
+      \item Geschreven mbv. Flex, die lexer in C genereert.
+      \item Splitst invoer in operatoren, haakjes, symbolen.
+      \item Deze `tokens' worden aan parser gegeven.
+    \end{itemize}
+  \end{block}
+  \begin{block}{Parser}
+    \begin{itemize}
+      \item Geschreven mbv. Bison, die parser in C genereert.
+      \item Herkent regels, code-blokken, argumenten, constraints, \ldots
+      \item Bouwt Abstract Syntax Tree (AST)
+    \end{itemize}
   \end{block}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Implementatie CCHR Compiler}
-  \begin{block}{Implementatie CCHR Compiler}
+  \frametitle{Analyse}
+  \begin{block}{Analyse}
+    Tijdens de analyse wordt de AST omgezet in een tussenvorm (semantic tree, ST)
     \begin{itemize}
-      \item De lexer is geschreven mbv. Flex
-      \item De parser is geschreven mbv. Bison
-      \item De rest van de compiler is in C geschreven
+      \item Alle types, variabelen, constraints, rules, occurrences worden objecten met
+            onderlinge verwijzingen ipv. strings.
+      \item Alle regels zijn omgezet naar Head Normal Form (HNF).
+      \item Onderlinge afhankelijkheden tussen variabelen en occurrences worden bepaald.
     \end{itemize}
   \end{block}
-% eventueel iets over scheiding modules of efficientie
+\end{frame}
+
+\begin{frame}
+  \frametitle{Join ordering en code generatie}
+  \begin{block}{Join ordering}
+    Voor elke constraint occurrence moet iteratievolgorde en -methode bepaald worden
+    voor elke partner constraint.
+    \begin{itemize}
+      \item Alle mogelijke volgordes afgaan.
+      \item Gewicht toekennen aan elke volgorde.
+      \item Volgorde met laagste gewicht kiezen.
+      \item Guard met iterator combineren (index).
+    \end{itemize}
+  \end{block}
+  \begin{block}{Code generatie}
+    C macro's en een C header genereren voor elke:
+    \begin{itemize}
+      \item constraint, constraint occurrence, rule
+      \item index, propagation geschiedenis, \ldots
+    \end{itemize}
+  \end{block}
 \end{frame}
 
 \subsection{Gegenereerde code}
+\frame[containsverbatim]{\frametitle{Voorbeeld - CCHR code}
+  \begin{example}
+  \begin{Verbatim}[commandchars=\\\{\}]
+constraint \cConstr{fib}(int,long),\cConstr{init};
+
+begin @ \cConstr{init}(_) ==> \cConstr{fib}(0,1L), \cConstr{fib}(1,1L);
+calc @  \cConstr{init}(Max), \cConstr{fib}(N2,M2) \bs {\em \cConstr{fib}(N1,M1)}
+        <=> alt(N2==N1+1,N2-1==N1), N2<Max
+        | \cConstr{fib}(N2+1, M1+M2);
+  \end{Verbatim}
+  \end{example}
+}
+\frame[containsverbatim]{\frametitle{Voorbeeld - C Macro's}
+  \begin{example}[generated code]
+  {\scriptsize \begin{Verbatim}[commandchars=\\\{\}]
+#define CODELIST_\cConstr{fib}_2_calc_R1 {\bs}
+  {CSM_IMMLOCAL}(int,N1,{CSM_ARG}(\cConstr{fib}_2,arg1)) {\bs}
+  {CSM_IMMLOCAL}(long,M1,{CSM_ARG}(\cConstr{fib}_2,arg2)) {\bs}
+  {CSM_DEFIDXVAR}(\cConstr{fib}_2,idx1,K2) {\bs}
+  {CSM_SETIDXVAR}(\cConstr{fib}_2,idx1,K2,arg1,{CSM_LOCAL}(N1) + 1) {\bs}
+  {CSM_IDXLOOP}(\cConstr{fib}_2,idx1,K2, {\bs}
+    {CSM_IF}({CSM_DIFFSELF}(K2), {\bs}
+      {CSM_IMMLOCAL}(int,N2,{CSM_LARG}(\cConstr{fib}_2,K2,arg1)) {\bs}
+      {CSM_IMMLOCAL}(long,M2,{CSM_LARG}(\cConstr{fib}_2,K2,arg2)) {\bs}
+      {CSM_LOOP}(init_1,K1, {\bs}
+        {CSM_IMMLOCAL}(int,Max,{CSM_LARG}(\cConstr{init}_1,K1,arg1)) {\bs}
+        {CSM_IF}({CSM_LOCAL}(N2) < {CSM_LOCAL}(Max), {\bs}
+          {CSM_KILLSELF}(\cConstr{fib}_2) {\bs}
+          {CSM_ADD}(\cConstr{fib}_2,{CSM_LOCAL}(N2)+1,{CSM_LOCAL}(M1)+{CSM_LOCAL}(M2)) {\bs}
+          {CSM_END} {\bs}
+        ) {\bs}
+      ) {\bs}
+    ) {\bs}
+  )
+\end{Verbatim}
+  }\end{example}
+}
+
+\subsection{Overige code}
 
 \begin{frame}
-  \frametitle{
-      
+  \frametitle{CSM definities}
+  \begin{block}{CSM definities}
+    \begin{itemize}
+      \item Schermen implementatie-details af van codegenerator.
+      \item Datastructuren kunnen gewijzigd worden zonder codegenerator aan te passen.
+      \item Definieert de \code{CSM\_START} macro.
+      \item Gedefinieerd in bestand \code{cchr\_csm.h}, dat in gegenereerde header ingeladen wordt.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Hashtables}
+  \begin{block}{Hashtable}
+    \begin{itemize}
+      \item Datastructuur om in $O(1)$ tijd elementen op te zoeken.
+      \item Zelf ge\"implementeerd Cuckoo-hashing algoritme.
+      \item Gebruikt om indexen en propagation geschiedenis in bij te houden.
+    \end{itemize}
+  \end{block}
+  \begin{block}{Hashfunctie}
+    \begin{itemize}
+      \item Hashtable vereist grillige functie om elementen op getallen af te beelden.
+      \item Het public-domain lookup3 algoritme gebruikt.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\section{Benchmarks}
+
+\subsection{Fibonacci}
+
+\begin{frame}
+  \frametitle{Benchmark: Fibonacci}
+  \includegraphics[width=\textwidth]{fig/bench-fib}
+\end{frame}
+
+\subsection{Kleiner-dan of gelijk-aan}
+
+\begin{frame}
+  \frametitle{Benchmark: Kleiner-dan of gelijk-aan}
+  \includegraphics[width=\textwidth]{fig/bench-leq}
+\end{frame}
+
+\subsection{Grootste gemene deler}
+
+\begin{frame}
+  \frametitle{Benchmark: Grootste gemene deler}
+  \includegraphics[width=\textwidth]{fig/bench-gcd}
+\end{frame}
+
+\subsection{Vergelijking}
+
+\begin{frame}
+\frametitle{Vergelijking benchmarks}
+\begin{center}
+\cFront{\begin{tabular}{|c|rrr@{.}lr|}
+\hline
+ & {\bf SWI} & {\bf JCHR} & \multicolumn{2}{c}{\bf CCHR} & {\bf C} \\
+\hline
+gcd    & 22000 & -     &   3&4  & 1 \\
+fib    & 21000 & 940   &   8&5  & 1 \\
+primes & 310   & 490   &   6&9  & 1 \\
+tak    & 210   & 110   &   4&3  & 1 \\
+leq    & 1100  & 440   &   9&8  & 1 \\
+ram    & 4700  & 11000 &  120&0 & 1 \\
+\hline
+\end{tabular}}
+\end{center}
+\end{frame}
+
+\section{Conclusie}
+
+\begin{frame}
+  \frametitle{Conclusie}
+  \begin{block}{Conclusie}
+    Met deze thesis is aangetoond dat:
+    \begin{itemize}
+      \item Een CHR implementatie in/voor C mogelijk is
+      \item en dat het een snelheidswinst oplevert
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Demonstratie}
+  \cFront{Demonstratie}
+\end{frame}
+
 \end{document}
 

@@ -117,6 +117,8 @@ for my $bench (keys %PDATA) {
 #  system("ps2pdf14 bench-$bench.ps bench-$bench.pdf");
   print PIPE "set terminal pdf monochrome enhanced dashed\n";
   print PIPE "set output \"bench-$bench.pdf\"\n";
+  print PIPE "set terminal pdf enhanced font \"Helvetica,9\" linewidth 2 rounded color solid\n";
+  print PIPE "set output \"bench-$bench-col.pdf\"\n";
   print PIPE "replot\n";
 }
 close PIPE;

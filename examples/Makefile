@@ -1,8 +1,8 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=athlon64
 DEFS :=
 
-#MODE := normal
-MODE := debug
+MODE := normal
+#MODE := debug
 #MODE := debugopt
 #MODE := efence
 
@@ -80,6 +80,9 @@ leq.c: leq.cchr cchr_csm.h bin/cchr Makefile
 leq.prep.c: leq.c Makefile
 	cpp -P $(DEFS) <leq.c | indent -kr -l127 >leq.prep.c
 
+fib_topdown.prep.c: fib_topdown.c Makefile
+	cpp -P $(DEFS) <fib_topdown.c | indent -kr -l127 >fib_topdown.prep.c
+
 fib.prep.c: fib.c Makefile
 	cpp -P $(DEFS) <fib.c | indent -kr -l127 >fib.prep.c
 
@@ -118,6 +121,9 @@ merge: merge.c ../cchr_csm.h Makefile
 
 leq.prep: leq.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o leq.prep leq.prep.c
+
+fib_topdown.prep: fib_topdown.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown.prep fib_topdown.prep.c
 
 ram: ram.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o ram ram.c

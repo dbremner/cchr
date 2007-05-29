@@ -328,8 +328,8 @@ calc \cKey{@}  \cConstr{upto}(Max), \cConstr{fib}(N2,M2) \bs {\em \cConstr{fib}(
     \cKey{CSM_IF}(\cKey{CSM_DIFFSELF}(K2), {\bs}
       \cKey{CSM_IMMLOCAL}(int,N2,{CSM_LARG}(\cConstr{fib}_2,K2,arg1)) {\bs}
       \cKey{CSM_IMMLOCAL}(long,M2,{CSM_LARG}(\cConstr{fib}_2,K2,arg2)) {\bs}
-      \cKey{CSM_LOOP}(init_1,K1, {\bs}
-        \cKey{CSM_IMMLOCAL}(int,Max,{CSM_LARG}(\cConstr{init}_1,K1,arg1)) {\bs}
+      \cKey{CSM_LOOP}(\cConstr{upto}_1,K1, {\bs}
+        \cKey{CSM_IMMLOCAL}(int,Max,{CSM_LARG}(\cConstr{upto}_1,K1,arg1)) {\bs}
         \cKey{CSM_IF}(\cKey{CSM_LOCAL}(N2) < \cKey{CSM_LOCAL}(Max), {\bs}
           \cKey{CSM_KILLSELF}(\cConstr{fib}_2) {\bs}
           \cKey{CSM_ADD}(\cConstr{fib}_2,\cKey{CSM_LOCAL}(N2)+1,\cKey{CSM_LOCAL}(M1)+\cKey{CSM_LOCAL}(M2)) {\bs}
@@ -369,6 +369,19 @@ calc \cKey{@}  \cConstr{upto}(Max), \cConstr{fib}(N2,M2) \bs {\em \cConstr{fib}(
     \begin{itemize}
       \item Hashtable vereist grillige functie om elementen op getallen af te beelden.
       \item Het public-domain lookup3 algoritme gebruikt.
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Logische variabelen}
+  \begin{block}{Logische variabelen}
+    \begin{itemize}
+      \item Variabelen die een waarde kunnen hebben of niet
+      \item Waarover onderlinge gelijkheden bekend kunnen zijn
+      \item Ge\"implementeerd met een C implementatie van het
+            Union-Find algoritme
+      \item Ook buiten CCHR bruikbaar
     \end{itemize}
   \end{block}
 \end{frame}

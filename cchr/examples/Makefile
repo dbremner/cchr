@@ -1,9 +1,9 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=athlon64
+CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona 
 DEFS :=
 
-#MODE := normal
+MODE := normal
 #MODE := debug
-MODE := debugopt
+#MODE := debugopt
 #MODE := efence
 
 ifeq ($(MODE),debugopt)
@@ -38,36 +38,49 @@ bin:
 
 gcd.c: gcd.cchr bin/cchr Makefile
 	bin/cchr gcd.cchr
-
-gcd: gcd.c cchr_csm.h Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o gcd gcd.c
-
 gcd.p: gcd.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o gcd.a gcd.c
 	time ./gcd.a 50000000 5 >/dev/null
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o gcd.p gcd.c
 
-primes.c: primes.cchr bin/cchr Makefile
-	bin/cchr primes.cchr
+gcd: gcd.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o gcd gcd.c
 
 primes: primes.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o primes primes.c
-
+primes.c: primes.cchr bin/cchr Makefile
+	bin/cchr primes.cchr
 primes.p: primes.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o primes.a primes.c
 	time ./primes.a 5000 5 >/dev/null
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o primes.p primes.c
 
+cslv: cslv.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) -lm $(LDFLAGS) -o cslv cslv.c
+cslv.c: cslv.cchr bin/cchr Makefile
+	bin/cchr cslv.cchr
+cslv.prep: cslv.prep.c Makefile
+	$(CC) $(CFLAGS) -lm $(LDFLAGS) -o cslv.prep cslv.prep.c
+cslv.prep.c: cslv.c Makefile
+	cpp -P $(DEFS) <cslv.c | indent -kr -l127 >cslv.prep.c
+
+fib: fib.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib fib.c
 fib.c: fib.cchr bin/cchr Makefile
 	bin/cchr fib.cchr
-
 fib.c.debug: fib.c cchr_csm.h Makefile
 	cpp -P $(DEFS)  <fib.c | egrep -v '^#' | indent -kr -l1024 >fib.c.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.c.debug fib.c.c
+fib.debug: fib.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.debug fib.c
+fib.prep: fib.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.prep fib.prep.c
+fib.prep.c: fib.c Makefile
+	cpp -P $(DEFS) <fib.c | indent -kr -l127 >fib.prep.c
+
 
 fib_topdown.c: fib_topdown.cchr bin/cchr Makefile
 	bin/cchr fib_topdown.cchr
-
 fib_topdown: fib_topdown.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown fib_topdown.c
 
@@ -83,8 +96,6 @@ leq.prep.c: leq.c Makefile
 fib_topdown.prep.c: fib_topdown.c Makefile
 	cpp -P $(DEFS) <fib_topdown.c | indent -kr -l127 >fib_topdown.prep.c
 
-fib.prep.c: fib.c Makefile
-	cpp -P $(DEFS) <fib.c | indent -kr -l127 >fib.prep.c
 
 gcd.prep.c: gcd.c Makefile
 	cpp -P $(DEFS) <gcd.c | indent -kr -l127 >gcd.prep.c
@@ -140,8 +151,6 @@ dijkstra: dijkstra.c ../cchr_csm.h Makefile
 dijkstra.prep: dijkstra.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o dijkstra.prep dijkstra.prep.c
 
-fib.prep: fib.prep.c Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.prep fib.prep.c
 
 tak2.prep: tak2.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c
@@ -157,36 +166,28 @@ fib_topdown.debug: fib_topdown.c ../cchr_csm.h ../logical.h ../dcls.h ../alist.h
 	cpp -P $(DEFS) <fib_topdown.c | indent -kr -l1024 >fib_topdown.debug.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown.debug fib_topdown.debug.c
 
+fib_gmp: fib_gmp.c cchr_csm.h Makefile
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp fib_gmp.c
 fib_gmp.c: fib_gmp.cchr bin/cchr Makefile
 	bin/cchr fib_gmp.cchr
-
+fib_gmp.p: fib_gmp.c cchr_csm.h Makefile
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-generate -o fib_gmp.a fib_gmp.c
+	time ./fib_gmp.a 3000 >/dev/null
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-use -o fib_gmp.p fib_gmp.c
+fib_gmp.prep: fib_gmp.prep.c Makefile
+	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp.prep fib_gmp.prep.c
 fib_gmp.prep.c: fib_gmp.c
 	cpp -P $(DEFS) <fib_gmp.c | indent -kr -l127 >fib_gmp.prep.c
 
-fib: fib.c cchr_csm.h Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o fib fib.c
 
 fib_h: fib_h.c cchr_csm.h Makefile
 	cpp -P $(DEFS) fib_h.c | indent -kr -l 384 >fib_h.prep.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_h fib_h.prep.c
 
-fib_gmp: fib_gmp.c cchr_csm.h Makefile
-	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp fib_gmp.c
 
-fib_gmp.prep: fib_gmp.prep.c Makefile
-	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -o fib_gmp.prep fib_gmp.prep.c
-
-fib_gmp.p: fib_gmp.c cchr_csm.h Makefile
-	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-generate -o fib_gmp.a fib_gmp.c
-	time ./fib_gmp.a 3000 >/dev/null
-	$(CC) -lgmp $(CFLAGS) $(LDFLAGS) -fprofile-use -o fib_gmp.p fib_gmp.c
-
-fib.debug: fib.c cchr_csm.h Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o fib.debug fib.c
 
 logtest: logtest.c ../logical.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o logtest logtest.c
-
 logtest.c.debug: logtest.c ../logical.h
 	cpp -P $(DEFS) <logtest.c | indent -kr >logtest.c.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o logtest.c.debug logtest.c.c

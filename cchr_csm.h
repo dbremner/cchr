@@ -515,6 +515,14 @@
 #define CSM_ADDE(CON) { \
 	cchr_fire_##CON(DCLS_EMPTY_PID); \
 }
+#define CSM_TADD(CON,...) { \
+	CSM_ADD(CON,__VA_ARGS__); \
+	CSM_END \
+}
+#define CSM_TADDE(CON,...) { \
+	CSM_ADDE(CON); \
+	CSM_END \
+}
 #define CSM_NEEDSELF(CON) { \
 	if (doadd) { \
 		CSM_MAKE(CON) \

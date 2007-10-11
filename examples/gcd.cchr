@@ -5,7 +5,7 @@
 #include "gcd_cchr.h"
 
 cchr {
-  constraint gcd(uint64_t) option(fmt,"gcd(%llu)");
+  constraint gcd(uint64_t) option(fmt,"gcd(%llu)",$1);
 
   triv @ gcd(0ULL) <=> true;
   dec @ gcd(N) \ gcd(M) <=> M>=N | uint64_t V=M-N, gcd(V);

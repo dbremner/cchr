@@ -97,7 +97,7 @@ fib_topdown.prep.c: fib_topdown.c Makefile
 	cpp -P $(DEFS) <fib_topdown.c | indent -kr -l127 >fib_topdown.prep.c
 
 
-gcd.prep.c: gcd.c Makefile
+gcd.prep.c: cchr_csm.h gcd.c Makefile
 	cpp -P $(DEFS) <gcd.c | indent -kr -l127 >gcd.prep.c
 
 tak2.prep.c: tak2.c Makefile

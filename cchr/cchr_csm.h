@@ -147,7 +147,7 @@
 
 /* callback macro to copy the arguments of a constraint into local vars */
 #define CSM_CB_DTDAC_S
-#define CSM_CB_DTDAC_D(NAME,TYPE,CON) TYPE NAME=args.data.CON.NAME;
+#define CSM_CB_DTDAC_D(NAME,TYPE,CON) TYPE NAME=args->data.CON.NAME;
 
 #define CSM_HTCB_DEFINED(VAL) ((VAL)->used)
 #define CSM_HTCB_UNDEF(VAL) {(VAL)->used=0;}
@@ -223,9 +223,9 @@
     dcls_add_begin(_global_runtime.store,pid_self_,type); \
   } \
   CONSLIST(CSM_CB_FFD) \
-  void static inline cchr_fire(cchr_args_t args) { \
-    cchr_id_t pid_self_=args.pid; \
-    switch (args.con) { \
+  void static inline cchr_fire(cchr_args_t *args) { \
+    cchr_id_t pid_self_=args->pid; \
+    switch (args->con) { \
       CONSLIST(CSM_CB_FFID) \
     } \
     CONSLIST(CSM_CB_FFIC) \
@@ -302,7 +302,7 @@
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA,)) { \
     cchr_args_t args; \
     cchr_cont_add_##NAME(&args,ARGLIST_##NAME(CSM_CB_FFPAA,)); \
-    cchr_fire(args); \
+    cchr_fire(&args); \
   } \
   void static inline cchr_cont_reactivate_##NAME(cchr_args_t *args, cchr_id_t pid_self_) { \
     args->con=CCHR_CONS_TYPE_##NAME; \
@@ -314,7 +314,7 @@
     cchr_cont_reactivate_##NAME(&args,pid_self_); \
     CSM_FMTOUT("reactiv: pid=%i",pid_self_); \
     CSM_GENOFPID(self_)++; \
-    cchr_fire(args); \
+    cchr_fire(&args); \
   } \
   void cchr_reactivate_all_##NAME(void) { \
   	CSM_LOOP(NAME,C, \
@@ -563,19 +563,19 @@
 #define CSM_DEAD(PID,CODE) CSM_IF((!CSM_ALIVEPID(PID) || CSM_IDOFPID(PID)!=id_##PID),CODE)
 
 #define CSM_ADD(CON,...) { \
-	cchr_cont_add_##CON(&args,__VA_ARGS__); \
+	cchr_cont_add_##CON(args,__VA_ARGS__); \
         cchr_fire(args); \
 }
 #define CSM_ADDE(CON) { \
-	cchr_cont_add_##CON(&args); \
+	cchr_cont_add_##CON(args); \
         cchr_fire(args); \
 }
 #define CSM_TADD(CON,...) { \
-	cchr_cont_add_##CON(&args,__VA_ARGS__); \
+	cchr_cont_add_##CON(args,__VA_ARGS__); \
 	goto fire_##CON; \
 }
 #define CSM_TADDE(CON) { \
-	cchr_cont_add_##CON(&args); \
+	cchr_cont_add_##CON(args); \
 	goto fire_##CON; \
 }
 #define CSM_NEEDSELF(CON) { \

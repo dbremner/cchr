@@ -147,7 +147,7 @@
 
 /* callback macro to copy the arguments of a constraint into local vars */
 #define CSM_CB_DTDAC_S
-#define CSM_CB_DTDAC_D(NAME,TYPE,CON) TYPE NAME=args->data.CON.NAME;
+#define CSM_CB_DTDAC_D(NAME,TYPE,CON) TYPE NAME=args.data.CON.NAME;
 
 #define CSM_HTCB_DEFINED(VAL) ((VAL)->used)
 #define CSM_HTCB_UNDEF(VAL) {(VAL)->used=0;}
@@ -193,9 +193,8 @@
     } data; \
   } cchr_entry_t; \
   typedef struct cchr_args_struct_ cchr_args_t; \
-  typedef int (*cchr_firefn_t)(cchr_args_t*); \
   struct cchr_args_struct_ { \
-    cchr_firefn_t fn; \
+    cchr_id_t con; \
     cchr_id_t pid; \
     union { \
       CONSLIST(CSM_CB_DUA) \
@@ -223,13 +222,14 @@
   void static inline cchr_store(cchr_id_t pid_self_,enum cchr_cons_type type) { \
     dcls_add_begin(_global_runtime.store,pid_self_,type); \
   } \
-  void static inline cchr_fire(cchr_args_t* args) { \
-    int run=1; \
-    while (run) { \
-      run=args->fn(args); \
-    } \
-  } \
   CONSLIST(CSM_CB_FFD) \
+  void static inline cchr_fire(cchr_args_t args) { \
+    cchr_id_t pid_self_=args.pid; \
+    switch (args.con) { \
+      CONSLIST(CSM_CB_FFID) \
+    } \
+    CONSLIST(CSM_CB_FFIC) \
+  } \
   CONSLIST(CSM_CB_FFC) \
   void static cchr_reactivate_all(void *dummy) { \
   	CONSLIST(CSM_CB_REC) \
@@ -266,11 +266,14 @@
 #define CSM_CB_FADAR_S ,
 #define CSM_CB_FADAR_D(NAME,TYPE,...) TYPE NAME
 
-/* callback macro for code of fire functions */
-#define CSM_CB_FFC_S
-#define CSM_CB_FFC_D(NAME) \
-  int static inline cchr_fire_##NAME(cchr_args_t *args) { \
-    cchr_id_t pid_self_=args->pid; \
+/* callback macro for switch to correct inlined fire function */
+#define CSM_CB_FFID_S
+#define CSM_CB_FFID_D(NAME) case CCHR_CONS_TYPE_##NAME: goto fire_##NAME;
+
+/* callback macro for inline code of fire functions */
+#define CSM_CB_FFIC_S
+#define CSM_CB_FFIC_D(NAME) \
+  fire_##NAME: { \
     ARGLIST_##NAME(CSM_CB_DTDAC,NAME) \
     int doadd=(pid_self_==DCLS_EMPTY_PID); \
     int oldid; \
@@ -286,19 +289,23 @@
     CSM_STROUT("final store") \
     CSM_NEEDSELF(NAME) \
     CSM_END \
-  } \
+  }
+
+/* callback macro for code of fire functions */
+#define CSM_CB_FFC_S
+#define CSM_CB_FFC_D(NAME) \
   void static inline cchr_cont_add_##NAME(cchr_args_t *args, ARGLIST_##NAME(CSM_CB_FFCAA,)) { \
-    args->fn=cchr_fire_##NAME; \
+    args->con=CCHR_CONS_TYPE_##NAME; \
     args->pid=DCLS_EMPTY_PID; \
     ARGLIST_##NAME(CSM_CB_FFCFC,NAME) \
   } \
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA,)) { \
     cchr_args_t args; \
     cchr_cont_add_##NAME(&args,ARGLIST_##NAME(CSM_CB_FFPAA,)); \
-    cchr_fire(&args); \
+    cchr_fire(args); \
   } \
   void static inline cchr_cont_reactivate_##NAME(cchr_args_t *args, cchr_id_t pid_self_) { \
-    args->fn=cchr_fire_##NAME; \
+    args->con=CCHR_CONS_TYPE_##NAME; \
     args->pid=pid_self_; \
     ARGLIST_##NAME(CSM_CB_FFCRA,NAME); \
   } \
@@ -307,7 +314,7 @@
     cchr_cont_reactivate_##NAME(&args,pid_self_); \
     CSM_FMTOUT("reactiv: pid=%i",pid_self_); \
     CSM_GENOFPID(self_)++; \
-    cchr_fire(&args); \
+    cchr_fire(args); \
   } \
   void cchr_reactivate_all_##NAME(void) { \
   	CSM_LOOP(NAME,C, \
@@ -524,15 +531,9 @@
 		_global_runtime.debugindent--; \
 		CSM_STROUT("end fire"); \
 	) \
-	return 0; \
+	return; \
 }
-#define CSM_TEND { \
-	CSM_DEBUG( \
-		_global_runtime.debugindent--; \
-		CSM_STROUT("end fire - tailing"); \
-	) \
-	return 1; \
-}
+
 #define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
 #define CSM_MAKE(TYPE) { \
 	if (doadd && pid_self_==DCLS_EMPTY_PID) { \
@@ -562,20 +563,20 @@
 #define CSM_DEAD(PID,CODE) CSM_IF((!CSM_ALIVEPID(PID) || CSM_IDOFPID(PID)!=id_##PID),CODE)
 
 #define CSM_ADD(CON,...) { \
-	cchr_cont_add_##CON(args,__VA_ARGS__); \
+	cchr_cont_add_##CON(&args,__VA_ARGS__); \
         cchr_fire(args); \
 }
 #define CSM_ADDE(CON) { \
-	cchr_cont_add_##CON(args); \
+	cchr_cont_add_##CON(&args); \
         cchr_fire(args); \
 }
 #define CSM_TADD(CON,...) { \
-	cchr_cont_add_##CON(args,__VA_ARGS__); \
-	CSM_TEND \
+	cchr_cont_add_##CON(&args,__VA_ARGS__); \
+	goto fire_##CON; \
 }
 #define CSM_TADDE(CON) { \
-	cchr_cont_add_##CON(args); \
-	CSM_TEND \
+	cchr_cont_add_##CON(&args); \
+	goto fire_##CON; \
 }
 #define CSM_NEEDSELF(CON) { \
 	if (doadd) { \

@@ -217,6 +217,22 @@ csm_varuse_t static *csm_generate_vartable_constr(sem_cchr_t *chr,int coni) {
   tbl[0].use=0;
   tbl[0].cache=0;
   for (int i=1; i<=alist_len(co->types); i++) {
+    tbl[i].code=make_message("arg%i",i);
+    tbl[i].use=0;
+    tbl[i].cache=0;
+  }
+  return tbl;
+}
+
+csm_varuse_t static *csm_generate_vartable_fmt(sem_cchr_t *chr,int coni) {
+  sem_constr_t *co=alist_ptr(chr->cons,coni);
+  char c[256];
+  csm_constr_getname(chr,coni,c,256);
+  csm_varuse_t *tbl=malloc(sizeof(csm_varuse_t)*(alist_len(co->types)+1));
+  tbl[0].code=make_message("");
+  tbl[0].use=0;
+  tbl[0].cache=0;
+  for (int i=1; i<=alist_len(co->types); i++) {
     tbl[i].code=make_message("CSM_ARG(%s,arg%i)",c,i);
     tbl[i].use=0;
     tbl[i].cache=0;
@@ -233,7 +249,7 @@ csm_varuse_t static *csm_generate_vartable_killadd(sem_cchr_t *chr,int coni) {
   tbl[0].use=0;
   tbl[0].cache=0;
   for (int i=1; i<=alist_len(co->types); i++) {
-    tbl[i].code=make_message("CSM_LARG(%s,PID,local,arg%i)",c,i);
+    tbl[i].code=make_message("CSM_PARG(%s,PID,arg%i)",c,i);
     tbl[i].use=0;
     tbl[i].cache=0;
   }
@@ -779,10 +795,11 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		}
 		output_char(out,'\n');
 		csm_varuse_t *vt=csm_generate_vartable_constr(in,i);
+		csm_varuse_t *vtf=csm_generate_vartable_fmt(in,i);
 		output_fmt(out,"#undef FORMAT_%s\n",conn);
 		output_fmt(out,"#define FORMAT_%s ",conn);
 		if (alist_len(con->fmt)>0) {
-			csm_generate_expr(&(alist_get(con->fmt,0)),vt,out);
+			csm_generate_expr(&(alist_get(con->fmt,0)),vtf,out);
 		} else {
 		        output_fmt(out,"\"%s()\"",conn);
 		}
@@ -791,7 +808,7 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		output_fmt(out,"#define FORMATARGS_%s ",conn);
 		for (int k=1; k<alist_len(con->fmt); k++) {
 		  output_string(out,",");
-		  csm_generate_expr(&(alist_get(con->fmt,k)),vt,out);
+		  csm_generate_expr(&(alist_get(con->fmt,k)),vtf,out);
 		}
 		output_string(out,"\n");
 		output_char(out,'\n');
@@ -809,7 +826,7 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		output_fmt(out,"#undef CONSTRUCT_%s\n",conn);
 		output_fmt(out,"#define CONSTRUCT_%s ",conn);
 		if (alist_len(con->init.parts)>0) {
-			csm_generate_expr(&(con->init),vt,out);
+			csm_generate_expr(&(con->init),vtf,out);
 		}
 		csm_varuse_t *vtak=csm_generate_vartable_killadd(in,i);
 		output_string(out,"\n");
@@ -851,6 +868,7 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		}
 		output_string(out,"\n");
 		csm_destruct_vartable_constr(con,vt);
+		csm_destruct_vartable_constr(con,vtf);
 		output_fmt(out,"\n");
 	}
 	for (int i=0; i<alist_len(in->cons); i++) {

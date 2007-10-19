@@ -18,7 +18,8 @@ typedef struct {
 logical_header(int,log_int_t_tag_t,log_int_t)
 
 #define log_int_t_reactivate(var) { \
-  CSM_LOGUNILOOP(leq_2,RA,leq_2_ra,log_int_t,var,{cchr_reactivate_leq_2(CSM_PID(RA));}) \
+  CSM_DECLOGUNILOOP(RA,CSM_CB_FFVDC,) \
+  CSM_LOGUNILOOP(leq_2,RA,local,leq_2_ra,log_int_t,var,{cchr_reactivate_leq_2(CSM_PID(RA,local));}) \
 }
 
 #define log_int_cb_created(val) { \
@@ -48,7 +49,7 @@ cchr {
     option(destr,{log_int_t_destruct($1);log_int_t_destruct($2);}) 
     option(fmt,"leq""(#%i,#%i)""[%p,%p]" ,log_int_t_normalize($1)->_id,log_int_t_normalize($2)->_id ,$1,$2)
     option(add,{
-      cchr_idxlist_t nw;nw.pid=CSM_PID($0); 
+      cchr_idxlist_t nw;nw.pid=$0; 
       nw.id=CSM_IDOFPID($0); 
       cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);
       nw.id=CSM_IDOFPID($0); 
@@ -60,7 +61,7 @@ cchr {
     })
     option(kill,{
       cchr_idxlist_t nw; 
-      nw.pid=CSM_PID($0); 
+      nw.pid=$0; 
       nw.id=CSM_IDOFPID($0); 
       cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);
       cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);

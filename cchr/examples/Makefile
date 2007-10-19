@@ -1,8 +1,9 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona 
 DEFS :=
 
-MODE := normal
+#MODE := normal
 #MODE := debug
+MODE := gdb
 #MODE := debugopt
 #MODE := efence
 
@@ -23,9 +24,15 @@ else
       CFLAGS := -O0 -ggdb3 $(DEFS)
       LDFLAGS := -lefence 
     else
+    ifeq ($(MODE),gdb)
+      DEFS :=
+      CFLAGS := -O0 -ggdb3 $(DEFS)
+      LDFLAGS := 
+    else
       DEFS :=
       CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers $(DEFS)
       LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
+    endif
     endif
   endif
 endif
@@ -106,8 +113,6 @@ fib_topdown.prep.c: fib_topdown.c Makefile
 gcd.prep.c: cchr_csm.h gcd.c Makefile
 	cpp -P $(DEFS) <gcd.c | indent -kr -l127 >gcd.prep.c
 
-tak2.prep.c: tak2.c Makefile
-	cpp -P $(DEFS) <tak2.c | indent -kr -l127 >tak2.prep.c
 
 dijkstra.prep.c: dijkstra.c ../cchr_csm.h Makefile
 	cpp -P $(DEFS) <dijkstra.c | indent -kr -l127 >dijkstra.prep.c
@@ -124,8 +129,6 @@ merge.c: merge.cchr bin/cchr Makefile
 acker.c: acker.cchr bin/cchr Makefile
 	bin/cchr acker.cchr
 
-tak2.c: tak2.cchr bin/cchr Makefile
-	bin/cchr tak2.cchr
 
 tak: tak.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak tak.c
@@ -148,6 +151,12 @@ ram: ram.c ../cchr_csm.h Makefile
 acker: acker.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o acker acker.c
 
+tak2.c: tak2.cchr bin/cchr Makefile
+	bin/cchr tak2.cchr
+tak2.prep.c: tak2.c Makefile
+	cpp -P $(DEFS) <tak2.c | indent -kr -l127 >tak2.prep.c
+tak2.prep: tak2.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c
 tak2: tak2.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2 tak2.c
 
@@ -158,8 +167,6 @@ dijkstra.prep: dijkstra.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o dijkstra.prep dijkstra.prep.c
 
 
-tak2.prep: tak2.prep.c Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c
 
 gcd.prep: gcd.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o gcd.prep gcd.prep.c

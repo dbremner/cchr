@@ -13,8 +13,8 @@
 
 
 #include "dcls.h" /* for doubly-linked lists (constraint store) */
-#include "lookup3.h" /* for hashing algorithm */
-#include "lookup3.c"
+#include "lookup3.h" /* for hashing algorithm: declarations */
+#include "lookup3.c" /* the hashing algorithm itself */
 #include "ht_cuckoo.h" /* for hashtable */
 
 #define cchr_id_t dcls_pid_t
@@ -45,7 +45,7 @@
 #define CSM_PRINTF(INIT,TYPE) CSM_DEBUG( \
 	CSM_INDENT \
 	{ \
-		fprintf(stderr,"%s%s: " FORMAT_##TYPE " | pid=%i id=%i\n",INIT,#TYPE FORMATARGS_##TYPE,(int)pid_self_,pid_self_!= DCLS_EMPTY_PID ? CSM_IDOFPID(self_) : -1); \
+		fprintf(stderr,"%s%s: " FORMAT_##TYPE " | pid=%i id=%i\n",INIT,#TYPE FORMATARGS_##TYPE,(int)pid_self_,pid_self_!= DCLS_EMPTY_PID ? CSM_IDOFPID(pid_self_) : -1); \
 	} \
 )
 #define CSM_FMTOUT(FMT,...) CSM_DEBUG( \
@@ -147,7 +147,7 @@
 
 /* callback macro to copy the arguments of a constraint into local vars */
 #define CSM_CB_DTDAC_S
-#define CSM_CB_DTDAC_D(NAME,TYPE,CON) TYPE NAME=args->data.CON.NAME;
+#define CSM_CB_DTDAC_D(NAME,TYPE,CON) CSM_CVAR(NAME,CON)=args.data.CON.NAME;
 
 #define CSM_HTCB_DEFINED(VAL) ((VAL)->used)
 #define CSM_HTCB_UNDEF(VAL) {(VAL)->used=0;}
@@ -167,6 +167,10 @@
   typedef struct { \
     ARGLIST_##NAME(CSM_CB_DTDAL,) \
   } cchr_args_ ## NAME ## _t; \
+  typedef struct { \
+    ARGLIST_##NAME(CSM_CB_DTDAL,) \
+    int doadd,oldgen,oldid; \
+  } cchr_cls_## NAME ##_t;
   
 
 #define CSM_CB_DUD_S
@@ -223,12 +227,34 @@
     dcls_add_begin(_global_runtime.store,pid_self_,type); \
   } \
   CONSLIST(CSM_CB_FFD) \
-  void static inline cchr_fire(cchr_args_t *args) { \
-    cchr_id_t pid_self_=args->pid; \
-    switch (args->con) { \
+  typedef struct { \
+    void *rp; \
+    size_t back; \
+    cchr_id_t pid; \
+  } cchr_stackframe_t; \
+  void static inline cchr_fire(cchr_args_t args) { \
+    cchr_id_t pid_self_=0; \
+    char *stack=malloc(128); \
+    size_t ss=128,ds=0,sp=0; /* stack size, data size, stack position */ \
+    switch (args.con) { \
       CONSLIST(CSM_CB_FFID) \
     } \
     CONSLIST(CSM_CB_FFIC) \
+    fire_end: \
+    CSM_DEBUG( \
+      _global_runtime.debugindent--; \
+      CSM_STROUT("end fire"); \
+    ) \
+    if (sp==0) { \
+      free(stack); \
+      return; \
+    } else { \
+      size_t back=((cchr_stackframe_t*)(stack+sp))->back; \
+      sp -= back; \
+      pid_self_=((cchr_stackframe_t*)(stack+sp))->pid; \
+      CSM_FMTOUT("restored stack frame | sp=%i",sp); \
+      goto *(((cchr_stackframe_t*)(stack+sp))->rp); \
+    } \
   } \
   CONSLIST(CSM_CB_FFC) \
   void static cchr_reactivate_all(void *dummy) { \
@@ -249,6 +275,9 @@
 /* callback macro for declaration of fire functions */  
 #define CSM_CB_FFD_S
 #define CSM_CB_FFD_D(NAME) \
+  typedef union { \
+    RULELIST_##NAME(CSM_CB_FFIDC) \
+  } cchr_bls_##NAME##_t; \
   int static inline cchr_fire_##NAME(cchr_args_t*); \
   void static inline cchr_add_##NAME(ARGLIST_##NAME(CSM_CB_FADAR,)); \
   void static inline cchr_reactivate_##NAME(cchr_id_t); \
@@ -270,15 +299,35 @@
 #define CSM_CB_FFID_S
 #define CSM_CB_FFID_D(NAME) case CCHR_CONS_TYPE_##NAME: goto fire_##NAME;
 
+#define CSM_CB_FFVDC_S
+#define CSM_CB_FFVDC_D(TYPE,NAME,...) TYPE NAME;
+
+#define CSM_CB_FFIDC_S
+#define CSM_CB_FFIDC_D(NAME) \
+  struct { \
+    NSLIST_##NAME(CSM_CB_FFVDC,) \
+  } NAME;
+
 /* callback macro for inline code of fire functions */
 #define CSM_CB_FFIC_S
 #define CSM_CB_FFIC_D(NAME) \
   fire_##NAME: { \
+    size_t ssn=sp+ds+sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##NAME##_t)+sizeof(cchr_cls_##NAME##_t); \
+    if (ssn>ss) { \
+      ss+=ssn; \
+      stack=realloc(stack,ss); \
+      CSM_FMTOUT("stack size: need %i, have %i, increased to %i bytes",ssn,ss-ssn,ss); \
+    } \
+    if (ds) { \
+      ((cchr_stackframe_t*)(stack+sp))->pid=pid_self_; \
+      sp += ds; \
+      ((cchr_stackframe_t*)(stack+sp))->back=ds; \
+      CSM_FMTOUT("stack frame added | sp=%i",sp); \
+    } \
     ARGLIST_##NAME(CSM_CB_DTDAC,NAME) \
-    int doadd=(pid_self_==DCLS_EMPTY_PID); \
-    int oldid; \
-    int oldgen; \
-    if (doadd) { \
+    pid_self_=args.pid; \
+    CSM_CVAR(doadd,NAME)=(pid_self_==DCLS_EMPTY_PID); \
+    if (CSM_CVAR(doadd,NAME)) { \
       CONSTRUCT_##NAME; \
     } \
     CSM_DEBUG( \
@@ -302,7 +351,7 @@
   void cchr_add_##NAME( ARGLIST_##NAME(CSM_CB_FFCAA,)) { \
     cchr_args_t args; \
     cchr_cont_add_##NAME(&args,ARGLIST_##NAME(CSM_CB_FFPAA,)); \
-    cchr_fire(&args); \
+    cchr_fire(args); \
   } \
   void static inline cchr_cont_reactivate_##NAME(cchr_args_t *args, cchr_id_t pid_self_) { \
     args->con=CCHR_CONS_TYPE_##NAME; \
@@ -313,19 +362,21 @@
     cchr_args_t args; \
     cchr_cont_reactivate_##NAME(&args,pid_self_); \
     CSM_FMTOUT("reactiv: pid=%i",pid_self_); \
-    CSM_GENOFPID(self_)++; \
-    cchr_fire(&args); \
+    CSM_GENOFPID(pid_self_)++; \
+    cchr_fire(args); \
   } \
   void cchr_reactivate_all_##NAME(void) { \
-  	CSM_LOOP(NAME,C, \
-  	  cchr_reactivate_##NAME(pid_C); \
-  	) \
+    CSM_DECLOOP(C,CSM_CB_FFVDC,) \
+    CSM_LOOP(NAME,C,local, \
+      cchr_reactivate_##NAME(CSM_PID(C,local)); \
+    ) \
   } \
   void cchr_free_all_##NAME(void) { \
-  	CSM_LOOP(NAME,C, \
-	  CSM_DESTRUCT_PID(NAME,C); \
-  	  CSM_KILL(C,NAME); \
-  	) \
+    CSM_DECLOOP(C,CSM_CB_FFVDC,) \
+    CSM_LOOP(NAME,C,local, \
+      CSM_DESTRUCT_PID(NAME,C,local); \
+      CSM_KILL(C,local,NAME); \
+    ) \
   } \
   void cchr_index_##NAME(cchr_id_t pid_self_) { \
     HASHLIST_##NAME(CSM_CB_IdxSet,NAME) \
@@ -336,7 +387,7 @@
   
 
 #define CSM_CB_IdxArgs_S
-#define CSM_CB_IdxArgs_D(A,T,C) {_idx.key.A = CSM_LARG(C,self_,A);}
+#define CSM_CB_IdxArgs_D(A,T,C) {_idx.key.A = CSM_PARG(C,pid_self_,A);}
 
 #define CSM_CB_IdxSet_S
 #define CSM_CB_IdxSet_D(H,C) { \
@@ -344,7 +395,7 @@
   HASHDEF_##C##_##H(CSM_CB_IdxArgs,C) \
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
   CSM_FMTOUT("idxset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
-  cchr_idxlist_t pidx={.pid=pid_self_,.id=CSM_IDOFPID(self_)}; \
+  cchr_idxlist_t pidx={.pid=pid_self_,.id=CSM_IDOFPID(pid_self_)}; \
   if (_idxp) { \
     cchr_htdc_t_set(&(_idxp->val),&pidx); \
   } else { \
@@ -361,7 +412,7 @@
   _idxp=cchr_conht_##C##_##H##_t_find(&(_global_runtime.index_##C.H),&_idx); \
   CSM_FMTOUT("idxunset %s/%s in %p(%i elem) found=%p(%i elem)",#H,#C,&(_global_runtime.index_##C.H),(_global_runtime.index_##C.H).used,_idxp,_idxp ? cchr_htdc_t_count(&(_idxp->val)) : -1); \
   if (_idxp) { \
-    cchr_idxlist_t pidx={.pid=pid_self_,.id=CSM_IDOFPID(self_)}; \
+    cchr_idxlist_t pidx={.pid=pid_self_,.id=CSM_IDOFPID(pid_self_)}; \
     cchr_htdc_t_unset(&(_idxp->val),&pidx); \
     if (cchr_htdc_t_count(&(_idxp->val))==0) { \
       CSM_STROUT("idxunset: completely removing element"); \
@@ -371,7 +422,7 @@
 }
 
 #define CSM_CB_FFCRA_S
-#define CSM_CB_FFCRA_D(NAME,TYPE,CON) args->data.CON.NAME=CSM_LARG(CON,self_,NAME);
+#define CSM_CB_FFCRA_D(NAME,TYPE,CON) args->data.CON.NAME=CSM_PARG(CON,pid_self_,NAME);
 
 /* callback macro for arguments of code of fire functions */ 
 #define CSM_CB_FFCAR_S
@@ -393,43 +444,44 @@
 #define CSM_CB_FFCFC_S
 #define CSM_CB_FFCFC_D(NAME,TYPE,CON) args->data.CON.NAME=NAME;
 
-
-#define CSM_ARG(TYPE,NAME) (NAME)
+#define CSM_ARG(CON,NAME) CSM_CVAR(NAME,CON)
 
 #define CSM_IF(EXP,CODE) { \
 	if (EXP) { \
 		CODE \
 	} \
 }
-#define CSM_DIFFSELF(VAR) (pid_self_ != pid_##VAR)
-#define CSM_DIFF(VAR1,VAR2) (pid_##VAR1 != pid_##VAR2)
+#define CSM_DIFFSELF(VAR,NS) (pid_self_ != CSM_PID(VAR,NS))
+#define CSM_DIFF(VAR1,VAR2,NS) (CSM_PID(VAR1,NS) != CSM_PID(VAR2,NS))
 
 /* callback macro for freeing propagation history records */ 
 #define CSM_CB_FPH_D(T,V,A) { \
-	cchr_propstr_##V##_t_free(&(dcls_get(_global_runtime.store,pid_##A).data.T._ph_##V)); \
+	cchr_propstr_##V##_t_free(&(dcls_get(_global_runtime.store,A).data.T._ph_##V)); \
 }
 #define CSM_CB_FPH_S
 
 /* after a killself should always be a CSM_END */
 #define CSM_KILLSELF(TYPE) { \
 	if (pid_self_!=DCLS_EMPTY_PID) { \
-	    CSM_KILL(self_,TYPE) \
+	    CSM_KILL_(pid_self_,TYPE) \
 	} \
 }
 
-#define CSM_KILL(VAR,TYPE) { \
-	CSM_FMTOUT("kill pid=%s(%i) - start",#VAR,(int)pid_##VAR); \
-	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,VAR);) \
-	cchr_unindex_##TYPE(pid_##VAR); \
+#define CSM_KILL(VAR,NS,TYPE) CSM_KILL_(CSM_PID(VAR,NS),TYPE)
+	
+#define CSM_KILL_(PID,TYPE) { \
+	CSM_FMTOUT("kill pid=%s(%i) - start",#PID,(int)(PID)); \
+	CSM_PROP(RULEHOOKS_##TYPE(CSM_CB_FPH,PID);) \
+	cchr_unindex_##TYPE(PID); \
 	KILL_##TYPE(VAR); \
-	dcls_free(_global_runtime.store,pid_##VAR); \
-	CSM_FMTOUT("kill pid=%s(%i) - end",#VAR,(int)pid_##VAR); \
+	dcls_free(_global_runtime.store,PID); \
+	CSM_FMTOUT("kill pid=%s(%i) - end",#PID,(int)(PID)); \
 }
 
-#define CSM_DESTRUCT_PID(TYPE,PID) DESTRUCT_##TYPE CSM_CB_DPH_F(TYPE,PID)
-#define CSM_CB_DPH_F(TYPE,PID) (ARGLIST_##TYPE(CSM_CB_DPH,TYPE,PID))
+#define CSM_DESTRUCT_PID(TYPE,PID,NS) DESTRUCT_##TYPE CSM_CB_DPH_F(TYPE,PID,NS)
+#define CSM_CB_DPH_F(TYPE,PID,NS) (ARGLIST_##TYPE(CSM_CB_DPH,TYPE,PID,NS))
 #define CSM_CB_DPH_S ,
-#define CSM_CB_DPH_D(ARG,TYPE,CON,PID) CSM_LARG(CON,PID,ARG)
+#define CSM_CB_DPH_D(ARG,TYPE,CON,PID,NS) CSM_LARG(CON,PID,NS,ARG)
 
 #define CSM_DESTRUCT_SELF(TYPE) DESTRUCT_##TYPE CSM_CB_DSH_F(TYPE)
 #define CSM_CB_DSH_F(TYPE) (ARGLIST_##TYPE(CSM_CB_DSH,TYPE))
@@ -439,12 +491,16 @@
 #define CSM_DESTRUCT(TYPE,...) DESTRUCT_##TYPE(__VA_ARGS__)
 #define CSM_DESTRUCTE(TYPE) DESTRUCT_##TYPE()
 
-#define CSM_LOOP(TYPE,VAR,CODE) { \
+#define CSM_DECPID(VAR,CB,...) CB##_D(cchr_id_t,pid_##VAR,__VA_ARGS__)
+#define CSM_DECID(VAR,CB,...) CB##_D(cchr_id_t,id_##VAR,__VA_ARGS__)
+#define CSM_DECLOOP(VAR,CB,...) dcls_dec_iterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
+
+#define CSM_LOOP(TYPE,VAR,NS,CODE) { \
 	CSM_FMTOUT("loop over %s in %s:",#TYPE,#VAR); \
-	dcls_iter(_global_runtime.store,pid_##VAR,CCHR_CONS_TYPE_##TYPE,{ \
+	dcls_iterx(_global_runtime.store,CSM_PID(VAR,NS),CSM_VAR(iter_##VAR,NS),CCHR_CONS_TYPE_##TYPE,{ \
 	        __label__ csm_loop_##VAR; \
-		cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
-		CSM_FMTOUT("inside loop (over %s in %s): pid=%i",#TYPE,#VAR,pid_##VAR); \
+		CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
+		CSM_FMTOUT("inside loop (over %s in %s@%s): pid=%i",#TYPE,#VAR,#NS,CSM_PID(VAR,NS)); \
 		{ \
 		  CODE \
 		} \
@@ -452,18 +508,20 @@
 	}) \
 }
 
-#define CSM_LOOPNEXT(VAR) goto csm_loop_##VAR;
-#define CSM_DEFIDXVAR(CON,HASH,VAR) cchr_contbl_##CON##_##HASH##_t _idxvar_##VAR;
-#define CSM_SETIDXVAR(CON,HASH,VAR,NAM,ARG) { _idxvar_##VAR.key.NAM = (ARG); CSM_FMTOUT("in setIDXVAR: VAR=%s NAM=%s ARG=%i",#VAR,#NAM,ARG);}
+#define CSM_LOOPNEXT(VAR,NS) goto csm_loop_##VAR;
+// #define CSM_DEFIDXVAR(CON,HASH,VAR,NS) cchr_contbl_##CON##_##HASH##_t idxvar_##VAR;
+#define CSM_IDXVAR(CON,HASH,VAR,NS,NAM,ARG) { CSM_VAR(idxvar_##VAR.key.NAM,NS) = (ARG); CSM_FMTOUT("in setIDXVAR: VAR=%s@%s NAM=%s ARG=%i",#VAR,#NS,#NAM,ARG);}
 
-#define CSM_IDXLOOP(CON,HASH,VAR,CODE) { \
-	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
-	if (_idx_##VAR) { \
-	  CSM_FMTOUT("in idxloop (%s.%s var=%s)",#CON,#HASH,#VAR); \
-	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&(_idx_##VAR->val)); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&(_idx_##VAR->val),_idxlst_##VAR) ) { \
+#define CSM_DECIDXLOOP(VAR,CB,CON,HASH,...) CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__) CB##_S CB##_D(cchr_contbl_##CON##_##HASH##_t *,idx_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_idxlist_t *,idxlst_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_contbl_##CON##_##HASH##_t,idxvar_##VAR,__VA_ARGS__)
+
+#define CSM_IDXLOOP(CON,HASH,VAR,NS,CODE) { \
+	CSM_VAR(idx_##VAR,NS)=cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&CSM_VAR(idxvar_##VAR,NS)); \
+	if (CSM_VAR(idx_##VAR,NS)) { \
+	  CSM_FMTOUT("in idxloop (%s.%s var=%s@%s)",#CON,#HASH,#VAR,#NS); \
+	  for (CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(&(CSM_VAR(idx_##VAR,NS)->val)); CSM_VAR(idxlst_##VAR,NS) != NULL; CSM_VAR(idxlst_##VAR,NS)=cchr_htdc_t_next(&(CSM_VAR(idx_##VAR,NS)->val),CSM_VAR(idxlst_##VAR,NS)) ) { \
 	    __label__ csm_loop_##VAR; \
-            cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
-	    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
+	    CSM_PID(VAR,NS) = CSM_VAR(idxlst_##VAR,NS)->pid; \
+	    CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
             { \
 	      CODE \
             } \
@@ -472,127 +530,161 @@
 	} \
 }
 
-#define CSM_IDXUNILOOP(CON,HASH,VAR,CODE) { \
-	cchr_contbl_##CON##_##HASH##_t *_idx_##VAR = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&_idxvar_##VAR); \
-	if (_idx_##VAR) { \
-	  CSM_FMTOUT("in IDXUNILOOP (%s.%s var=%s)",#CON,#HASH,#VAR); \
-	  cchr_htdc_t _idxcopy_##VAR; \
-	  cchr_htdc_t_copy(&(_idx_##VAR->val),&_idxcopy_##VAR); \
-	  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
+#define CSM_DECIDXUNILOOP(VAR,CB,CON,HASH,...) CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__) CB##_S CB##_D(cchr_contbl_##CON##_##HASH##_t *,idx_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_idxlist_t *,idxlst_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_htdc_t,idxcopy_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_contbl_##CON##_##HASH##_t,idxvar_##VAR,__VA_ARGS__)
+
+#define CSM_IDXUNILOOP(CON,HASH,VAR,NS,CODE) { \
+	CSM_VAR(idx_##VAR,NS) = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&CSM_VAR(idxvar_##VAR,NS)); \
+	if (CSM_VAR(idx_##VAR,NS)) { \
+	  CSM_FMTOUT("in IDXUNILOOP (%s.%s var=%s@%s)",#CON,#HASH,#VAR,#NS); \
+	  cchr_htdc_t_copy(&(CSM_VAR(idx_##VAR,NS)->val),&CSM_VAR(idxcopy_##VAR,NS)); \
+	  for (CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(&CSM_VAR(idxcopy_##VAR,NS)); CSM_VAR(idxlst_##VAR,NS) != NULL; CSM_VAR(idxlst_##VAR,NS)=cchr_htdc_t_next(&CSM_VAR(idxcopy_##VAR,NS),CSM_VAR(idxlst_##VAR,NS)) ) { \
 	    __label__ csm_loop_##VAR; \
-            cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
-	    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
-            if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
+	    CSM_PID(VAR,NS) = CSM_VAR(idxlst_##VAR,NS)->pid; \
+	    CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
+            if (CSM_ALIVEPID(CSM_PID(VAR,NS)) && (CSM_IDOFPID(CSM_PID(VAR,NS))==CSM_VAR(idxlst_##VAR,NS)->id)) { \
 	      CODE \
             } \
 	    csm_loop_##VAR: {} \
 	  } \
-          CSM_UNIEND(CON,VAR) \
+          CSM_UNIEND(CON,VAR,NS) \
 	} \
 }
 
-#define CSM_UNIEND(CON,VAR) {CSM_FMTOUT("UNIEND con=%s var=%s",#CON,#VAR); cchr_htdc_t_freecopy(&_idxcopy_##VAR); }
+#define CSM_UNIEND(CON,VAR,NS) {CSM_FMTOUT("UNIEND con=%s var=%s@%s",#CON,#VAR,#NS); cchr_htdc_t_freecopy(&CSM_VAR(idxcopy_##VAR,NS)); }
 
-#define CSM_LOGLOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
-  cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
-  CSM_FMTOUT("in LOGLOOP (%s;%s var=%s)",#CON,#ENT,#VAR); \
-  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(_log_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(_log_##VAR,_idxlst_##VAR) ) { \
+#define CSM_DECLOGLOOP(VAR,CB,...) CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__) CB##_S CB##_D(cchr_htdc_t *,log_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_idxlist_t *,idxlst_##VAR,__VA_ARGS__)
+
+#define CSM_LOGLOOP(CON,VAR,NS,ENT,TYPE,ARG,CODE) { \
+  CSM_VAR(log_##VAR,NS)=&(TYPE##_getextrap(ARG)->ENT); \
+  CSM_FMTOUT("in LOGLOOP (%s;%s var=%s@%s)",#CON,#ENT,#VAR,#NS); \
+  for (CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(CSM_VAR(log_##VAR,NS)); CSM_VAR(idxlst_##VAR,NS) != NULL; CSM_VAR(idxlst_##VAR,NS)=cchr_htdc_t_next(CSM_VAR(log_##VAR,NS),CSM_VAR(idxlst_##VAR,NS)) ) { \
     __label__ csm_loop_##VAR; \
-    cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
-    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
+    CSM_PID(VAR,NS)=CSM_VAR(idxlst_##VAR,NS)->pid; \
+    CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
     { \
-      CSM_FMTOUT("in LOGLOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
+      CSM_FMTOUT("in LOGLOOP (%s;%s var=%s@%s): pid=%i id=%i",#CON,#ENT,#VAR,#NS,CSM_PID(VAR,NS),CSM_IDOFPID(CSM_PID(VAR,NS))); \
       CODE \
     } \
     csm_loop_##VAR: {} \
   } \
 }
 
-#define CSM_LOGUNILOOP(CON,VAR,ENT,TYPE,ARG,CODE) { \
-  cchr_htdc_t *_log_##VAR=&(TYPE##_getextrap(ARG)->ENT); \
-  CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s)",#CON,#ENT,#VAR); \
-  cchr_htdc_t _idxcopy_##VAR; \
-  cchr_htdc_t_copy(_log_##VAR,&_idxcopy_##VAR); \
-  for (cchr_idxlist_t *_idxlst_##VAR = cchr_htdc_t_first(&_idxcopy_##VAR); _idxlst_##VAR != NULL; _idxlst_##VAR=cchr_htdc_t_next(&_idxcopy_##VAR,_idxlst_##VAR) ) { \
+#define CSM_DECLOGUNILOOP(VAR,CB,...) CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__) CB##_S CB##_D(cchr_htdc_t *,log_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_idxlist_t *,idxlst_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_htdc_t,idxcopy_##VAR,__VA_ARGS__)
+
+#define CSM_LOGUNILOOP(CON,VAR,NS,ENT,TYPE,ARG,CODE) { \
+  CSM_VAR(log_##VAR,NS)=&(TYPE##_getextrap(ARG)->ENT); \
+  CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s@%s)",#CON,#ENT,#VAR,#NS); \
+  cchr_htdc_t_copy(CSM_VAR(log_##VAR,NS),&CSM_VAR(idxcopy_##VAR,NS)); \
+  for (CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(&CSM_VAR(idxcopy_##VAR,NS)); CSM_VAR(idxlst_##VAR,NS) != NULL; CSM_VAR(idxlst_##VAR,NS)=cchr_htdc_t_next(&CSM_VAR(idxcopy_##VAR,NS),CSM_VAR(idxlst_##VAR,NS)) ) { \
     __label__ csm_loop_##VAR; \
-    cchr_id_t pid_##VAR = _idxlst_##VAR->pid; \
-    cchr_id_t id_##VAR=CSM_IDOFPID(VAR); \
-    if (CSM_ALIVEPID(VAR) && (CSM_IDOFPID(VAR)==_idxlst_##VAR->id)) { \
-      CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s): pid=%i id=%i",#CON,#ENT,#VAR,pid_##VAR,CSM_IDOFPID(VAR)); \
+    CSM_PID(VAR,NS)=CSM_VAR(idxlst_##VAR,NS)->pid; \
+    CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
+    if (CSM_ALIVEPID(CSM_PID(VAR,NS)) && (CSM_IDOFPID(CSM_PID(VAR,NS))==CSM_VAR(idxlst_##VAR,NS)->id)) { \
+      CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s@%s): pid=%i id=%i",#CON,#ENT,#VAR,#NS,CSM_PID(VAR,NS),CSM_IDOFPID(CSM_PID(VAR,NS))); \
       CODE \
     } \
     csm_loop_##VAR: {} \
   } \
-  CSM_UNIEND(CON,VAR) \
+  CSM_UNIEND(CON,VAR,NS) \
 }
 
 #define CSM_END { \
-	CSM_DEBUG( \
-		_global_runtime.debugindent--; \
-		CSM_STROUT("end fire"); \
-	) \
-	return; \
+	goto fire_end; \
 }
 
-#define CSM_LARG(TYPE,VAR,NAME) (dcls_get(_global_runtime.store,pid_##VAR).data.TYPE.NAME)
+#define CSM_PARG(TYPE,PID,NAME) (dcls_get(_global_runtime.store,PID).data.TYPE.NAME)
+#define CSM_LARG(TYPE,VAR,NS,NAME) CSM_PARG(TYPE,CSM_PID(VAR,NS),NAME)
+
 #define CSM_MAKE(TYPE) { \
-	if (doadd && pid_self_==DCLS_EMPTY_PID) { \
+	if (CSM_CVAR(doadd,TYPE) && pid_self_==DCLS_EMPTY_PID) { \
 		pid_self_=cchr_make_entry(CCHR_CONS_TYPE_##TYPE); \
 		ARGLIST_##TYPE(CSM_CB_MAKSA,TYPE); \
 		RULEHOOKS_##TYPE(CSM_CB_PHI,); \
 		CSM_PRINTF("make ",TYPE); \
 	} \
-	oldid=CSM_IDOFPID(self_); \
-	oldgen=CSM_GENOFPID(self_); \
+	CSM_CVAR(oldid,TYPE)=CSM_IDOFPID(pid_self_); \
+	CSM_CVAR(oldgen,TYPE)=CSM_GENOFPID(pid_self_); \
 }
 
 /* callback macro for constraint suspension argument setting */ 
 #define CSM_CB_MAKSA_S 
-#define CSM_CB_MAKSA_D(NAME,TYPE,CON) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = NAME ;
+#define CSM_CB_MAKSA_D(NAME,TYPE,CON) dcls_get(_global_runtime.store,pid_self_).data.CON.NAME = CSM_ARG(CON,NAME) ;
 
 #define CSM_CB_PHI_D(T,V,A) CSM_PROP( \
 	cchr_propstr_##V##_t_init(&(dcls_get(_global_runtime.store,pid_self_).data.T._ph_##V)); \
 )
 #define CSM_CB_PHI_S
 
-#define CSM_IDOFPID(PID) (dcls_id(_global_runtime.store,pid_##PID))
-#define CSM_GENOFPID(PID) (dcls_get(_global_runtime.store,pid_##PID).gen_num)
-#define CSM_ALIVEPID(PID) (dcls_used(_global_runtime.store,pid_##PID))
+#define CSM_IDOFPID(PID) (dcls_id(_global_runtime.store,PID))
+#define CSM_GENOFPID(PID) (dcls_get(_global_runtime.store,PID).gen_num)
+#define CSM_ALIVEPID(PID) (dcls_used(_global_runtime.store,PID))
 
-#define CSM_DEADSELF(CODE) CSM_IF((!CSM_ALIVEPID(self_) || CSM_IDOFPID(self_)!=oldid || CSM_GENOFPID(self_)!=oldgen),CODE)
-#define CSM_DEAD(PID,CODE) CSM_IF((!CSM_ALIVEPID(PID) || CSM_IDOFPID(PID)!=id_##PID),CODE)
+#define CSM_DEADSELF(TYPE,CODE) CSM_IF((!CSM_ALIVEPID(pid_self_) || CSM_IDOFPID(pid_self_)!=CSM_CVAR(oldid,TYPE) || CSM_GENOFPID(pid_self_)!=CSM_CVAR(oldgen,TYPE)),CODE)
+#define CSM_DEAD(PID,NS,CODE) CSM_IF((!CSM_ALIVEPID(CSM_PID(PID,NS)) || CSM_IDOFPID(CSM_PID(PID,NS))!=CSM_ID(PID,NS)),CODE)
+
+#define CSM_TAILFIRE(CON) { \
+  ds=0; \
+  CSM_FMTOUT("tail fire %s | sp=%i ds=0",#CON,sp) \
+  CSM_DEBUG( \
+    _global_runtime.debugindent--; \
+  ) \
+  goto fire_##CON; \
+}
+
+/*#define CSM_TAILFIRE CSM_FIRE*/
+
+#define CSM_FIRE(CON) { \
+  __label__ rp; \
+  ((cchr_stackframe_t*)(stack+sp))->rp=(&&rp); \
+  ds = sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##CON##_t)+sizeof(cchr_cls_##CON##_t); \
+  CSM_FMTOUT("goto fire %s | sp=%i ds=%i",#CON,sp,ds) \
+  goto fire_##CON; \
+  rp: {} \
+  CSM_FMTOUT("resume from fire %s | sp=%i",#CON,sp) \
+}
 
 #define CSM_ADD(CON,...) { \
-	cchr_cont_add_##CON(args,__VA_ARGS__); \
-        cchr_fire(args); \
+  cchr_cont_add_##CON(&args,__VA_ARGS__); \
+  CSM_FIRE(CON) \
 }
+	
 #define CSM_ADDE(CON) { \
-	cchr_cont_add_##CON(args); \
-        cchr_fire(args); \
+  cchr_cont_add_##CON(&args); \
+  CSM_FIRE(CON); \
 }
+
 #define CSM_TADD(CON,...) { \
-	cchr_cont_add_##CON(args,__VA_ARGS__); \
-	goto fire_##CON; \
+  cchr_cont_add_##CON(&args,__VA_ARGS__); \
+  CSM_TAILFIRE(CON); \
+  CSM_END; \
 }
 #define CSM_TADDE(CON) { \
-	cchr_cont_add_##CON(args); \
-	goto fire_##CON; \
+  cchr_cont_add_##CON(&args); \
+  CSM_TAILFIRE(CON); \
+  CSM_END; \
 }
 #define CSM_NEEDSELF(CON) { \
-	if (doadd) { \
+	if (CSM_CVAR(doadd,CON)) { \
 		CSM_MAKE(CON) \
 		CSM_FMTOUT("store pid=%i - begin",(int)pid_self_); \
 		cchr_store(pid_self_,CCHR_CONS_TYPE_##CON); \
 		cchr_index_##CON(pid_self_); \
 		ADD_##CON(self_); \
-		doadd=0; \
+		CSM_CVAR(doadd,CON)=0; \
 		CSM_FMTOUT("store pid=%i - end",(int)pid_self_); \
 	} \
 }
-#define CSM_DEFLOCAL(TYPE,VAR,EXPR) TYPE local_##VAR = EXPR;
-#define CSM_DECLOCAL(TYPE,VAR) TYPE local_##VAR;
-#define CSM_IMMLOCAL(TYPE,VAR,EXPR) CSM_DEFLOCAL(TYPE const,VAR,EXPR)
-#define CSM_LOCAL(VAR) (local_##VAR)
+
+#define NSPACE_local(VAR) CSM_SPACE_LOCAL(VAR)
+
+#define CSM_SPACE_FIRE(NS,CON,VAR) ((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))->NS.VAR
+#define CSM_SPACE_LOCAL(VAR) VAR
+
+#define CSM_CVAR(VAR,CON) ((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))->VAR
+#define CSM_VAR(VAR,NS) NSPACE_##NS(VAR)
+#define CSM_LOCAL(VAR,NS) (CSM_VAR(local_##VAR,NS))
+#define CSM_DEFLOCAL(VAR,NS,EXPR) {CSM_LOCAL(VAR,NS)=(EXPR);}
+#define CSM_DECLOCAL(TYPE,VAR,CB,...) CB##_D(TYPE,local_##VAR,__VA_ARGS__)
 
 
 #define CSM_MESSAGE(...) { \
@@ -602,12 +694,14 @@
 	 __VA_ARGS__ \
 }
 
-#define CSM_PID(PID) (pid_##PID)
+#define CSM_PID_SELF(NS) pid_self_
+#define CSM_PID(VAR,NS) CSM_VAR(pid_##VAR,NS)
+#define CSM_ID(VAR,NS) CSM_VAR(id_##VAR,NS)
 
 #define CSM_HISTCHECK(RULE,CODE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HC,__VA_ARGS__,RULE,CODE)) CSM_NOPROP({CODE})
 #define CSM_CB_HC_I(HOOK,RULE,CODE,COND) { \
 	int ok_=1; \
-	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
+	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,HOOK); \
 	cchr_propent_##RULE##_t ent_={.used=1}; \
 	COND; \
 	if (cchr_propstr_##RULE##_t_have(&(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE),&ent_)) { \
@@ -617,21 +711,21 @@
 		CODE \
 	} \
 }
-#define CSM_CB_HC_D(PID,HOOK,POS,RULE,CODE) ent_.hist[(POS)]=CSM_IDOFPID(PID);
+#define CSM_CB_HC_D(PID,HOOK,POS,NS,RULE,CODE) ent_.hist[(POS)]=CSM_IDOFPID(PID);
 #define CSM_CB_HC_S(RULE,CODE)
 
 #define CSM_HISTADD(RULE,...) CSM_PROP(PROPHIST_##RULE(CSM_CB_HA,__VA_ARGS__,RULE))
 #define CSM_CB_HA_I(HOOK,RULE,COND) { \
-	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,pid_##HOOK); \
-	CSM_FMTOUT("histadd pre: [pid=%i cnt=%i id=%i]",pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._ph_##RULE.used,CSM_IDOFPID(HOOK)); \
+	cchr_entry_t *p_=dcls_ptr(_global_runtime.store,HOOK); \
+	CSM_FMTOUT("histadd pre: [pid=%i cnt=%i id=%i]",HOOK,p_->data.PROPHIST_HOOK_##RULE._ph_##RULE.used,CSM_IDOFPID(HOOK)); \
 	cchr_propent_##RULE##_t ent_={.used=1}; \
 	CSM_FMTOUTX("histadd %s (",0,#RULE); \
 	COND; \
-	CSM_FMTOUTX(") to %s:%i [pid=%i cnt=%i]",2,#HOOK,CSM_IDOFPID(HOOK),pid_##HOOK,p_->data.PROPHIST_HOOK_##RULE._ph_##RULE.used); \
+	CSM_FMTOUTX(") to %s:%i [pid=%i cnt=%i]",2,#HOOK,CSM_IDOFPID(HOOK),HOOK,p_->data.PROPHIST_HOOK_##RULE._ph_##RULE.used); \
 	cchr_propstr_##RULE##_t_set(&(p_->data.PROPHIST_HOOK_##RULE._ph_##RULE),&ent_); \
 }
 #define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[(POS)]=CSM_IDOFPID(PID); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,CSM_IDOFPID(PID)); );
-#define CSM_CB_HA_S(RULE)
+#define CSM_CB_HA_S(NS,RULE)
 
 /***** additional helper macro's *****/
 

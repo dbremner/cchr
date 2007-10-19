@@ -13,8 +13,10 @@ ifeq ($(MODE),debugopt)
 else
   ifeq ($(MODE),debug)
     DEFS := -DCSM_CONF_DEBUG -DDEBUG
-    CFLAGS := -O0 -ggdb3 $(DEFS) -fmudflap
-    LDFLAGS := -lmudflap
+    CFLAGS := -O0 -ggdb3 $(DEFS) 
+#    CFLAGS := -O0 -ggdb3 $(DEFS) -fmudflap
+    LDFLAGS := 
+#    LDFLAGS := -lmudflap
   else
     ifeq ($(MODE),efence)
       DEFS := -DUSE_EFENCE
@@ -54,6 +56,10 @@ primes.p: primes.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o primes.a primes.c
 	time ./primes.a 5000 5 >/dev/null
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o primes.p primes.c
+primes.prep: primes.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o primes.prep primes.prep.c
+primes.prep.c: primes.c Makefile
+	cpp -P $(DEFS) <primes.c | indent -kr -l127 >primes.prep.c
 
 cslv: cslv.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) -lm $(LDFLAGS) -o cslv cslv.c

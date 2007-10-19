@@ -8,7 +8,7 @@ cchr {
   constraint gcd(uint64_t) option(fmt,"gcd(%llu)",$1);
 
   triv @ gcd(0ULL) <=> true;
-  dec @ gcd(N) \ gcd(M) <=> M>=N | uint64_t V=M-N, gcd(V);
+  dec @ gcd(N) \ gcd(M) <=> M>=N | uint64_t V=M-N, /*{printf("[val=%i]\n",(int)V);},*/ gcd(V);
 }
 
 int main(int argc, char **argv) {

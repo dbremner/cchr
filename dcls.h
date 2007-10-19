@@ -56,17 +56,29 @@ typedef uint32_t dcls_pid_t;
 #define dcls_iter_hasnext(var,pid,type) ((pid) != (type))
 #define dcls_iter_next(var,pid) ((var)._d[(pid)]._next)
 
+typedef struct {
+  dcls_pid_t nid,npid;
+} dcls_iter_t;
+
+#define dcls_dec_iterx(ns,CB,...) CB##_D(dcls_iter_t,ns,__VA_ARGS__)
+
 #define dcls_safeiter(var,pid,type,code) { \
-  dcls_pid_t pid=dcls_iter_first((var),(type)); \
+  dcls_pid_t pid; \
+  dcls_iter_t iter; \
+  dcls_safeiterx(var,pid,iter,type,code); \
+}
+  
+#define dcls_safeiterx(var,pid,ns,type,code) { \
+  pid=dcls_iter_first((var),(type)); \
   if (dcls_iter_hasnext((var),(pid),(type))) do { \
-     dcls_pid_t _npid=dcls_iter_next(var,pid); \
-     dcls_pid_t _nid=dcls_id(var,_npid); \
+     (ns).npid=dcls_iter_next(var,pid); \
+     (ns).nid=dcls_id(var,(ns).npid); \
      { \
        code \
      } \
-     if (!dcls_iter_hasnext((var),_npid,(type))) break; \
-     if (dcls_used(var,_npid) && dcls_id(var,_npid)==_nid) { \
-       (pid)=_npid;\
+     if (!dcls_iter_hasnext((var),(ns).npid,(type))) break; \
+     if (dcls_used(var,(ns).npid) && dcls_id(var,(ns).npid)==(ns).nid) { \
+       (pid)=(ns).npid;\
      } else { \
        (pid)=dcls_iter_first((var),(type)); \
      } \
@@ -74,6 +86,7 @@ typedef uint32_t dcls_pid_t;
 }
 
 #define dcls_iter dcls_safeiter
+#define dcls_iterx dcls_safeiterx
 
 #define dcls_used(var,pid) ((var)._d[(pid)]._prev != DCLS_EMPTY_PID)
 

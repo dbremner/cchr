@@ -345,20 +345,24 @@ void static csm_generate_expr(sem_expr_t *expr,csm_varuse_t *tbl,output_t *out) 
   }
 }
 
-void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,output_t *out,sem_out_t *so,int tail, char *ns, csm_nsdef_t *nsd) {
+void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,output_t *out,sem_out_t *so,int tail, char *ns, char *con, csm_nsdef_t *nsd) {
   switch (so->type) {
     case SEM_OUT_TYPE_CON: {
       char coo[256];
       csm_constr_getname(chr,so->data.con.constr,coo,256);
+      output_fmt(out,"CSM_SAVE(%s,%s) \\\n",con,ns);
       if (alist_len(so->data.con.args)==0) {
         output_fmt(out,tail ? "CSM_TADDE(%s) \\\n" : "CSM_ADDE(%s) \\\n",coo);
       } else {
-        output_fmt(out,tail ? "CSM_TADD(%s" : "CSM_ADD(%s",coo);					
+        output_fmt(out,tail ? "CSM_TADD(%s" : "CSM_ADD(%s",coo);
         for (int j=0; j<alist_len(so->data.con.args); j++) {
           output_fmt(out,",");
           csm_generate_expr(alist_ptr(so->data.con.args,j),tbl,out);
         }
         output_fmt(out,") \\\n");
+      }
+      if (!tail) {
+        output_fmt(out,"CSM_LOAD(%s,%s) \\\n",con,ns);
       }
       break;
     }
@@ -388,7 +392,7 @@ void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,
   }
 }
 
-void static csm_generate_body(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,output_t *out, int rem, char *ns, csm_nsdef_t *nsd) {
+void static csm_generate_body(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,output_t *out, int rem, char *ns, char *con, csm_nsdef_t *nsd) {
   int l=0;
   int *conocc_td=malloc(sizeof(int)*alist_len(rule->head[SEM_RULE_LEVEL_REM]));
   int ntd=0;
@@ -424,7 +428,7 @@ void static csm_generate_body(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl
     if (l==alist_len(rule->out[1])) break;
     sem_out_t *so=alist_ptr(rule->out[1],l);
     l++;
-    csm_generate_out(chr,rule,tbl,out,so,rem && ntd==0 && alist_len(rule->out[1])==l,ns,nsd);
+    csm_generate_out(chr,rule,tbl,out,so,rem && ntd==0 && alist_len(rule->out[1])==l,ns,con,nsd);
   }
   free(conocc_td);
 }
@@ -529,7 +533,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
       }
       case GIO_TYPE_OUT: {
         sem_out_t *so=alist_ptr(ru->out[0],entry->data.out);
-	csm_generate_out(cchr,ru,tbl_c,out,so,0,buf,&nsdef);
+	csm_generate_out(cchr,ru,tbl_c,out,so,0,buf,buf2,&nsdef);
 	break;
       }
       case GIO_TYPE_IDXITER: {
@@ -628,7 +632,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
   }
   csm_destruct_vartable_rule(ru,tbl_c); /* destruct the vartable and recreate it, so the body generation starts with zeroed varuses */
   tbl_c=csm_generate_vartable_rule(cchr,ru,rem,ro->pos,buf,1);
-  csm_generate_body(cchr,ru,tbl_c,out,rem,buf,&nsdef);
+  csm_generate_body(cchr,ru,tbl_c,out,rem,buf,buf2,&nsdef);
   
   int cond=1;
   if (cond) { /* check for active constraint to be alive */

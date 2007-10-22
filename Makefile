@@ -1,6 +1,6 @@
 CC := gcc
 CFLAGS := -Wall -pipe -std=c99 -pedantic -march=nocona -m32
-LDFLAGS := -lm
+LDFLAGS := -lm -m32
 
 INTDIR := intermediate
 

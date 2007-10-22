@@ -1000,6 +1000,7 @@ int static sem_rule_generate(sem_cchr_t *out,rule_t *in) {
 		sem_rule_hook(out,alist_len(out->rules)-1);
 		return 1;
 	} else {
+		fprintf(stderr,"Rule '%s' failed\n",n.name ? n.name : "<anonymous>");
 		sem_rule_destruct(&n);
 		return 0;
 	}

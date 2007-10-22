@@ -1,8 +1,8 @@
 CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona
 DEFS :=
 
-MODE := normal
-#MODE := debug
+#MODE := normal
+MODE := debug
 #MODE := gdb
 #MODE := debugopt
 #MODE := efence

@@ -34,7 +34,7 @@ cchr {
   
   extern alt,eq;
 
-  constraint tak(int,int,int,log_int_t) option(destr,{del($4);}) option(init,{copy($4);}) option(fmt,"tak(%lli,%lli,%lli,%p)");
+  constraint tak(int,int,int,log_int_t) option(destr,{del($4);}) option(init,{copy($4);}) option(fmt,"tak(%i,%i,%i,%p)",$1,$2,$3,$4);
 
   takid @ tak(X,Y,Z,A1) \ tak(X,Y,Z,A2) <=> { set(A1,A2); };
   

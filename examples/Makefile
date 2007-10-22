@@ -3,9 +3,9 @@ DEFS :=
 
 MODE := normal
 #MODE := debug
+#MODE := gdb
 #MODE := debugopt
 #MODE := efence
-#MODE := gdb
 
 ifeq ($(MODE),debugopt)
   DEFS := -DCSM_CONF_DEBUG -DDEBUG

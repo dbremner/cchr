@@ -350,7 +350,7 @@ void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,
     case SEM_OUT_TYPE_CON: {
       char coo[256];
       csm_constr_getname(chr,so->data.con.constr,coo,256);
-      output_fmt(out,"CSM_SAVE(%s,%s) \\\n",con,ns);
+      if (!tail) output_fmt(out,"CSM_SAVE(%s,%s) \\\n",con,ns);
       if (alist_len(so->data.con.args)==0) {
         output_fmt(out,tail ? "CSM_TADDE(%s) \\\n" : "CSM_ADDE(%s) \\\n",coo);
       } else {
@@ -361,9 +361,7 @@ void static csm_generate_out(sem_cchr_t *chr,sem_rule_t *rule,csm_varuse_t *tbl,
         }
         output_fmt(out,") \\\n");
       }
-      if (!tail) {
-        output_fmt(out,"CSM_LOAD(%s,%s) \\\n",con,ns);
-      }
+      if (!tail) output_fmt(out,"CSM_LOAD(%s,%s) \\\n",con,ns);
       break;
     }
     case SEM_OUT_TYPE_EXP: {

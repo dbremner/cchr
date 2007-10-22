@@ -145,6 +145,10 @@
 #define CSM_CB_DTDAL_S
 #define CSM_CB_DTDAL_D(NAME,TYPE,...) TYPE NAME;
 
+/* callback macro for the arguments of a constraint */
+#define CSM_CB_DTDALI_S
+#define CSM_CB_DTDALI_D(NAME,TYPE,...) TYPE cls_##NAME;
+
 /* callback macro to copy the arguments of a constraint into local vars */
 #define CSM_CB_DTDAC_S
 #define CSM_CB_DTDAC_D(NAME,TYPE,CON) CSM_CVAR(NAME,CON)=args.data.CON.NAME;
@@ -275,9 +279,10 @@
 /* callback macro for declaration of fire functions */  
 #define CSM_CB_FFD_S
 #define CSM_CB_FFD_D(NAME) \
-  typedef union { \
-    RULELIST_##NAME(CSM_CB_FFIDC) \
-  } cchr_bls_##NAME##_t; \
+  RULELIST_##NAME(CSM_CB_FFIDC) \
+  typedef struct { \
+    RULELIST_##NAME(CSM_CB_FFIDCI) \
+  } cchr_blsx_##NAME##_t; \
   int static inline cchr_fire_##NAME(cchr_args_t*); \
   void static inline cchr_add_##NAME(ARGLIST_##NAME(CSM_CB_FADAR,)); \
   void static inline cchr_reactivate_##NAME(cchr_id_t); \
@@ -304,17 +309,23 @@
 
 #define CSM_CB_FFIDC_S
 #define CSM_CB_FFIDC_D(NAME) \
-  struct { \
+  typedef struct { \
     NSLIST_##NAME(CSM_CB_FFVDC,) \
-  } NAME;
+  } cchr_bls_##NAME##_t;
+
+#define CSM_CB_FFIDCI_S
+#define CSM_CB_FFIDCI_D(NAME) cchr_bls_##NAME##_t NAME; 
+
+#define CSM_CB_FFIBS_S
+#define CSM_CB_FFIBS_D(TYPE,NAME,...) TYPE bls_##NAME;
 
 /* callback macro for inline code of fire functions */
 #define CSM_CB_FFIC_S
 #define CSM_CB_FFIC_D(NAME) \
   fire_##NAME: { \
-    size_t ssn=sp+ds+sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##NAME##_t)+sizeof(cchr_cls_##NAME##_t); \
-    cchr_cls_##NAME##_t cls; \
-    cchr_bls_##NAME##_t bls; \
+    size_t ssn=sp+ds+sizeof(cchr_stackframe_t)+sizeof(cchr_blsx_##NAME##_t)+sizeof(cchr_cls_##NAME##_t); \
+    ARGLIST_##NAME(CSM_CB_DTDALI,) \
+    int cls_doadd,cls_oldgen,cls_oldid; \
     if (ssn>ss) { \
       ss+=ssn; \
       stack=realloc(stack,ss); \
@@ -432,7 +443,10 @@
 
 /* callback macro for inclusion of constraint-occurrence code in fire functions */
 #define CSM_CB_FFCCO_S
-#define CSM_CB_FFCCO_D(NAME) { CSM_STROUT("try " #NAME); CODELIST_##NAME }
+#define CSM_CB_FFCCO_D(NAME) { \
+  NSLIST_##NAME(CSM_CB_FFIBS,) \
+  CSM_STROUT("try " #NAME); CODELIST_##NAME \
+}
 
 /* callback macro for arguments of code of add functions */
 #define CSM_CB_FFCAA_S ,
@@ -635,15 +649,27 @@
 
 /*#define CSM_TAILFIRE CSM_FIRE*/
 
+#define CSM_CB_FFIBSS_S
+#define CSM_CB_FFIBSS_D(TYPE,NAME,CON,NS) (*((cchr_bls_##NS##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))).NAME=bls_##NAME;
+
+#define CSM_CB_FFIBSL_S
+#define CSM_CB_FFIBSL_D(TYPE,NAME,CON,NS) bls_##NAME=(*((cchr_bls_##NS##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))).NAME;
+
+#define CSM_CB_FFICSS_S
+#define CSM_CB_FFICSS_D(NAME,TYPE,CON) (*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).NAME=cls_##NAME;
+
+#define CSM_CB_FFICSL_S
+#define CSM_CB_FFICSL_D(NAME,TYPE,CON) cls_##NAME=(*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).NAME;
+
 #define CSM_SAVE(CON,NS) { \
-  ds = sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##CON##_t)+sizeof(cchr_cls_##CON##_t); \
-  *((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))=cls; \
-  (*((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t))))=bls; \
+  ds = sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##NS##_t)+sizeof(cchr_cls_##CON##_t); \
+  ARGLIST_##CON(CSM_CB_FFICSS,CON) \
+  NSLIST_##NS(CSM_CB_FFIBSS,CON,NS); \
 }
 
 #define CSM_LOAD(CON,NS) { \
-  cls=*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t))); \
-  bls=(*((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))); \
+  ARGLIST_##CON(CSM_CB_FFICSL,CON) \
+  NSLIST_##NS(CSM_CB_FFIBSL,CON,NS); \
 }
 
 #define CSM_FIRE(CON) { \
@@ -690,11 +716,11 @@
 #define NSPACE_local(VAR) CSM_SPACE_LOCAL(VAR)
 
 //#define CSM_SPACE_FIRE(NS,CON,VAR) ((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))->NS.VAR
-#define CSM_SPACE_FIRE(NS,CON,VAR) bls.NS.VAR
+#define CSM_SPACE_FIRE(NS,CON,VAR) bls_##VAR
 #define CSM_SPACE_LOCAL(VAR) VAR
 
 //#define CSM_CVAR(VAR,CON) ((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))->VAR
-#define CSM_CVAR(VAR,CON) cls.VAR
+#define CSM_CVAR(VAR,CON) cls_##VAR
 #define CSM_VAR(VAR,NS) NSPACE_##NS(VAR)
 #define CSM_LOCAL(VAR,NS) (CSM_VAR(local_##VAR,NS))
 #define CSM_DEFLOCAL(VAR,NS,EXPR) {CSM_LOCAL(VAR,NS)=(EXPR);}

@@ -280,7 +280,7 @@
 #define CSM_CB_FFD_S
 #define CSM_CB_FFD_D(NAME) \
   RULELIST_##NAME(CSM_CB_FFIDC) \
-  typedef struct { \
+  typedef union { \
     RULELIST_##NAME(CSM_CB_FFIDCI) \
   } cchr_blsx_##NAME##_t; \
   int static inline cchr_fire_##NAME(cchr_args_t*); \
@@ -664,11 +664,17 @@
 #define CSM_SAVE(CON,NS) { \
   ds = sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##NS##_t)+sizeof(cchr_cls_##CON##_t); \
   ARGLIST_##CON(CSM_CB_FFICSS,CON) \
+  (*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).doadd=cls_doadd; \
+  (*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).oldgen=cls_oldgen; \
+  (*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).oldid=cls_oldid; \
   NSLIST_##NS(CSM_CB_FFIBSS,CON,NS); \
 }
 
 #define CSM_LOAD(CON,NS) { \
   ARGLIST_##CON(CSM_CB_FFICSL,CON) \
+  cls_doadd=(*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).doadd; \
+  cls_oldgen=(*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).oldgen; \
+  cls_oldid=(*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))).oldid; \
   NSLIST_##NS(CSM_CB_FFIBSL,CON,NS); \
 }
 

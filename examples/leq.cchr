@@ -49,13 +49,17 @@ cchr {
     option(destr,{log_int_t_destruct($1);log_int_t_destruct($2);}) 
     option(fmt,"leq""(#%i,#%i)""[%p,%p]" ,log_int_t_normalize($1)->_id,log_int_t_normalize($2)->_id ,$1,$2)
     option(add,{
-      cchr_idxlist_t nw;nw.pid=$0; 
+      cchr_idxlist_t nw;
+      nw.pid=$0; 
       nw.id=CSM_IDOFPID($0); 
       cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);
+      nw.pid=$0; 
       nw.id=CSM_IDOFPID($0); 
       cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);
+      nw.pid=$0; 
       nw.id=CSM_IDOFPID($0); 
       cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_ra),&nw);
+      nw.pid=$0; 
       nw.id=CSM_IDOFPID($0); 
       cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_ra),&nw);
     })
@@ -91,10 +95,10 @@ void test(int size) {
   fprintf(stderr,"done!\n");
   int aj=0;
   /* following line still causes some problems ... not all constraints get removed */
-  /* cchr_consloop(j,leq_2,{fprintf(stderr,"outch %i (%i,%i)!\n",aj++,log_int_t_getval(cchr_consarg(j,leq_2,1)),log_int_t_getval(cchr_consarg(j,leq_2,2)));}); */
-  /* for (int j=0; j<size; j++) {
+  cchr_consloop(j,leq_2,{fprintf(stderr,"outch %i (%i,%i)!\n",aj++,log_int_t_getval(cchr_consarg(j,leq_2,1)),log_int_t_getval(cchr_consarg(j,leq_2,2)));}); 
+  for (int j=0; j<size; j++) {
     if (!log_int_t_testeq(vars[j],vars[(j+1)%size])) fprintf(stderr,"noteq %i %i\n",j,j+1);
-  } */
+  }
   cchr_runtime_free();
   for (int j=0; j<size; j++) log_int_t_destruct(vars[j]);
   free(vars);

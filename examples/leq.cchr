@@ -92,9 +92,9 @@ void test(int size) {
   int aj=0;
   /* following line still causes some problems ... not all constraints get removed */
   /* cchr_consloop(j,leq_2,{fprintf(stderr,"outch %i (%i,%i)!\n",aj++,log_int_t_getval(cchr_consarg(j,leq_2,1)),log_int_t_getval(cchr_consarg(j,leq_2,2)));}); */
-  for (int j=0; j<size; j++) {
+  /* for (int j=0; j<size; j++) {
     if (!log_int_t_testeq(vars[j],vars[(j+1)%size])) fprintf(stderr,"noteq %i %i\n",j,j+1);
-  }
+  } */
   cchr_runtime_free();
   for (int j=0; j<size; j++) log_int_t_destruct(vars[j]);
   free(vars);

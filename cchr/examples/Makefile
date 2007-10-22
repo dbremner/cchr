@@ -1,11 +1,11 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona 
+CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona
 DEFS :=
 
-#MODE := normal
+MODE := normal
 #MODE := debug
-MODE := gdb
 #MODE := debugopt
 #MODE := efence
+#MODE := gdb
 
 ifeq ($(MODE),debugopt)
   DEFS := -DCSM_CONF_DEBUG -DDEBUG
@@ -116,6 +116,9 @@ gcd.prep.c: cchr_csm.h gcd.c Makefile
 
 dijkstra.prep.c: dijkstra.c ../cchr_csm.h Makefile
 	cpp -P $(DEFS) <dijkstra.c | indent -kr -l127 >dijkstra.prep.c
+
+ram.prep.c: ram.c ../cchr_csm.h Makefile
+	cpp -P $(DEFS) <ram.c | indent -kr -l127 >ram.prep.c
 
 ram.c: ram.cchr bin/cchr Makefile
 	bin/cchr ram.cchr

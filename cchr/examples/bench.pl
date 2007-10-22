@@ -7,8 +7,8 @@ my $BENCHER="./bench.sh";
 my $FACTOR=1.09;
 my $EFACTOR=1.09;
 my $MINTIME=0.000025;
-my $MAXTIME=0.005;
-my $RUNTIME=100;
+my $MAXTIME=10;
+my $RUNTIME=10;
 
 my $AVGTIME=($MINTIME+$MAXTIME)/2;
 
@@ -24,16 +24,16 @@ my %BENCHERS=(
 
 my %SYSTEMS=(
   swi => sub {  my ($prog,@args)=@_; return ('./benchswi.sh',$prog,join(',',@args)); },
-  jchr => sub { my ($prog,@args)=@_; return ('java','-cp','/home/pw/Desktop/KULeuven_JCHR.jar:Java',$prog,@args); },
-#  cchr => sub { my ($prog,@args)=@_; return ("./$prog",@args); },
-#  c => sub {    my ($prog,@args)=@_; return ("C/$prog",@args); }
+#  jchr => sub { my ($prog,@args)=@_; return ('java','-cp','/home/pw/Desktop/KULeuven_JCHR.jar:Java',$prog,@args); },
+  cchr => sub { my ($prog,@args)=@_; return ("./$prog",@args); },
+  c => sub {    my ($prog,@args)=@_; return ("C/$prog",@args); }
 );
 
 my %SYSTBL=(
-#  cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
-#  c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" }
-  jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
   swi =>  {gcd => "gcd", fib => "fib", leq => "leq", primes => "primes2", ram => "ram_simulator", tak => "tak" },
+#  jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
+  cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
+  c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" }
 );
 
 #my %SYSTBL=(
@@ -41,10 +41,10 @@ my %SYSTBL=(
 #);
 
 my %MAX=(
-#  c => {leq => 450, fib => 135000, gcd => 35000000, primes => 350000, ram => 250000000, tak => 3400},
-#  cchr => {ram => 4500, tak => 2000, fib => 25000, gcd => 10000000, primes => 80000, leq => 250},
+  c => {leq => 450, fib => 135000, gcd => 35000000, primes => 350000, ram => 250000000, tak => 3400},
+  cchr => {ram => 4500, tak => 2000, fib => 25000, gcd => 10000000, primes => 80000, leq => 250},
   swi => {gcd => 800, ram => 25000, tak => 500, fib => 750, primes => 14000, leq => 65},
-  jchr => {fib => 10000, leq => 100, primes => 9000, ram => 2500, leq => 850},
+#  jchr => {fib => 10000, leq => 100, primes => 9000, ram => 2500, leq => 850},
 );
 
 sub execBench {

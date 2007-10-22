@@ -313,6 +313,8 @@
 #define CSM_CB_FFIC_D(NAME) \
   fire_##NAME: { \
     size_t ssn=sp+ds+sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##NAME##_t)+sizeof(cchr_cls_##NAME##_t); \
+    cchr_cls_##NAME##_t cls; \
+    cchr_bls_##NAME##_t bls; \
     if (ssn>ss) { \
       ss+=ssn; \
       stack=realloc(stack,ss); \
@@ -633,10 +635,20 @@
 
 /*#define CSM_TAILFIRE CSM_FIRE*/
 
+#define CSM_SAVE(CON,NS) { \
+  ds = sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##CON##_t)+sizeof(cchr_cls_##CON##_t); \
+  *((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))=cls; \
+  (*((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t))))=bls; \
+}
+
+#define CSM_LOAD(CON,NS) { \
+  cls=*((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t))); \
+  bls=(*((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))); \
+}
+
 #define CSM_FIRE(CON) { \
   __label__ rp; \
   ((cchr_stackframe_t*)(stack+sp))->rp=(&&rp); \
-  ds = sizeof(cchr_stackframe_t)+sizeof(cchr_bls_##CON##_t)+sizeof(cchr_cls_##CON##_t); \
   CSM_FMTOUT("goto fire %s | sp=%i ds=%i",#CON,sp,ds) \
   goto fire_##CON; \
   rp: {} \
@@ -677,10 +689,12 @@
 
 #define NSPACE_local(VAR) CSM_SPACE_LOCAL(VAR)
 
-#define CSM_SPACE_FIRE(NS,CON,VAR) ((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))->NS.VAR
+//#define CSM_SPACE_FIRE(NS,CON,VAR) ((cchr_bls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)+sizeof(cchr_cls_##CON##_t)))->NS.VAR
+#define CSM_SPACE_FIRE(NS,CON,VAR) bls.NS.VAR
 #define CSM_SPACE_LOCAL(VAR) VAR
 
-#define CSM_CVAR(VAR,CON) ((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))->VAR
+//#define CSM_CVAR(VAR,CON) ((cchr_cls_##CON##_t*)(stack+sp+sizeof(cchr_stackframe_t)))->VAR
+#define CSM_CVAR(VAR,CON) cls.VAR
 #define CSM_VAR(VAR,NS) NSPACE_##NS(VAR)
 #define CSM_LOCAL(VAR,NS) (CSM_VAR(local_##VAR,NS))
 #define CSM_DEFLOCAL(VAR,NS,EXPR) {CSM_LOCAL(VAR,NS)=(EXPR);}

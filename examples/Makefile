@@ -47,13 +47,13 @@ bin:
 
 gcd.c: gcd.cchr bin/cchr Makefile
 	bin/cchr gcd.cchr
-gcd.p: gcd.c cchr_csm.h Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o gcd.a gcd.c
-	time ./gcd.a 50000000 5 >/dev/null
-	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o gcd.p gcd.c
-
 gcd: gcd.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o gcd gcd.c
+gcd.p: gcd.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o gcd.a gcd.c
+	time ./gcd.a 1 200000000 >/dev/null
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o gcd.p gcd.c
+
 
 primes: primes.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o primes primes.c
@@ -61,7 +61,7 @@ primes.c: primes.cchr bin/cchr Makefile
 	bin/cchr primes.cchr
 primes.p: primes.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o primes.a primes.c
-	time ./primes.a 5000 5 >/dev/null
+	time ./primes.a 32768 >/dev/null
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o primes.p primes.c
 primes.prep: primes.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o primes.prep primes.prep.c
@@ -79,6 +79,10 @@ cslv.prep.c: cslv.c Makefile
 
 fib: fib.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib fib.c
+fib.p: fib.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o fib.a fib.c
+	time ./fib.a 20000
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o fib.p fib.c
 fib.c: fib.cchr bin/cchr Makefile
 	bin/cchr fib.cchr
 fib.c.debug: fib.c cchr_csm.h Makefile
@@ -102,6 +106,14 @@ tak.c: tak.cchr bin/cchr Makefile
 
 leq.c: leq.cchr cchr_csm.h bin/cchr Makefile
 	bin/cchr leq.cchr
+leq: leq.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o leq leq.c
+leq.p: leq.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o leq.a leq.c
+	./leq.a 150
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o leq.p leq.c
+leq.prep: leq.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o leq.prep leq.prep.c
 
 leq.prep.c: leq.c Makefile
 	cpp -P $(DEFS) <leq.c | indent -kr -l127 >leq.prep.c
@@ -119,9 +131,15 @@ dijkstra.prep.c: dijkstra.c ../cchr_csm.h Makefile
 
 ram.prep.c: ram.c ../cchr_csm.h Makefile
 	cpp -P $(DEFS) <ram.c | indent -kr -l127 >ram.prep.c
-
 ram.c: ram.cchr bin/cchr Makefile
 	bin/cchr ram.cchr
+ram: ram.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o ram ram.c
+ram.p: ram.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o ram.a ram.c
+	time ./ram.a 3400
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o ram.p ram.c
+
 
 dijkstra.c: dijkstra.cchr bin/cchr Makefile
 	bin/cchr dijkstra.cchr
@@ -136,20 +154,14 @@ acker.c: acker.cchr bin/cchr Makefile
 tak: tak.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak tak.c
 
-leq: leq.c ../cchr_csm.h Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o leq leq.c
 
 merge: merge.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o merge merge.c
 
-leq.prep: leq.prep.c Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o leq.prep leq.prep.c
 
 fib_topdown.prep: fib_topdown.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown.prep fib_topdown.prep.c
 
-ram: ram.c ../cchr_csm.h Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) -o ram ram.c
 
 acker: acker.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o acker acker.c
@@ -162,6 +174,19 @@ tak2.prep: tak2.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2.prep tak2.prep.c
 tak2: tak2.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o tak2 tak2.c
+tak2.p: tak2.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o tak2.a tak2.c
+	./tak2.a 1000 900 810
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o tak2.p tak2.c
+
+consts.c: consts.cchr bin/cchr Makefile
+	bin/cchr consts.cchr
+consts.prep.c: consts.c Makefile
+	cpp -P $(DEFS) <consts.c | indent -kr -l127 >consts.prep.c
+consts.prep: consts.prep.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -lm -o consts.prep consts.prep.c
+consts: consts.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -lm -o consts consts.c
 
 dijkstra: dijkstra.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o dijkstra dijkstra.c

@@ -236,6 +236,7 @@
     size_t back; \
     cchr_id_t pid; \
   } cchr_stackframe_t; \
+  void static inline cchr_fire(cchr_args_t args); \
   void static inline cchr_fire(cchr_args_t args) { \
     cchr_id_t pid_self_=0; \
     char *stack=malloc(128); \
@@ -335,7 +336,7 @@
       ((cchr_stackframe_t*)(stack+sp))->pid=pid_self_; \
       sp += ds; \
       ((cchr_stackframe_t*)(stack+sp))->back=ds; \
-      CSM_FMTOUT("stack frame added | sp=%i",sp); \
+      CSM_FMTOUT("stack frame added of size %i | sp=%i",ds,sp); \
     } \
     ARGLIST_##NAME(CSM_CB_DTDAC,NAME) \
     pid_self_=args.pid; \
@@ -687,6 +688,16 @@
   CSM_FMTOUT("resume from fire %s | sp=%i",#CON,sp) \
 }
 
+#define CSM_REACT(CON,PID) { \
+  cchr_cont_reactivate_##CON(&args,(PID)); \
+  CSM_FIRE(CON); \
+}
+
+#define CSM_TREACT(CON,PID) { \
+  cchr_cont_reactivate_##CON(&args,(PID)); \
+  CSM_TAILFIRE(CON); \
+}
+
 #define CSM_ADD(CON,...) { \
   cchr_cont_add_##CON(&args,__VA_ARGS__); \
   CSM_FIRE(CON) \
@@ -700,12 +711,10 @@
 #define CSM_TADD(CON,...) { \
   cchr_cont_add_##CON(&args,__VA_ARGS__); \
   CSM_TAILFIRE(CON); \
-  CSM_END; \
 }
 #define CSM_TADDE(CON) { \
   cchr_cont_add_##CON(&args); \
   CSM_TAILFIRE(CON); \
-  CSM_END; \
 }
 #define CSM_NEEDSELF(CON) { \
 	if (CSM_CVAR(doadd,CON)) { \

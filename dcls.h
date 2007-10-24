@@ -61,13 +61,11 @@ typedef struct {
 } dcls_iter_t;
 
 #define dcls_dec_iterx(ns,CB,...) CB##_D(dcls_iter_t,ns,__VA_ARGS__)
-
 #define dcls_safeiter(var,pid,type,code) { \
   dcls_pid_t pid; \
   dcls_iter_t iter; \
   dcls_safeiterx(var,pid,iter,type,code); \
 }
-  
 #define dcls_safeiterx(var,pid,ns,type,code) { \
   pid=dcls_iter_first((var),(type)); \
   if (dcls_iter_hasnext((var),(pid),(type))) do { \
@@ -84,9 +82,28 @@ typedef struct {
      } \
   } while(1); \
 }
-
 #define dcls_iter dcls_safeiter
 #define dcls_iterx dcls_safeiterx
+
+#define dcls_dec_uiterx(ns,CB,...) CB##_D(dcls_pid_t,ns,__VA_ARGS__)
+#define dcls_unsafeiter(var,pid,type,code) { \
+  dcls_pid_t pid; \
+  dcls_pid_t iter; \
+  dcls_safeiterx(var,pid,iter,type,code); \
+}
+#define dcls_unsafeiterx(var,pid,ns,type,code) { \
+  pid=dcls_iter_first((var),(type)); \
+  while (dcls_iter_hasnext((var),(pid),(type))) { \
+     (ns)=dcls_iter_next(var,pid); \
+     { \
+       code \
+     } \
+     (pid)=(ns);\
+  } \
+}
+#define dcls_uiter dcls_unsafeiter
+#define dcls_uiterx dcls_unsafeiterx
+  
 
 #define dcls_used(var,pid) ((var)._d[(pid)]._prev != DCLS_EMPTY_PID)
 

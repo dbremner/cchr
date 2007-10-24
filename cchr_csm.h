@@ -380,14 +380,14 @@
     cchr_fire(args); \
   } \
   void cchr_reactivate_all_##NAME(void) { \
-    CSM_DECLOOP(C,CSM_CB_FFVDC,) \
-    CSM_LOOP(NAME,C,local, \
+    CSM_DECUNILOOP(C,CSM_CB_FFVDC,) \
+    CSM_UNILOOP(NAME,C,local, \
       cchr_reactivate_##NAME(CSM_PID(C,local)); \
     ) \
   } \
   void cchr_free_all_##NAME(void) { \
-    CSM_DECLOOP(C,CSM_CB_FFVDC,) \
-    CSM_LOOP(NAME,C,local, \
+    CSM_DECUNILOOP(C,CSM_CB_FFVDC,) \
+    CSM_UNILOOP(NAME,C,local, \
       CSM_DESTRUCT_PID(NAME,C,local); \
       CSM_KILL(C,local,NAME); \
     ) \
@@ -510,8 +510,8 @@
 
 #define CSM_DECPID(VAR,CB,...) CB##_D(cchr_id_t,pid_##VAR,__VA_ARGS__)
 #define CSM_DECID(VAR,CB,...) CB##_D(cchr_id_t,id_##VAR,__VA_ARGS__)
-#define CSM_DECLOOP(VAR,CB,...) dcls_dec_iterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
 
+#define CSM_DECLOOP(VAR,CB,...) dcls_dec_iterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
 #define CSM_LOOP(TYPE,VAR,NS,CODE) { \
 	CSM_FMTOUT("loop over %s in %s:",#TYPE,#VAR); \
 	dcls_iterx(_global_runtime.store,CSM_PID(VAR,NS),CSM_VAR(iter_##VAR,NS),CCHR_CONS_TYPE_##TYPE,{ \
@@ -524,6 +524,22 @@
 	        csm_loop_##VAR: {} \
 	}) \
 }
+
+#define CSM_DECUNILOOP(VAR,CB,...) dcls_dec_uiterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
+#define CSM_UNILOOP(TYPE,VAR,NS,CODE) { \
+	CSM_FMTOUT("uniloop over %s in %s:",#TYPE,#VAR); \
+	dcls_uiterx(_global_runtime.store,CSM_PID(VAR,NS),CSM_VAR(iter_##VAR,NS),CCHR_CONS_TYPE_##TYPE,{ \
+	        __label__ csm_loop_##VAR; \
+		CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
+		CSM_FMTOUT("inside uniloop (over %s in %s@%s): pid=%i",#TYPE,#VAR,#NS,CSM_PID(VAR,NS)); \
+		{ \
+		  CODE \
+		} \
+	        csm_loop_##VAR: {} \
+	}) \
+}
+/*#define CSM_DECLOOP CSM_DECUNILOOP
+#define CSM_LOOP CSM_UNILOOP*/
 
 #define CSM_LOOPNEXT(VAR,NS) goto csm_loop_##VAR;
 // #define CSM_DEFIDXVAR(CON,HASH,VAR,NS) cchr_contbl_##CON##_##HASH##_t idxvar_##VAR;
@@ -552,7 +568,7 @@
 #define CSM_IDXUNILOOP(CON,HASH,VAR,NS,CODE) { \
 	CSM_VAR(idx_##VAR,NS) = cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&CSM_VAR(idxvar_##VAR,NS)); \
 	if (CSM_VAR(idx_##VAR,NS)) { \
-	  CSM_FMTOUT("in IDXUNILOOP (%s.%s var=%s@%s)",#CON,#HASH,#VAR,#NS); \
+	  CSM_FMTOUT("in idxuniloop (%s.%s var=%s@%s)",#CON,#HASH,#VAR,#NS); \
 	  cchr_htdc_t_copy(&(CSM_VAR(idx_##VAR,NS)->val),&CSM_VAR(idxcopy_##VAR,NS)); \
 	  for (CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(&CSM_VAR(idxcopy_##VAR,NS)); CSM_VAR(idxlst_##VAR,NS) != NULL; CSM_VAR(idxlst_##VAR,NS)=cchr_htdc_t_next(&CSM_VAR(idxcopy_##VAR,NS),CSM_VAR(idxlst_##VAR,NS)) ) { \
 	    __label__ csm_loop_##VAR; \
@@ -573,13 +589,13 @@
 
 #define CSM_LOGLOOP(CON,VAR,NS,ENT,TYPE,ARG,CODE) { \
   CSM_VAR(log_##VAR,NS)=(&(TYPE##_getextrap(ARG)->ENT)); \
-  CSM_FMTOUT("in LOGLOOP (%s;%s var=%s@%s)",#CON,#ENT,#VAR,#NS); \
+  CSM_FMTOUT("in logloop (%s;%s var=%s@%s)",#CON,#ENT,#VAR,#NS); \
   for (CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(CSM_VAR(log_##VAR,NS)); CSM_VAR(idxlst_##VAR,NS) != NULL; CSM_VAR(idxlst_##VAR,NS)=cchr_htdc_t_next(CSM_VAR(log_##VAR,NS),CSM_VAR(idxlst_##VAR,NS)) ) { \
     __label__ csm_loop_##VAR; \
     CSM_PID(VAR,NS)=CSM_VAR(idxlst_##VAR,NS)->pid; \
     CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
     { \
-      CSM_FMTOUT("in LOGLOOP (%s;%s var=%s@%s): pid=%i id=%i",#CON,#ENT,#VAR,#NS,CSM_PID(VAR,NS),CSM_IDOFPID(CSM_PID(VAR,NS))); \
+      CSM_FMTOUT("in logloop (%s;%s var=%s@%s): pid=%i id=%i",#CON,#ENT,#VAR,#NS,CSM_PID(VAR,NS),CSM_IDOFPID(CSM_PID(VAR,NS))); \
       CODE \
     } \
     csm_loop_##VAR: {} \
@@ -597,7 +613,7 @@
     CSM_PID(VAR,NS)=CSM_VAR(idxlst_##VAR,NS)->pid; \
     CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
     if (CSM_ALIVEPID(CSM_PID(VAR,NS)) && (CSM_IDOFPID(CSM_PID(VAR,NS))==CSM_VAR(idxlst_##VAR,NS)->id)) { \
-      CSM_FMTOUT("in LOGUNILOOP (%s;%s var=%s@%s): pid=%i id=%i",#CON,#ENT,#VAR,#NS,CSM_PID(VAR,NS),CSM_IDOFPID(CSM_PID(VAR,NS))); \
+      CSM_FMTOUT("in loguniloop (%s;%s var=%s@%s): pid=%i id=%i",#CON,#ENT,#VAR,#NS,CSM_PID(VAR,NS),CSM_IDOFPID(CSM_PID(VAR,NS))); \
       CODE \
     } \
     csm_loop_##VAR: {} \

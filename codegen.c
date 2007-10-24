@@ -489,7 +489,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	int cicon=alist_get(ru->head[ci_rem],cid).constr;
 	char cicon_name[256];
 	csm_constr_getname(cchr,cicon,cicon_name,256);
-	output_fmt(out,"CSM_LOOP(%s,%s%i,%s,",cicon_name,ci_rem ? "R" : "K",cid+1,buf);
+	output_fmt(out,entry->uni ? "CSM_UNILOOP(%s,%s%i,%s," : "CSM_LOOP(%s,%s%i,%s,",cicon_name,ci_rem ? "R" : "K",cid+1,buf);
 	output_indent(out," \\",") \\");
 	csm_loop_t cl;
 	cl.constr=cicon;
@@ -497,7 +497,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	cl.pos=cid;
 	cl.clean=0;
 	alist_add(clean,cl);
-        csm_nsent_t ent={.var=make_message("%s%i",ci_rem ? "R" : "K",cid+1),.type=NULL,.call="CSM_DECLOOP",.free=1,.arg1=NULL,.arg2=NULL};
+        csm_nsent_t ent={.var=make_message("%s%i",ci_rem ? "R" : "K",cid+1),.type=NULL,.call=(entry->uni ? "CSM_DECUNILOOP" : "CSM_DECLOOP"),.free=1,.arg1=NULL,.arg2=NULL};
         alist_add(nsdef.list,ent);
 	break;
       }

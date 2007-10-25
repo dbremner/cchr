@@ -4,7 +4,7 @@
 #include "fib_cchr.h"
 
 cchr {
-  constraint fib(int,long long),init(int);
+  constraint fib(int,long long) option(fmt,"fib(%i)=%lli;",$1,$2),init(int) ;
 
   begin @ init(_) ==> fib(0,1LL), fib(1,1LL);
   calc @  init(Max), fib(N2,M2) \ fib(N1,M1) <=>

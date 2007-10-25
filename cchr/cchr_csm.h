@@ -511,10 +511,10 @@
 #define CSM_DECPID(VAR,CB,...) CB##_D(cchr_id_t,pid_##VAR,__VA_ARGS__)
 #define CSM_DECID(VAR,CB,...) CB##_D(cchr_id_t,id_##VAR,__VA_ARGS__)
 
-#define CSM_DECLOOP(VAR,CB,...) dcls_dec_iterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
+#define CSM_DECLOOP(VAR,CB,...) dcls_dec_uiterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
 #define CSM_LOOP(TYPE,VAR,NS,CODE) { \
 	CSM_FMTOUT("loop over %s in %s:",#TYPE,#VAR); \
-	dcls_iterx(_global_runtime.store,CSM_PID(VAR,NS),CSM_VAR(iter_##VAR,NS),CCHR_CONS_TYPE_##TYPE,{ \
+	dcls_uiterx(_global_runtime.store,CSM_PID(VAR,NS),CSM_VAR(iter_##VAR,NS),CCHR_CONS_TYPE_##TYPE,{ \
 	        __label__ csm_loop_##VAR; \
 		CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
 		CSM_FMTOUT("inside loop (over %s in %s@%s): pid=%i",#TYPE,#VAR,#NS,CSM_PID(VAR,NS)); \
@@ -525,10 +525,10 @@
 	}) \
 }
 
-#define CSM_DECUNILOOP(VAR,CB,...) dcls_dec_uiterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
+#define CSM_DECUNILOOP(VAR,CB,...) dcls_dec_iterx(iter_##VAR,CB,__VA_ARGS__) CB##_S CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__)
 #define CSM_UNILOOP(TYPE,VAR,NS,CODE) { \
 	CSM_FMTOUT("uniloop over %s in %s:",#TYPE,#VAR); \
-	dcls_uiterx(_global_runtime.store,CSM_PID(VAR,NS),CSM_VAR(iter_##VAR,NS),CCHR_CONS_TYPE_##TYPE,{ \
+	dcls_iterx(_global_runtime.store,CSM_PID(VAR,NS),CSM_VAR(iter_##VAR,NS),CCHR_CONS_TYPE_##TYPE,{ \
 	        __label__ csm_loop_##VAR; \
 		CSM_ID(VAR,NS)=CSM_IDOFPID(CSM_PID(VAR,NS)); \
 		CSM_FMTOUT("inside uniloop (over %s in %s@%s): pid=%i",#TYPE,#VAR,#NS,CSM_PID(VAR,NS)); \

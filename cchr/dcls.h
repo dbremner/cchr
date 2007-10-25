@@ -32,6 +32,7 @@ typedef uint32_t dcls_pid_t;
     struct { \
       type _data; \
       dcls_pid_t _prev,_next,_id; \
+      int _rc,_ic; \
     } *_d; \
   } var
 
@@ -41,6 +42,8 @@ typedef uint32_t dcls_pid_t;
   (var)._d=malloc(sizeof((var)._d[0])*(types)); \
   (var)._id=1; \
   for (int j=0; j<(types); j++) { \
+    (var)._d[j]._rc=1; \
+    (var)._d[j]._ic=0; \
     (var)._d[j]._next=j; \
     (var)._d[j]._prev=j; \
     (var)._d[j]._id=((var)._id)++; \
@@ -53,59 +56,50 @@ typedef uint32_t dcls_pid_t;
 #define dcls_ptr(var,pid) (&(dcls_get(var,pid)))
 
 #define dcls_iter_first(var,type) ((var)._d[(type)]._next)
-#define dcls_iter_hasnext(var,pid,type) ((pid) != (type))
+#define dcls_iter_isreal(var,pid,type) ((pid) != (type))
+#define dcls_iter_rc(var,pid) ((var)._d[(pid)]._rc)
+#define dcls_iter_ic(var,pid) ((var)._d[(pid)]._ic)
+#define dcls_iter_alive(var,pid) (dcls_iter_rc(var,pid)==2)
 #define dcls_iter_next(var,pid) ((var)._d[(pid)]._next)
+#define dcls_iter_prev(var,pid) ((var)._d[(pid)]._prev)
 
-typedef struct {
-  dcls_pid_t nid,npid;
-} dcls_iter_t;
-
-#define dcls_dec_iterx(ns,CB,...) CB##_D(dcls_iter_t,ns,__VA_ARGS__)
-#define dcls_safeiter(var,pid,type,code) { \
-  dcls_pid_t pid; \
-  dcls_iter_t iter; \
-  dcls_safeiterx(var,pid,iter,type,code); \
-}
-#define dcls_safeiterx(var,pid,ns,type,code) { \
-  pid=dcls_iter_first((var),(type)); \
-  if (dcls_iter_hasnext((var),(pid),(type))) do { \
-     (ns).npid=dcls_iter_next(var,pid); \
-     (ns).nid=dcls_id(var,(ns).npid); \
-     { \
-       code \
-     } \
-     if (!dcls_iter_hasnext((var),(ns).npid,(type))) break; \
-     if (dcls_used(var,(ns).npid) && dcls_id(var,(ns).npid)==(ns).nid) { \
-       (pid)=(ns).npid;\
-     } else { \
-       (pid)=dcls_iter_first((var),(type)); \
-     } \
-  } while(1); \
-}
-#define dcls_iter dcls_safeiter
-#define dcls_iterx dcls_safeiterx
-
-#define dcls_dec_uiterx(ns,CB,...) CB##_D(dcls_pid_t,ns,__VA_ARGS__)
-#define dcls_unsafeiter(var,pid,type,code) { \
+#define dcls_iter(var,pid,type,code) { \
   dcls_pid_t pid; \
   dcls_pid_t iter; \
-  dcls_safeiterx(var,pid,iter,type,code); \
+  dcls_iterx(var,pid,iter,type,code); \
 }
-#define dcls_unsafeiterx(var,pid,ns,type,code) { \
-  pid=dcls_iter_first((var),(type)); \
-  while (dcls_iter_hasnext((var),(pid),(type))) { \
-     (ns)=dcls_iter_next(var,pid); \
-     { \
-       code \
+#define dcls_iterx(var,pid,ns,type,code) { \
+  (pid)=dcls_iter_first((var),(type)); \
+  while (dcls_iter_isreal((var),(pid),(type))) { \
+     if (dcls_iter_alive(var,pid)) { \
+       dcls_incic_(var,pid); \
+       { code }; \
+       int _npid=dcls_iter_next(var,pid); \
+       dcls_decic_(var,pid); \
+       (pid)=_npid; \
+     } else { \
+       (pid)=dcls_iter_next(var,pid); \
      } \
-     (pid)=(ns);\
   } \
 }
-#define dcls_uiter dcls_unsafeiter
-#define dcls_uiterx dcls_unsafeiterx
-  
+#define dcls_dec_iterx(ns,CB,...)
 
-#define dcls_used(var,pid) ((var)._d[(pid)]._prev != DCLS_EMPTY_PID)
+#define dcls_uiter(var,pid,type,code) { \
+  dcls_pid_t pid; \
+  dcls_uiterx(var,pid,_,type,code); \
+}
+#define dcls_uiterx(var,pid,ns,type,code) { \
+  pid=dcls_iter_first((var),(type)); \
+  while (dcls_iter_isreal((var),(pid),(type))) { \
+     if (dcls_iter_alive(var,pid)) { \
+       code \
+     } \
+     (pid)=dcls_iter_next(var,pid); \
+  } \
+}
+#define dcls_dec_uiterx(ns,CB,...)
+  
+#define dcls_used(var,pid) dcls_iter_alive(var,pid)
 
 /* ensure a DCLS var has size positions (including the filled markers) */
 #define dcls_ensure(var,size) do {\
@@ -117,6 +111,8 @@ typedef struct {
       (var)._d[_kp]._prev=DCLS_EMPTY_PID; \
       (var)._d[_kp]._next=(var)._fe; \
       (var)._d[_kp]._id=0; \
+      (var)._d[_kp]._rc=0; \
+      (var)._d[_kp]._ic=0; \
       (var)._fe=_kp; \
     }; \
     (var)._s=_ns; \
@@ -131,11 +127,19 @@ typedef struct {
   (var)._fe=(var)._d[(pid)]._next; \
   (var)._d[(pid)]._prev=DCLS_EMPTY_PID; \
   (var)._d[(pid)]._id=((var)._id++); \
+  (var)._d[(pid)]._rc=1; \
 } while(0);
 
 /* get a position out of the filled set (not added to free set, unless already there) */
 #define dcls_remove(var,pid) do { \
-  if ((var)._d[(pid)]._prev!=DCLS_EMPTY_PID) {\
+  if (dcls_iter_rc(var,pid)==2) { \
+    dcls_unadd_(var,pid); \
+    dcls_iter_rc(var,pid)=1; \
+  } \
+} while(0);
+
+#define dcls_unadd_(var,pid) do { \
+  if (dcls_iter_ic(var,pid)==0) { \
     dcls_pid_t _prev=(var)._d[(pid)]._prev; \
     dcls_pid_t _next=(var)._d[(pid)]._next; \
     (var)._d[_prev]._next=_next;\
@@ -146,10 +150,29 @@ typedef struct {
 
 /* bring a position into the free set (and get it out of filled set if necessary) */
 #define dcls_free(var,pid) do { \
-  dcls_remove(var,pid); \
-  (var)._d[(pid)]._next=(var)._fe;\
-  (var)._fe=(pid);\
-  (var)._d[(pid)]._id=0;\
+  if (dcls_iter_rc(var,pid)>1) dcls_unadd_(var,pid); \
+  if (dcls_iter_rc(var,pid)>0) dcls_release_(var,pid); \
+  dcls_iter_rc(var,pid)=0; \
+} while(0);
+
+#define dcls_release_(var,pid) do { \
+  if (dcls_iter_ic(var,pid)==0) { \
+    (var)._d[(pid)]._next=(var)._fe;\
+    (var)._fe=(pid);\
+    (var)._d[(pid)]._id=0;\
+  } \
+} while(0);
+
+#define dcls_decic_(var,pid) do { \
+  dcls_iter_ic(var,pid)--; \
+  if (dcls_iter_ic(var,pid)==0) { \
+    if (dcls_iter_rc(var,pid)<2) dcls_unadd_(var,pid); \
+    if (dcls_iter_rc(var,pid)<1) dcls_release_(var,pid); \
+  } \
+} while(0);
+
+#define dcls_incic_(var,pid) do { \
+  dcls_iter_ic(var,pid)++; \
 } while(0);
 
 /* bring a position into the filled set */
@@ -157,6 +180,7 @@ typedef struct {
 #define dcls_add_begin(var,pid,type) do { \
   (var)._d[(pid)]._next=(var)._d[(type)]._next; \
   (var)._d[(pid)]._prev=(type); \
+  (var)._d[(pid)]._rc=2; \
   (var)._d[(var)._d[(type)]._next]._prev=(pid); \
   (var)._d[(type)]._next=(pid); \
 } while(0);
@@ -164,6 +188,7 @@ typedef struct {
 #define dcls_add_end(var,pid,type) do { \
   (var)._d[(pid)]._prev=(var)._d[(type)]._prev; \
   (var)._d[(pid)]._next=(type); \
+  (var)._d[(pid)]._rc=2; \
   (var)._d[(var)._d[(type)]._prev]._next=(pid); \
   (var)._d[(type)]._prev=(pid); \
 } while(0);

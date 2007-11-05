@@ -1,5 +1,5 @@
 CC := gcc
-CFLAGS := -Wall -pipe -std=c99 -pedantic -march=nocona -m32
+CFLAGS := -Wall -pipe -std=c99 -pedantic -march=pentium4 -m32
 LDFLAGS := -lm -m32
 
 INTDIR := intermediate

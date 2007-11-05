@@ -436,6 +436,7 @@ typedef struct {
   int rem;
   int pos;
   int clean;
+  char *clt;
 } csm_loop_t;
 
 /* generate codelist for a constraint occurence, using GIO */
@@ -495,7 +496,8 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	cl.constr=cicon;
 	cl.rem=ci_rem;
 	cl.pos=cid;
-	cl.clean=0;
+	cl.clean=entry->uni;
+        cl.clt="CSM_UNILOOPEND";
 	alist_add(clean,cl);
         csm_nsent_t ent={.var=make_message("%s%i",ci_rem ? "R" : "K",cid+1),.type=NULL,.call=(entry->uni ? "CSM_DECUNILOOP" : "CSM_DECLOOP"),.free=1,.arg1=NULL,.arg2=NULL};
         alist_add(nsdef.list,ent);
@@ -564,6 +566,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	cl.rem=ci_rem;
 	cl.pos=cid;
 	cl.clean=entry->uni;
+        cl.clt="CSM_IDXUNILOOPEND";
 	alist_add(clean,cl);
 	csm_hashdefs_add(&(hd[cicon]),&def);
         csm_nsent_t ent={.var=make_message("%s%i",ci_rem ? "R" : "K",cid+1),.type=NULL,.call=entry->uni ? "CSM_DECIDXUNILOOP" : "CSM_DECIDXLOOP",.free=25,.arg1=make_message("%s",cicon_name),.arg2=make_message("%s",idxname)};
@@ -590,6 +593,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	cl.rem=ci_rem;
 	cl.pos=cid;
 	cl.clean=entry->uni;
+        cl.clt="CSM_LOGUNILOOPEND";
 	alist_add(clean,cl);
         csm_nsent_t ent={.var=make_message("%s%i",ci_rem ? "R" : "K",cid+1),.type=NULL,.call=entry->uni ? "CSM_DECLOGUNILOOP" : "CSM_DECLOGLOOP",.free=1,.arg1=NULL,.arg2=NULL};
         alist_add(nsdef.list,ent);
@@ -645,7 +649,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
         if (cl->clean) {
           char chc[256];
           csm_constr_getname(cchr,cl->constr,chc,256);
-          output_fmt(out,"CSM_UNIEND(%s,%s%i,%s) \\\n",chc,cl->rem ? "R" : "K",cl->pos+1,buf);
+          output_fmt(out,"%s(%s,%s%i,%s) \\\n",cl->clt,chc,cl->rem ? "R" : "K",cl->pos+1,buf);
         }
       }
       output_fmt(out,"CSM_END \\\n");
@@ -666,7 +670,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	if (cl2->clean) {
 	  char chc[256];
           csm_constr_getname(cchr,cl2->constr,chc,256);
-          output_fmt(out,"CSM_UNIEND(%s,%s%i,%s) \\\n",chc,cl2->rem ? "R" : "K",cl2->pos+1,buf);
+          output_fmt(out,"%s(%s,%s%i,%s) \\\n",cl2->clt,chc,cl2->rem ? "R" : "K",cl2->pos+1,buf);
 	}
       }
       output_fmt(out,"CSM_LOOPNEXT(%s%i,%s) \\\n",cl->rem ? "R" : "K",cl->pos+1,buf);

@@ -82,6 +82,9 @@ typedef uint32_t dcls_pid_t;
      } \
   } \
 }
+#define dcls_iterx_end(var,pid) { \
+  dcls_decic_(var,pid); \
+}
 #define dcls_dec_iterx(ns,CB,...)
 
 #define dcls_uiter(var,pid,type,code) { \

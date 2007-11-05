@@ -1,8 +1,8 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona
+CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=pentium4 -m32
 DEFS :=
 
-MODE := normal
-#MODE := debug
+#MODE := normal
+MODE := debug
 #MODE := gdb
 #MODE := debugopt
 #MODE := efence
@@ -95,6 +95,18 @@ fib.prep: fib.prep.c Makefile
 fib.prep.c: fib.c Makefile
 	cpp -P $(DEFS) <fib.c | indent -kr -l127 >fib.prep.c
 
+fib2: fib2.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib2 fib2.c
+fib2.p: fib2.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o fib2.a fib2.c
+	time ./fib2.a 20000
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o fib2.p fib2.c
+fib2.c: fib2.cchr bin/cchr Makefile
+	bin/cchr fib2.cchr
+fib2.prep: fib.prep2.c Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o fib2.prep fib2.prep.c
+fib2.prep.c: fib2.c Makefile
+	cpp -P $(DEFS) <fib2.c | indent -kr -l127 >fib2.prep.c
 
 fib_topdown.c: fib_topdown.cchr bin/cchr Makefile
 	bin/cchr fib_topdown.cchr

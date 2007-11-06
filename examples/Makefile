@@ -103,7 +103,7 @@ fib2.p: fib2.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o fib2.p fib2.c
 fib2.c: fib2.cchr bin/cchr Makefile
 	bin/cchr fib2.cchr
-fib2.prep: fib.prep2.c Makefile
+fib2.prep: fib2.prep.c Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib2.prep fib2.prep.c
 fib2.prep.c: fib2.c Makefile
 	cpp -P $(DEFS) <fib2.c | indent -kr -l127 >fib2.prep.c

@@ -571,6 +571,7 @@ hmap_header(int,cchr_id_t,cchr_htdc_t);
 	CSM_VAR(idx_##VAR,NS)=cchr_conht_##CON##_##HASH##_t_find(&(_global_runtime.index_##CON.HASH),&CSM_VAR(idxvar_##VAR,NS)); \
 	if (CSM_VAR(idx_##VAR,NS)) { \
 	  CSM_FMTOUT("in idxuniloop (%s.%s var=%s@%s)",#CON,#HASH,#VAR,#NS); \
+	  CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(&(CSM_VAR(idx_##VAR,NS)->val)); \
 	  for (CSM_VAR(idxlst_##VAR,NS) = cchr_htdc_t_first(&(CSM_VAR(idx_##VAR,NS)->val)); CSM_VAR(idxlst_##VAR,NS) != NULL; CSM_VAR(idxlst_##VAR,NS)=cchr_htdc_t_next(&(CSM_VAR(idx_##VAR,NS)->val),CSM_VAR(idxlst_##VAR,NS)) ) { \
 	    __label__ csm_loop_##VAR; \
 	    CSM_PID(VAR,NS) = *cchr_htdc_t_valptr(&(CSM_VAR(idx_##VAR,NS)->val),CSM_VAR(idxlst_##VAR,NS)); \

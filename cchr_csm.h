@@ -160,7 +160,7 @@ hmap_header(int,cchr_id_t,cchr_htdc_t);
 #define CSM_HTCB_UNDEF(VAL) {(VAL)->used=0;}
 
 #define CSM_CTCB_DEFINED(VAL) ((VAL)->val!=NULL)
-#define CSM_CTCB_UNDEF(VAL) {free((VAL)->val);(VAL)->val=NULL;}
+#define CSM_CTCB_UNDEF(VAL) {if ((VAL)->val) {cchr_htdc_t_free((VAL)->val);free((VAL)->val);} (VAL)->val=NULL;}
 #define CSM_CTCB_INIT(VAL) {(VAL)->val=NULL;}
 
 /* callback macro for constraint-specific data in suspensions */ 

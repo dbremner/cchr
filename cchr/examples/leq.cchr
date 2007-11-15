@@ -49,28 +49,19 @@ cchr {
     option(destr,{log_int_t_destruct($1);log_int_t_destruct($2);}) 
     option(fmt,"leq""(#%i,#%i)""[%p,%p]" ,log_int_t_normalize($1)->_id,log_int_t_normalize($2)->_id ,$1,$2)
     option(add,{
-      cchr_idxlist_t nw;
-      nw.pid=$0; 
-      nw.id=CSM_IDOFPID($0); 
-      cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);
-      nw.pid=$0; 
-      nw.id=CSM_IDOFPID($0); 
-      cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);
-      nw.pid=$0; 
-      nw.id=CSM_IDOFPID($0); 
-      cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_ra),&nw);
-      nw.pid=$0; 
-      nw.id=CSM_IDOFPID($0); 
-      cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_ra),&nw);
+      cchr_id_t pid=$0;
+      int id=CSM_IDOFPID($0);
+      cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_arg1),&id,&pid);
+      cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_arg2),&id,&pid);
+      cchr_htdc_t_set(&(log_int_t_getextrap($1)->leq_2_ra),&id,&pid);
+      cchr_htdc_t_set(&(log_int_t_getextrap($2)->leq_2_ra),&id,&pid);
     })
     option(kill,{
-      cchr_idxlist_t nw; 
-      nw.pid=$0; 
-      nw.id=CSM_IDOFPID($0); 
-      cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_arg1),&nw);
-      cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_arg2),&nw);
-      cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_ra),&nw);
-      cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_ra),&nw);
+      int id=CSM_IDOFPID($0);
+      cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_arg1),&id);
+      cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_arg2),&id);
+      cchr_htdc_t_unset(&(log_int_t_getextrap($1)->leq_2_ra),&id);
+      cchr_htdc_t_unset(&(log_int_t_getextrap($2)->leq_2_ra),&id);
     })
     ;
   

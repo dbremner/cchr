@@ -18,6 +18,7 @@
     size_t count; \
   } hmap_t; \
   void static inline hmap_t ## _init(hmap_t *hm); \
+  void static inline hmap_t ## _copy(hmap_t *dest, hmap_t *src); \
   int static inline hmap_t ## _count(hmap_t *ht); \
   val_t static inline *hmap_t ## _find(hmap_t *hm, key_t *key); \
   int static inline hmap_t ## _have(hmap_t *hm, key_t *key); \
@@ -32,7 +33,8 @@
   void inline hmap_t ## _stop(hmap_t *hm, key_t *key); \
   val_t static inline * hmap_t ## _valptr(hmap_t *hm, key_t *key); \
   void static hmap_t ## _addall(hmap_t *to, hmap_t *from); \
-  void static hmap_t ## _free(hmap_t *hm); 
+  void static hmap_t ## _free(hmap_t *hm); \
+  void static hmap_t ## _freecopy(hmap_t *hm); 
 
 #define hmap_code(key_t,val_t,hmap_t,eq,init,undef) \
   uint32_t static inline hmap_t ## _hash1_(hmap_t##_entry_t *val) { \
@@ -61,6 +63,15 @@
   void static inline hmap_t ## _init(hmap_t *hm) { \
     hmap_t##_hash_t_init(&(hm->hash)); \
     hm->count=0; \
+  } \
+  void static inline hmap_t ## _copy(hmap_t *dest, hmap_t *src) { \
+    if (src) { \
+      dest->count=src->count; \
+      hmap_t##_hash_t_copy(&(dest->hash),&(src->hash)); \
+    } else { \
+      hmap_t##_hash_t_init(&(dest->hash)); \
+      dest->count=0; \
+    } \
   } \
   int static inline hmap_t ## _count(hmap_t *hm) { \
     return hm->count; \
@@ -176,12 +187,22 @@
     } \
   } \
   void static hmap_t ## _free(hmap_t *hm) { \
+    if (hmap_t##_hash_t_count(&(hm->hash))-hm->count) { \
+      fprintf(stderr,"warning: freeing hmap_" #hmap_t " with still %i elements being iterated over",hmap_t##_hash_t_count(&(hm->hash))-hm->count); \
+    } \
     key_t *key=hmap_t##_first(hm); \
     while (key) { \
       hmap_t ## _unsetx(hm,key); \
       key=hmap_t##_next(hm,key); \
     } \
     hmap_t##_hash_t_free(&(hm->hash)); \
+    hm->count=0; \
+  } \
+  void static hmap_t ## _freecopy(hmap_t *hm) { \
+    if (hm) { \
+      hmap_t##_hash_t_freecopy(&(hm->hash)); \
+      hm->count=0; \
+    } \
   } \
 
 #endif

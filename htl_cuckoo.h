@@ -16,6 +16,7 @@
     hash_t##_unit_t *data; \
   } hash_t;\
   void static inline hash_t ## _init(hash_t *ht); \
+  void static inline hash_t ## _copy(hash_t *dest,hash_t *src); \
   int static inline hash_t ## _count(hash_t *ht); \
   entry_t static inline *hash_t ## _find(hash_t *ht, entry_t *entry); \
   int static inline hash_t ## _have(hash_t *ht, entry_t *entry); \
@@ -25,6 +26,7 @@
   void static inline hash_t ## _unsetx(hash_t *ht, entry_t *entry); \
   void static inline hash_t ## _unset(hash_t *ht, entry_t *entry); \
   void static inline hash_t ## _free(hash_t *ht); \
+  void static inline hash_t ## _freecopy(hash_t *ht); \
   entry_t static inline * hash_t ## _first(hash_t *ht); \
   entry_t static inline * hash_t ## _next(hash_t *ht, entry_t *entry); \
   void static hash_t ## _addall(hash_t *to, hash_t *from); \
@@ -34,6 +36,16 @@
     ht->size=0; \
     ht->used=0; \
     ht->data=NULL; \
+  } \
+  void static inline hash_t ## _copy(hash_t *dest,hash_t *src) { \
+    dest->size=src->size; \
+    dest->used=src->size; \
+    if (dest->size) { \
+      dest->data=malloc((1+(2<<src->size))*sizeof(*(dest->data))); \
+      memcpy(dest->data,src->data,(1+(2<<src->size))*sizeof(*(dest->data))); \
+    } else { \
+      dest->data=NULL; \
+    } \
   } \
   int static inline hash_t ## _count(hash_t *ht) { \
     return (ht->used); \
@@ -176,6 +188,14 @@
           unset(&(ht->data[j].val)); \
         } \
       } \
+      ht->size=0; \
+      ht->used=0; \
+      free(ht->data); \
+      ht->data=NULL; \
+    } \
+  } \
+  void static inline hash_t ## _freecopy(hash_t *ht) { \
+    if (ht->data) { \
       ht->size=0; \
       ht->used=0; \
       free(ht->data); \

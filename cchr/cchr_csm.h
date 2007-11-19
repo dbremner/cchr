@@ -579,16 +579,16 @@ hmap_header(int,cchr_id_t,cchr_htdc_t);
 	    CSM_PID(VAR,NS) = *cchr_htdc_t_valptr(&(CSM_VAR(idx_##VAR,NS)),CSM_VAR(idxlst_##VAR,NS)); \
 	    CSM_ID(VAR,NS)= *(CSM_VAR(idxlst_##VAR,NS)); \
 	    CSM_FMTOUT("inside idxuniloop: pid=%i id=%i",CSM_PID(VAR,NS),CSM_ID(VAR,NS)); \
-            if (CSM_IDOFPID(CSM_ID(VAR,NS))==CSM_PID(VAR,NS)) { \
+            if (CSM_IDOFPID(CSM_PID(VAR,NS))==CSM_ID(VAR,NS)) { \
 	      CODE \
             } \
 	    csm_loop_##VAR: {} \
 	  } \
-          cchr_htdc_t_freecopy(CSM_VAR(idxp_##VAR,NS)); \
+          cchr_htdc_t_freecopy(&CSM_VAR(idx_##VAR,NS)); \
 	} \
 }
 
-#define CSM_IDXUNILOOPEND(CON,VAR,NS) {cchr_htdc_t_freecopy(CSM_VAR(idxp_##VAR,NS));}
+#define CSM_IDXUNILOOPEND(CON,VAR,NS) {cchr_htdc_t_freecopy(&CSM_VAR(idx_##VAR,NS));}
 
 #define CSM_DECLOGLOOP(VAR,CB,...) CSM_DECID(VAR,CB,__VA_ARGS__) CB##_S CSM_DECPID(VAR,CB,__VA_ARGS__) CB##_S CB##_D(int*,idxlst_##VAR,__VA_ARGS__) CB##_S CB##_D(cchr_htdc_t *,log_##VAR,__VA_ARGS__)
 
@@ -616,7 +616,7 @@ hmap_header(int,cchr_id_t,cchr_htdc_t);
     CSM_PID(VAR,NS) = *cchr_htdc_t_valptr(&CSM_VAR(log_##VAR,NS),CSM_VAR(idxlst_##VAR,NS)); \
     CSM_ID(VAR,NS)= *(CSM_VAR(idxlst_##VAR,NS)); \
     CSM_FMTOUT("inside unilogloop: pid=%i id=%i",CSM_PID(VAR,NS),CSM_ID(VAR,NS)); \
-    if (CSM_IDOFPID(CSM_ID(VAR,NS))==CSM_PID(VAR,NS)) { \
+    if (CSM_IDOFPID(CSM_PID(VAR,NS))==CSM_ID(VAR,NS)) { \
       CODE \
     } \
     csm_loop_##VAR: {} \

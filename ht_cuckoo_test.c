@@ -34,7 +34,11 @@ void testiter(hash_t *ht) {
   size_t s=0;
   while (it != NULL) {
     s++;
-    /*fprintf(stderr,"[it: (%i)%lu->%lu]",it->set,it->key,it->val);*/
+    /*if (it->set) {
+      fprintf(stderr,"[it: %lu->%lu]",it->key,it->val);
+    } else {
+      fprintf(stderr,"[it: UNSET]",it->key,it->val);
+    }*/
     it=hash_t_next(ht,it);
   }
   assert(s==hash_t_count(ht));
@@ -52,7 +56,7 @@ int main(void) {
   setbuf(stdout,NULL);
   printf("Initializing...");
   for (int l=0; l<SIZE; l++) {
-  	val[l]=(uint32_t)rand();
+  	val[l]=l;
   	key[l]=l+(uint32_t)rand()*SIZE;
   	del[l]=0;
   }
@@ -60,7 +64,7 @@ int main(void) {
   printf("processing...");
   for (int j=0; j<SIZE; j++) {
     het_t het={.key=key[j],.val=val[j],.set=1};
-//    fprintf(stderr,"- %i: setting %lu->%lu\n",j,het.key,het.val);
+    /*fprintf(stderr,"- %i: setting %lu->%lu\n",j,het.key,het.val);*/
     hash_t_set(&ht,&het);
     testiter(&ht);
     if (j==0) hash_t_double(&ht);
@@ -72,7 +76,7 @@ int main(void) {
     int dl=rand()%SIZE;
     if (dl<=j) {
         het.key=key[dl];
-//        fprintf(stderr,"- %i: setting %lu->NULL\n",dl,het.key);
+        /*fprintf(stderr,"- %i: setting %lu->NULL\n",dl,het.key);*/
     	hash_t_unset(&ht,&het);
         testiter(&ht);
         het.key=key[dl];
@@ -86,7 +90,7 @@ int main(void) {
 	het.key=key[ow];
 	het.val=val[ow];
 	het.set=1;
-//        fprintf(stderr,"- %i: setting %lu->%lu\n",ow,het.key,het.val);
+        /*fprintf(stderr,"- %i: setting %lu->%lu\n",ow,het.key,het.val);*/
     	hash_t_set(&ht,&het);
         testiter(&ht);
         het.key=key[ow];
@@ -97,11 +101,11 @@ int main(void) {
     for (int k=0; k<SIZE; k++) {
       int mh=(k<=j) && !del[k];
       het.key=key[k];
-      if (mh) {
-//        fprintf(stderr,"- %i: checking %lu->%lu\n",k,key[k],val[k]);
+/*      if (mh) {
+        fprintf(stderr,"- %i: checking %lu->%lu\n",k,key[k],val[k]);
       } else {
-//        fprintf(stderr,"- %i: checking %lu->NULL\n",k,key[k]);
-      }
+        fprintf(stderr,"- %i: checking %lu->NULL\n",k,key[k]);
+      }*/
       assert(hash_t_have(&ht,&het)==mh);
       if (mh) assert(hash_t_find(&ht,&het)->val==val[k]);
     }

@@ -114,53 +114,70 @@
     if (ht->used>(5*(1<< (ht->size)))/6) { \
       hash_t ## _double(ht); \
     } \
-    uint32_t nxt=ht->data[2 << ht->size].next; \
-    uint32_t prv=2 << ht->size; \
+    uint32_t after=2 << ht->size; \
     while (1) { \
       int maxiter=(23*ht->size+11)/2; \
       while (maxiter--) { \
         uint32_t h1=gethash1((entry)); \
         h1 = (h1 >> (32-ht->size)); \
 	/*fprintf(stderr,"[-> %i (%i it left)]\n",(int)h1,maxiter);*/ \
-	ht->data[prv].next=h1; \
-	ht->data[nxt].prev=h1; \
-	uint32_t onxt1=ht->data[h1].next; \
-	uint32_t oprv1=ht->data[h1].prev; \
-	ht->data[h1].next=nxt; \
-	ht->data[h1].prev=prv; \
-        if (!(defined(&(ht->data[h1].val)))) { \
+	if (defined(&(ht->data[h1].val))) { \
+	  bak=ht->data[h1].val; \
+          uint32_t oafter=ht->data[h1].prev; \
+	  uint32_t obefore=ht->data[h1].next; \
+          ht->data[oafter].next=obefore; \
+	  ht->data[obefore].prev=oafter; \
+          if (after==h1) after=oafter; \
+          uint32_t before=ht->data[after].next; \
 	  ht->data[h1].val=(*entry); \
-	  return; \
-	} else { \
-          bak=ht->data[h1].val; \
-	  nxt=onxt1; \
- 	  prv=oprv1; \
+          ht->data[h1].next=before; \
+          ht->data[h1].prev=after; \
+          ht->data[after].next=h1; \
+          ht->data[before].prev=h1; \
+          after=oafter; \
+        } else { \
+          uint32_t before=ht->data[after].next; \
 	  ht->data[h1].val=(*entry); \
-	} \
+          ht->data[h1].next=before; \
+          ht->data[h1].prev=after; \
+          ht->data[after].next=h1; \
+          ht->data[before].prev=h1; \
+          return; \
+        } \
         uint32_t h2=gethash2(&bak); \
         h2 = (h2 >> (32-ht->size)) | (1 << ht->size); \
-	/*fprintf(stderr,"[-> %i (%i.5 it left)]\n",(int)h2,maxiter-1);*/ \
-	ht->data[prv].next=h2; \
-	ht->data[nxt].prev=h2; \
-	uint32_t onxt2=ht->data[h2].next; \
-	uint32_t oprv2=ht->data[h2].prev; \
-	ht->data[h2].next=nxt; \
-	ht->data[h2].prev=prv; \
-        if (!(defined(&(ht->data[h2].val)))) { \
+	/*fprintf(stderr,"[-> %i (%i it left)]\n",(int)h1,maxiter);*/ \
+	if (defined(&(ht->data[h2].val))) { \
+	  (*entry)=ht->data[h2].val; \
+          uint32_t oafter=ht->data[h2].prev; \
+	  uint32_t obefore=ht->data[h2].next; \
+          ht->data[oafter].next=obefore; \
+	  ht->data[obefore].prev=oafter; \
+          if (after==h2) after=oafter; \
+          uint32_t before=ht->data[after].next; \
 	  ht->data[h2].val=bak; \
-	  return; \
-	} else { \
-          (*entry)=ht->data[h2].val; \
-	  nxt=onxt2; \
-	  prv=oprv2; \
+          ht->data[h2].next=before; \
+          ht->data[h2].prev=after; \
+          ht->data[after].next=h2; \
+          ht->data[before].prev=h2; \
+          after=oafter; \
+        } else { \
+          uint32_t before=ht->data[after].next; \
 	  ht->data[h2].val=bak; \
-	} \
+          ht->data[h2].next=before; \
+          ht->data[h2].prev=after; \
+          ht->data[after].next=h2; \
+          ht->data[before].prev=h2; \
+          return; \
+        } \
       } \
-      uint32_t nxth=(nxt==(2<<ht->size)) ? (4<<ht->size) : ((nxt < (1 << ht->size)) ? gethash1(&(ht->data[nxt].val)) : gethash2(&(ht->data[nxt].val))); \
-      uint32_t prvh=(prv==(2<<ht->size)) ? (4<<ht->size) : ((prv < (1 << ht->size)) ? gethash1(&(ht->data[prv].val)) : gethash2(&(ht->data[prv].val))); \
+      uint32_t afterh=(after==(2<<ht->size)) ? 0 : ( \
+        (after < (1 << ht->size)) ? \
+        ((uint32_t)gethash1(&(ht->data[after].val))) >> (31-ht->size) : \
+        ((uint32_t)gethash2(&(ht->data[after].val))) >> (31-ht->size) | (2 << ht->size) \
+      ); \
       hash_t ## _double(ht); \
-      nxt=(nxth==(2<<ht->size)) ? nxth : (nxth >> (32-ht->size)); \
-      prv=(prvh==(2<<ht->size)) ? prvh : (prvh >> (32-ht->size)); \
+      after=(after==(1<<ht->size)) ? 2<<ht->size : afterh; \
     } \
   } \
   /* entry must be a result of an earlier _find() */ \

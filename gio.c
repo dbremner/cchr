@@ -18,31 +18,6 @@
 #define NO_IDX 0
 #endif
 
-/* do something sprintf-like, but put the output in a malloc'ed block */
-char static *make_message(const char *fmt, ...) {
-  int n, size = 100;
-  char *p, *np;
-  va_list ap;
-  if ((p = malloc (size)) == NULL) return NULL;
-  while (1) {
-    va_start(ap, fmt);
-    n = vsnprintf (p, size, fmt, ap);
-    va_end(ap);
-    if (n > -1 && n < size) return p;
-    if (n > -1) {
-      size = n+1;
-    } else {
-      size *= 2;
-    }
-    if ((np = realloc (p, size)) == NULL) {
-      free(p);
-      return NULL;
-    } else {
-      p = np;
-    }
-  }
-}
-
 int static gio_test_idxeq(sem_cchr_t *chr,sem_rule_t *rule, int cot, int rem, sem_expr_t *expr, gio_entry_t *gioe);
 
 void static gio_entry_init(gio_entry_t *entry, gio_type_t type) {
@@ -194,7 +169,7 @@ void static gio_genorder(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, gio
 int static gio_test_idxeq_var(sem_cchr_t *chr,int cot, int rem, gio_entry_t *gioe, sem_var_t *var, sem_expr_t *expr,int start,int stop) {
   if (gioe->type==GIO_TYPE_LOGITER) return 0; /* nothing can be added to a LOGITER (level 3) */
   if (!var->local && var->occ[SEM_RULE_LEVEL_REM]==rem && var->pos==cot) {
-    if (alist_ptr(chr->types,var->type)->log_cb) { /* this is a logical variable, create LOGITER (level 3) */
+    if (alist_ptr(chr->types,var->type)->log_ground>=0) { /* this is a logical variable, create LOGITER (level 3) */
       int cot=gioe->data.idxiter.cot;
       gio_entry_destruct(gioe);
       gio_entry_init(gioe,GIO_TYPE_LOGITER);
@@ -236,7 +211,7 @@ int static gio_test_idxeq(sem_cchr_t *chr,sem_rule_t *rule, int cot, int rem, se
 	    sem_var_t *var=alist_ptr(rule->vt.vars,varid);
 	    sem_vartype_t *vtype=alist_ptr(chr->types,var->type);
 	    char *lecf=NULL;
-	    if (vtype->log_cb) {
+	    if (vtype->log_ground>=0) {
 	      lecf=make_message("%s_testeq",vtype->name);
 	    }
             if (!strcmp(ep->data.fun.name,"eq") || (lecf && !strcmp(ep->data.fun.name,lecf))) {

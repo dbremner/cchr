@@ -626,6 +626,12 @@ hmap_header(int,cchr_id_t,cchr_htdc_t);
 
 #define CSM_LOGUNILOOPEND(CON,VAR,NS) {cchr_htdc_t_freecopy(&CSM_VAR(log_##VAR,NS));}
 
+/*#define CSM_LOG_INIT(TYPE,VAR) {TYPE##_copy(VAR);}
+#define CSM_LOG_DESTR(TYPE,VAR) {TYPE##_destruct(VAR);}
+#define CSM_LOG_ADD(TYPE,SELF,VAR,CON,ARG) {cchr_id_t pid=SELF; int id=CSM_IDOFPID(SELF); cchr_htdc_t_set(&(TYPE##_getextrap(VAR)->CON##_##ARG),&id,&pid); cchr_htdc_t_set(&(TYPE##_getextrap(VAR)->CON##_ra),&id,&pid); }
+#define CSM_LOG_KILL(TYPE,SELF,VAR,CON,ARG) {int id=CSM_IDOFPID(SELF); cchr_htdc_t_unset(&(TYPE##_getextrap(VAR)->CON##_##ARG),&id); cchr_htdc_t_unset(&(TYPE##_getextrap(VAR)->CON##_ra),&id); }*/
+
+
 #define CSM_END { \
 	goto fire_end; \
 }
@@ -816,6 +822,20 @@ hmap_header(int,cchr_id_t,cchr_htdc_t);
 }
 #define CSM_CB_HA_D(PID,HOOK,POS,RULE) ent_.hist[(POS)]=CSM_IDOFPID(PID); CSM_DEBUG(if (POS>0) CSM_STROUTX(",",1); CSM_FMTOUTX("%s:%i",1,#PID,CSM_IDOFPID(PID)); );
 #define CSM_CB_HA_S(RULE)
+
+/***** index related macros *****/
+
+#define CSM_IDX_DEFINE(VAR) cchr_htdc_t VAR
+#define CSM_IDX_INIT(VAR) {cchr_htdc_t_init(&(VAR));}
+#define CSM_IDX_MERGE(VAR1,VAR2) {cchr_htdc_t_addall(&(VAR1),&(VAR2));}
+#define CSM_IDX_DESTR(VAR) {cchr_htdc_t_free(&(VAR));}
+#define CSM_IDX_ADD(VAR,PID) {cchr_id_t pid=PID; int id=CSM_IDOFPID(pid); cchr_htdc_t_set(&(VAR),&id,&pid); }
+#define CSM_IDX_DEL(VAR,PID) {cchr_id_t pid=PID; int id=CSM_IDOFPID(pid); cchr_htdc_t_unset(&(VAR),&id); }
+#define CSM_IDX_REACT(VAR,CON,TYPE) { \
+  CSM_DECLOGUNILOOP(RA,CSM_CB_FFVDC,) \
+  CSM_LOGUNILOOP(CON,RA,local,CON##_ra,log_int_t,VAR,{cchr_reactivate_##CON(CSM_PID(RA,local));}) \
+}
+
 
 /***** additional helper macro's *****/
 

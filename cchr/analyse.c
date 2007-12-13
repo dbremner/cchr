@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <assert.h>
@@ -15,12 +16,39 @@
 #include "semtree.h"
 #include "analyse.h"
 
+#include "sugar_log.h"
+
 #ifdef USE_EFENCE
 #include <efence.h>
 #endif
 
+/* do something sprintf-like, but put the output in a malloc'ed block */
+char *make_message(const char *fmt, ...) {
+  int n, size = 100;
+  char *p, *np;
+  va_list ap;
+  if ((p = malloc (size)) == NULL) return NULL;
+  while (1) {
+    va_start(ap, fmt);
+    n = vsnprintf (p, size, fmt, ap);
+    va_end(ap);
+    if (n > -1 && n < size) return p;
+    if (n > -1) {
+      size = n+1;
+    } else {
+      size *= 2;
+    }
+    if ((np = realloc (p, size)) == NULL) {
+      free(p);
+      return NULL;
+    } else {
+      p = np;
+    }
+  }
+}
+
 /* allocate and copy a string */
-char static *copy_string(char *in) {
+char *copy_string(const char *in) {
   if (in==NULL) return NULL;
   char *ret=malloc(strlen(in)+1);
   strcpy(ret,in);
@@ -29,19 +57,14 @@ char static *copy_string(char *in) {
 
 void static sem_vartype_init(sem_vartype_t *vt,char *name) {
   vt->name=copy_string(name);
-  vt->log_cb=NULL;
-  vt->log_prefix=NULL;
+  vt->log_ground=-1;
+  alist_init(vt->log_idx);
 }
 
 void static sem_vartype_destruct(sem_vartype_t *vt) {
   free(vt->name);
   vt->name=NULL;
-  if (vt->log_cb) {
-    free(vt->log_cb);
-    vt->log_cb=NULL;
-    free(vt->log_prefix);
-    vt->log_prefix=NULL;
-  }
+  alist_free(vt->log_idx);
 }
 
 int sem_cchr_gettype(sem_cchr_t *cchr,char *type) {
@@ -84,19 +107,19 @@ void static sem_constr_destruct(sem_constr_t *con) {
 }
 
 /* initialize a sem_exprpart_t as a variable reference */
-void static sem_exprpart_init_var(sem_exprpart_t *exprp, int var) {
+void sem_exprpart_init_var(sem_exprpart_t *exprp, int var) {
   exprp->type=SEM_EXPRPART_TYPE_VAR;
   exprp->data.var=var;
 }
 
 /* initialize a sem_expr_part_t as a literal string */
-void static sem_exprpart_init_lit(sem_exprpart_t *exprp, char *str) {
+void sem_exprpart_init_lit(sem_exprpart_t *exprp, char *str) {
   exprp->type=SEM_EXPRPART_TYPE_LIT;
   exprp->data.lit=str;
 }
 
 /* initialize a sem_expr_part_t as a literal string */
-void static sem_exprpart_init_fun(sem_exprpart_t *exprp, char *str) {
+void sem_exprpart_init_fun(sem_exprpart_t *exprp, char *str) {
   exprp->type=SEM_EXPRPART_TYPE_FUN;
   exprp->data.fun.name=str;
   alist_init(exprp->data.fun.args);
@@ -1044,17 +1067,18 @@ void static sem_cons_generate(sem_cchr_t *out,constr_t *in) {
 		if (!strcmp(optname,"kill")) par=3;
 		if (!strcmp(optname,"add")) par=4;
   		if (!ok && par) {
-			sem_expr_t *res=NULL;
-			switch (par) {
-			  case 1: {res=&(n->destr); break; }
-			  case 2: {res=&(n->init); break; }
-			  case 3: {res=&(n->kill); break; }
-			  case 4: {res=&(n->add); break; }
-			}
-  			sem_expr_init(res);
-  			sem_expr_generate(res,&svt,out,alist_ptr(t->args,1),n->name,0,1);
-  			sem_expr_expand(out,&svt,res,NULL,NULL);
+			sem_expr_t res;
+  			sem_expr_init(&res);
+  			sem_expr_generate(&res,&svt,out,alist_ptr(t->args,1),n->name,0,1);
+  			sem_expr_expand(out,&svt,&res,NULL,NULL);
   			ok=1;  			
+			switch (par) {
+			  case 1: {alist_addall(n->destr.parts,res.parts); break; }
+			  case 2: {alist_addall(n->init.parts,res.parts); break; }
+			  case 3: {alist_addall(n->kill.parts,res.parts); break; }
+			  case 4: {alist_addall(n->add.parts,res.parts); break; }
+			}
+			alist_free(res.parts);
   		}
   		if (!ok) {
   			fprintf(stderr,"warning: unknown constraint option '%s' ignored\n",optname);
@@ -1087,14 +1111,16 @@ void static sem_macro_generate(sem_cchr_t *out,macro_t *in) {
 void static sem_logicals(sem_cchr_t *out,logical_t *log) {
   int vid=sem_cchr_gettype(out,log->name);
   sem_vartype_t *vt=alist_ptr(out->types,vid);
-  vt->log_cb=copy_string(log->cb);
-  vt->log_prefix=copy_string("");
+  vt->log_ground=sem_cchr_gettype(out,log->cb);
 }
 
 /* generate a semantic form (sem_cchr_t) of the syntax tree (cchr_t) */
 int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   sem_cchr_init(out);
   int ok=1;
+  for (int i=0; i<alist_len(in->logicals); i++) {
+	sem_logicals(out,alist_ptr(in->logicals,i));
+  }
   for (int i=0; i<alist_len(in->exts); i++) {
     alist_add(out->exts,copy_string(alist_get(in->exts,i)));
   }
@@ -1107,8 +1133,6 @@ int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   for (int i=0; i<alist_len(in->rules); i++) {
   	if (!sem_rule_generate(out,alist_ptr(in->rules,i))) ok=0;
   }
-  for (int i=0; i<alist_len(in->logicals); i++) {
-	sem_logicals(out,alist_ptr(in->logicals,i));
-  }
+  sugar_log_analyse(out);
   return ok;
 }

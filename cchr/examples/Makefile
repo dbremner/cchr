@@ -1,7 +1,8 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=pentium4 -m32
+CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona -m64
 DEFS :=
 
 MODE := normal
+#MODE := libgc
 #MODE := debug
 #MODE := gdb
 #MODE := debugopt
@@ -29,9 +30,15 @@ else
       CFLAGS := -O0 -ggdb3 $(DEFS)
       LDFLAGS := 
     else
+    ifeq ($(MODE),libgc)
+      DEFS :=
+      CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers -I $(HOME)/sys/usr/include $(DEFS)
+      LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all -Wl,--rpath -L $(HOME)/sys/usr/lib -lgc
+    else
       DEFS :=
       CFLAGS := -O3 -g0 -fomit-frame-pointer -frename-registers $(DEFS)
       LDFLAGS := -Wl,-O2 -Wl,--enable-new-dtags -Wl,--sort-common -Wl,--strip-all
+    endif
     endif
     endif
   endif

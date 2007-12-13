@@ -9,10 +9,12 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include "analyse.h"
 #include "semtree.h"
 #include "alist.h"
 #include "output.h"
 #include "gio.h"
+#include "sugar_log.h"
 
 #ifdef USE_EFENCE
 #include <efence.h>
@@ -128,31 +130,6 @@ char static *csm_hashdef_strify(csm_hashdef_t *def) {
     ret[i+4]=0;
   }
   return ret;
-}
-
-/* do something sprintf-like, but put the output in a malloc'ed block */
-char static *make_message(const char *fmt, ...) {
-  int n, size = 100;
-  char *p, *np;
-  va_list ap;
-  if ((p = malloc (size)) == NULL) return NULL;
-  while (1) {
-    va_start(ap, fmt);
-    n = vsnprintf (p, size, fmt, ap);
-    va_end(ap);
-    if (n > -1 && n < size) return p;
-    if (n > -1) {
-      size = n+1;
-    } else {
-      size *= 2;
-    }
-    if ((np = realloc (p, size)) == NULL) {
-      free(p);
-      return NULL;
-    } else {
-      p = np;
-    }
-  }
 }
 
 void static csm_logidxs_add(csm_logidxs_t *li, int type, int con, int arg) {
@@ -584,7 +561,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
 	int vartype=alist_get(alist_get(cchr->cons,cicon).types,entry->data.logiter.pos);
 	csm_logidxs_add(ld,vartype,cicon,entry->data.logiter.pos);
 	sem_vartype_t *vt=alist_ptr(cchr->types,vartype);
-	output_fmt(out,"%s(%s,%s%i,%s,%s%s,%s,",entry->uni ? "CSM_LOGUNILOOP" : "CSM_LOGLOOP",cicon_name,ci_rem ? "R" : "K",cid+1,buf,vt->log_prefix,idxname,vt->name);
+	output_fmt(out,"%s(%s,%s%i,%s,%s%s,%s,",entry->uni ? "CSM_LOGUNILOOP" : "CSM_LOGLOOP",cicon_name,ci_rem ? "R" : "K",cid+1,buf,"",idxname,vt->name);
 	csm_generate_expr(&(entry->data.logiter.arg),tbl_c,out);
 	free(idxname);
 	output_indent(out,", \\",") \\");
@@ -771,11 +748,6 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		output_fmt(out,"#define ARGLIST_%s(CB,...) ",conn);
 		for (int j=0; j<alist_len(con->types); j++) {
 			if (j) output_fmt(out," CB##_S ");
-			int type=alist_get(con->types,j);
-			sem_vartype_t *vt=alist_ptr(in->types,type);
-			if (vt->log_cb) {
-			  /* csm_logidxs_add(ld,type,i,-1); */
-			}
 			output_fmt(out,"CB##_D(arg%i,%s,__VA_ARGS__)",j+1,csm_get_type(in,alist_get(con->types,j)));
 		}
 		output_fmt(out,"\n");
@@ -923,4 +895,5 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 	}
 	output_fmt(out,"CSM_START\n");
 	free(hd);
+	sugar_log_codegen(in,out,header);
 }

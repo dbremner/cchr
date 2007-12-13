@@ -63,11 +63,17 @@ struct _sem_expr_t_struct {
   alist_declare(sem_exprpart_t,parts);
 };
 
+/* an occurrence of a type */
+typedef struct {
+  int con; /* in which constraint */
+  int arg; /* what argument of that constraint */
+} sem_typeocc_t;
+
 /* a (variable) type definition */
 typedef struct {
   char *name;
-  char *log_cb; /* non-NULL for logical variables */
-  char *log_prefix; /* currently always "" */
+  int log_ground; /* ground type */
+  alist_declare(sem_typeocc_t,log_idx);
 } sem_vartype_t;
 
 /* a constraint, having a name, a list of types, and a list of rule occurences */

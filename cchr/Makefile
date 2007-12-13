@@ -46,8 +46,8 @@ $(INTDIR):
 # EXECUTABLES #
 ###############
 
-$(OUTDIR)/cchr: $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o $(OUTDIR)/gio.o Makefile
-	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o $(OUTDIR)/gio.o
+$(OUTDIR)/cchr: $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o $(OUTDIR)/gio.o $(OUTDIR)/sugar_log.o Makefile
+	$(CC) $(LDFLAGS) -o $(OUTDIR)/cchr $(OUTDIR)/parser.o $(OUTDIR)/lexer.o $(OUTDIR)/analyse.o $(OUTDIR)/parsestr.o $(OUTDIR)/main.o $(OUTDIR)/output.o $(OUTDIR)/codegen.o $(OUTDIR)/gio.o $(OUTDIR)/sugar_log.o
 
 ######################
 # INTERMEDIATE FILES #
@@ -83,6 +83,9 @@ $(OUTDIR)/gio.o: gio.c gio.h semtree.h alist.h Makefile
 
 $(OUTDIR)/output.o: output.c output.h Makefile
 	$(CC) $(CFLAGS) output.c -c -o $(OUTDIR)/output.o
+
+$(OUTDIR)/sugar_log.o: sugar_log.c sugar_log.h Makefile
+	$(CC) $(CFLAGS) sugar_log.c -c -o $(OUTDIR)/sugar_log.o
 
 $(OUTDIR)/main.o: main.c codegen.h analyse.h semtree.h parsestr.h alist.h output.h timings.h Makefile
 	$(CC) $(CFLAGS) main.c -c -o $(OUTDIR)/main.o

@@ -1,4 +1,4 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona -m64
+CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona -m32
 DEFS :=
 
 MODE := normal

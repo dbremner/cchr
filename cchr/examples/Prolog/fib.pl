@@ -23,9 +23,10 @@ A: upto(8), fib(0,1), fib(1,1), .., fib(7,21), fib(8,34).
 
 :- module(fib_bu,[fib/2, upto/1, test/1]).
 :- use_module(library(chr)).
-%:- chr_option(debug,off).                                                                                            
-:- chr_option(optimize,full).                                                                                        
-:- chr_option(check_guard_bindings,off).                                                                             
+:- chr_option(debug,off).
+:- chr_option(optimize,full).
+:- chr_option(check_guard_bindings,off).
+
  
 %% Deprecated syntax used for SICStus 3.x
 %handler fib.
@@ -38,7 +39,7 @@ A: upto(8), fib(0,1), fib(1,1), .., fib(7,21), fib(8,34).
 
 
 start @ upto(_) ==> fib(0,1), fib(1,1).
-next  @ upto(Max), fib(N1,M1), fib(N2,M2) ==> Max>N2, N2=:=N1+1 | 
+next  @ upto(Max), fib(N2,M2) \ fib(N1,M1) <=> Max>N2, N2=:=N1+1 | 
             N is N2+1, M is M1+M2, fib(N,M).
 
 test(N) :- upto(N).

@@ -26,6 +26,10 @@ A: H = E, I = E, R = E, T = E, U = E, W = E, leq(F,E).
 */
 :- module(leq, [test/1]).
 :- use_module(library(chr)).
+:- chr_option(debug,off).
+:- chr_option(optimize,full).
+:- chr_option(check_guard_bindings,off).
+
 
 %% Deprecated syntax used for SICStus 3.x
 %handler leq.

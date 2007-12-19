@@ -30,7 +30,7 @@ my %SYSTEMS=(
 );
 
 my %SYSTBL=(
-  swi =>  {gcd => "gcd", fib => "fib", leq => "leq", primes => "primes2", ram => "ram_simulator", tak => "tak" },
+  swi =>  {gcd => "gcd", fib => "fib", leq => "leq", primes => "primes", ram => "ram", tak => "tak" },
 #  jchr => {              fib => "Fib",     leq => "Leq", primes => "Primes",  ram => "Ram", tak => "Tak"},
   cchr => {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak2"},
   c =>    {gcd => "gcd", fib => "fib_gmp", leq => "leq", primes => "primes",  ram => "ram", tak => "tak" }

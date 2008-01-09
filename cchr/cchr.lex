@@ -98,6 +98,7 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 "("               LIT_RETURN(TOK_LRBRAC);
 ")"               LIT_RETURN(TOK_RRBRAC);
 "*"		  LIT_RETURN(TOK_ASTER);
+"#"		  LIT_RETURN(TOK_HASH);
 
 "++"|"--"|"+"|"-"|"/"|"->"|"."|"<<"|">>"|"<"|">"|"="|"=="|"<="|">="|"%"|"%="|"^"|"~"|"&"|"&&"|"||"|"+="|"*="|"/="|"-="|">>="|"<<="|"&="|"|="|"||="|"&&="|"!="|"^="|"?"|":"|"!"   		LIT_RETURN(TOK_OP)
 {integer}         LIT_RETURN(TOK_CONST)

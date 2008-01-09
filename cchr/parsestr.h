@@ -35,6 +35,7 @@ typedef struct {
 /* an expression, being a sequence of tokens */
 struct _expr_t_struct {
   alist_declare(token_t,list);
+  char *occn;
 };
  
 /* a constraint having a name and a list of arguments (the types) */
@@ -42,6 +43,7 @@ typedef struct {
   char *name;
   alist_declare(char*,list);
   alist_declare(expr_t,args);
+  char *occn;
 } constr_t;
 
 /* a list of expressions */

@@ -177,6 +177,7 @@ int main(int argc, char *argv[])
 	      output_destruct(&oo);
 	      output_destruct(&ooh);
 	      fclose(out);
+	      fclose(outh);
 	      fclose(in);
 	    } else {
 	      fprintf(stderr,"Error opening %s: %s\n",arg,strerror(errno));

@@ -67,10 +67,12 @@
      TOK_CHAR = 283,
      TOK_ECHAR = 284,
      TOK_LOGICAL = 285,
-     TOK_ERROR = 286,
-     PRE_ENDALIST = 287,
-     PRE_ELIST = 288,
-     PRE_ETLIST = 289
+     TOK_HASH = 286,
+     TOK_ERROR = 287,
+     PRE_ENDALIST = 288,
+     PRE_EC = 289,
+     PRE_ELIST = 290,
+     PRE_ETLIST = 291
    };
 #endif
 /* Tokens.  */
@@ -102,10 +104,12 @@
 #define TOK_CHAR 283
 #define TOK_ECHAR 284
 #define TOK_LOGICAL 285
-#define TOK_ERROR 286
-#define PRE_ENDALIST 287
-#define PRE_ELIST 288
-#define PRE_ETLIST 289
+#define TOK_HASH 286
+#define TOK_ERROR 287
+#define PRE_ENDALIST 288
+#define PRE_EC 289
+#define PRE_ELIST 290
+#define PRE_ETLIST 291
 
 
 
@@ -122,7 +126,7 @@ typedef union YYSTYPE
   exprlist_t elist;
 }
 /* Line 1489 of yacc.c.  */
-#line 126 "intermediate/cchr.tab.h"
+#line 130 "intermediate/cchr.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

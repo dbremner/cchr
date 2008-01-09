@@ -10,7 +10,8 @@
 cchr {
     constraint candidate(int) option(fmt,"candidate(%i)",$1),prime(int) option(fmt,"prime(%i)",$1);
 
-    gen @ candidate(N) <=> N>1 | candidate(N-1), prime(N);
+    low @ candidate(1) <=> true;
+    gen @ candidate(N) <=> candidate(N-1), prime(N);
     sift @ prime(Y) \ prime(X) <=> (X%Y)==0 | true;
 }
 

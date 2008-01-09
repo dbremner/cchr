@@ -21,6 +21,8 @@ void destruct_token_t (token_t *tok) {
 void destruct_expr_t (expr_t *expr) {
   for (int i=0; i<alist_len(expr->list); i++) destruct_token_t(alist_ptr(expr->list,i));
   alist_free(expr->list);
+  if (expr->occn) free(expr->occn);
+  expr->occn=NULL;
 }
 
 void destruct_constr_t (constr_t *constr) {

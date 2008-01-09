@@ -92,6 +92,8 @@ typedef struct {
 typedef struct {
   int constr;
   alist_declare(int,args); /* in KEPT & REM: just one var ID */
+  char *occn;
+  int passive;
 } sem_conocc_t;
 
 typedef struct {

@@ -51,20 +51,19 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
   exprlist_t elist;
 }
 
-%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING TOK_MACRO TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR TOK_LOGICAL
+%token <lit> TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC	     TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP TOK_EXTERN TOK_BSTRING TOK_STRING TOK_ESTRING TOK_MACRO TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR TOK_LOGICAL TOK_HASH
 
 %token TOK_ERROR
 
 %type  <lit> literal type rname string stringparts char charparts
 
-
-%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname TOK_EXTERN TOK_STRING TOK_BSTRING TOK_ESTRING TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR TOK_LOGICAL
+%destructor { free($$); } TOK_CONSTRAINT TOK_TRUE TOK_LCBRAC TOK_RCBRAC TOK_SEMI TOK_COMMA TOK_AT TOK_SIMP TOK_PROP TOK_SPIPE TOK_BSLASH TOK_LRBRAC TOK_RRBRAC TOK_FUNC TOK_SYMBAT TOK_CONST TOK_SYMB TOK_OP literal type rname TOK_EXTERN TOK_STRING TOK_BSTRING TOK_ESTRING TOK_ASTER TOK_BCHAR TOK_CHAR TOK_ECHAR TOK_LOGICAL TOK_HASH
 
 %type <constr> typelistc typelist constr carglist
 %destructor { destruct_constr_t(&$$); } typelistc typelist constr carglist
 
 %type <expr> tokenlist token etokenlist etoken stoken stokenlist functio
-%destructor { destruct_expr_t(&$$); } tokenlist token etokenlist etoken functio
+%destructor { destruct_expr_t(&$$); } tokenlist token etokenlist etoken stoken stokenlist functio
 
 %type <token> arglist
 %destructor { destruct_token_t(&$$); } arglist
@@ -77,6 +76,7 @@ void cchr_genrule(cchr_t *cchr,char *name,exprlist_t *kept,exprlist_t *removed,
 
 %left TOK_COMMA
 %left PRE_ENDALIST
+%left PRE_EC
 %left PRE_ELIST
 
 %left PRE_ETLIST
@@ -96,16 +96,16 @@ input : { cchr_init(&$$); }
         | input stmt { $$=$1; cchr_merge(&$$,&$2); }
         ;
 
-tokenlist : tokenlist token { $$.list=$1.list; alist_addall($$.list,$2.list); alist_free($2.list); }
-          | %prec PRE_ETLIST { alist_init($$.list); }
+tokenlist : tokenlist token { $$.list=$1.list; $$.occn=$1.occn; alist_addall($$.list,$2.list); alist_free($2.list); }
+          | %prec PRE_ETLIST { alist_init($$.list); $$.occn=NULL; }
           ;
 
-etokenlist : etokenlist etoken { $$.list=$1.list; alist_addall($$.list,$2.list); alist_free($2.list); }
-           | %prec PRE_ETLIST { alist_init($$.list); }
+etokenlist : etokenlist etoken { $$.list=$1.list; alist_addall($$.list,$2.list); alist_free($2.list); $$.occn=NULL; }
+           | %prec PRE_ETLIST { alist_init($$.list); $$.occn=NULL; }
            ;
 
-stokenlist : stokenlist stoken { $$.list=$1.list; alist_addall($$.list,$2.list); alist_free($2.list); }
-           | %prec PRE_ETLIST { alist_init($$.list); }
+stokenlist : stokenlist stoken { $$.list=$1.list; alist_addall($$.list,$2.list); alist_free($2.list); $$.occn=NULL; }
+           | %prec PRE_ETLIST { alist_init($$.list); $$.occn=NULL; }
            ;
 
 functio : TOK_FUNC arglist TOK_RRBRAC { 
@@ -113,6 +113,7 @@ functio : TOK_FUNC arglist TOK_RRBRAC {
 		    $2.data=$1;
 		    alist_add($$.list,$2);
 		    free($3);
+		    $$.occn=NULL;
 		}
 		| TOK_FUNC TOK_RRBRAC { 
    		    alist_init($$.list);
@@ -122,13 +123,14 @@ functio : TOK_FUNC arglist TOK_RRBRAC {
 		    tok->type=TOKEN_TYPE_FUNC;
 		    tok->data=$1;
 		    free($2);
+		    $$.occn=NULL;
 		}
 
-token : literal { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); }
+token : literal { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); $$.occn=NULL; }
 	  | functio
-	  | string  { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); }
-	  | char  { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); }
-	  | TOK_LCBRAC stokenlist TOK_RCBRAC { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_addall($$.list,$2.list); alist_new($$.list,tok); tok->data=$3; tok->type=TOKEN_TYPE_LIT; alist_free($2.list); }
+	  | string  { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); $$.occn=NULL; }
+	  | char  { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_init(tok->args); $$.occn=NULL; }
+	  | TOK_LCBRAC stokenlist TOK_RCBRAC { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; alist_addall($$.list,$2.list); alist_new($$.list,tok); tok->data=$3; tok->type=TOKEN_TYPE_LIT; alist_free($2.list); $$.occn=NULL; }
       | TOK_SYMB  { 
    		    alist_init($$.list);
 		    token_t *tok;
@@ -136,7 +138,7 @@ token : literal { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok
 		    tok->data=$1;
 		    tok->type=TOKEN_TYPE_SYMB;
 		    alist_init(tok->args);
-
+		    $$.occn=NULL; 
 		  }
 	  | TOK_LRBRAC TOK_RRBRAC {
    		    alist_init($$.list);
@@ -147,6 +149,7 @@ token : literal { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok
 		    tok->data=NULL;
 		    free($2);
 		    free($1);
+		    $$.occn=NULL; 
 	  }
       | TOK_LRBRAC arglist TOK_RRBRAC { 
     		alist_init($$.list);
@@ -154,22 +157,24 @@ token : literal { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok
 		    alist_add($$.list,$2);
 		    free($3);
 		    free($1);
+		    $$.occn=NULL; 
 		}
       ;
 
 etoken : token
-	   | TOK_SPIPE { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; }
-	   | TOK_SYMBAT { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_SYMB; alist_new($$.list,tok); tok->data=malloc(2); strcpy(tok->data,"@"); tok->type=TOKEN_TYPE_LIT;}
+	   | TOK_SPIPE { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; $$.occn=NULL; }
+	   | TOK_SYMBAT { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_SYMB; alist_new($$.list,tok); tok->data=malloc(2); strcpy(tok->data,"@"); tok->type=TOKEN_TYPE_LIT; $$.occn=NULL; }
 	   ;
 
 stoken : etoken
-       | TOK_SEMI { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; }
-	   ;
+       | TOK_SEMI { alist_init($$.list); token_t *tok; alist_new($$.list,tok); tok->data=$1; tok->type=TOKEN_TYPE_LIT; $$.occn=NULL; }
+	;
 
 exprlist : TOK_TRUE { free($1); alist_init($$.list); }
-		 | tokenlist %prec PRE_ELIST { alist_init($$.list); alist_add($$.list,$1); }
-		 | exprlist TOK_COMMA tokenlist { $$=$1; alist_add($$.list,$3); free($2); }
-		 ;
+		 | tokenlist %prec PRE_ELIST { $1.occn=NULL; alist_init($$.list); alist_add($$.list,$1); }
+		 | tokenlist TOK_HASH TOK_SYMB %prec PRE_ELIST { $1.occn=$3; alist_init($$.list); alist_add($$.list,$1); free($2); }
+		 | exprlist TOK_COMMA tokenlist { $3.occn=NULL; $$=$1; alist_add($$.list,$3); free($2); } ;
+		 | exprlist TOK_COMMA tokenlist TOK_HASH TOK_SYMB { $3.occn=$5; $$=$1; alist_add($$.list,$3); free($2); free($4); } ;
 
 string : TOK_BSTRING stringparts TOK_ESTRING { $$=malloc(strlen($1)+strlen($2)+strlen($3)+1); strcpy($$,$1); strcat($$,$2); strcat($$,$3); free($1); free($2); free($3); }
 	   ;

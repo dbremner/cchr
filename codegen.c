@@ -430,6 +430,7 @@ void static csm_generate_code_gio(sem_cchr_t *cchr,int cons,int occ,output_t *ou
   char buf3[256];
   csm_rule_getname(cchr,ro->rule,buf3,256);
   sem_conocc_t *co=alist_ptr(ru->head[rem],ro->pos);
+
   csm_nsdef_init(&nsdef);
 
   gio_t gio;
@@ -757,10 +758,17 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		for (int j=0; j<alist_len(con->occ); j++) {
 			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
 			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
-				if (jj) output_fmt(out," CB##_S ");
-				jj++;
+	    			sem_rule_t *ru=alist_ptr(in->rules,cs->rule);
+				int rem=cs->type==SEM_RULE_LEVEL_REM;
+				sem_conocc_t *co=alist_ptr(ru->head[rem],cs->pos);
 				csm_conocc_getname(in,i,j,buf,256);
-				output_fmt(out,"CB##_D(%s)",buf);
+				if (!co->passive) {
+				    if (jj) output_fmt(out," CB##_S ");
+				    jj++;
+				    output_fmt(out,"CB##_D(%s)",buf);
+				} else {
+				    output_fmt(out,"/* passive: %s */ ",buf);
+				}
 			}
 		}
 		output_string(out,"\n");
@@ -840,8 +848,13 @@ void csm_generate(sem_cchr_t *in,output_t *out,output_t *header) {
 		for (int j=0; j<alist_len(con->occ); j++) {
 			sem_ruleocc_t *cs=alist_ptr(con->occ,j);
 			if (cs->type==SEM_RULE_LEVEL_KEPT || cs->type==SEM_RULE_LEVEL_REM) {
-				/*csm_generate_code(in,i,j,out);*/
-				csm_generate_code_gio(in,i,j,out,hd,&ld);
+	    			sem_rule_t *ru=alist_ptr(in->rules,cs->rule);
+				int rem=cs->type==SEM_RULE_LEVEL_REM;
+				sem_conocc_t *co=alist_ptr(ru->head[rem],cs->pos);
+				if (!co->passive) {
+				    /*csm_generate_code(in,i,j,out);*/
+				    csm_generate_code_gio(in,i,j,out,hd,&ld);
+				}
 			}
 		}
 		output_string(out,"\n");

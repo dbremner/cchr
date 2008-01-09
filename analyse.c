@@ -175,11 +175,14 @@ void static sem_macro_destruct(sem_macro_t *macro) {
 void static sem_conocc_init(sem_conocc_t *occ,int constr) {
   alist_init(occ->args);
   occ->constr=constr;
+  occ->occn=NULL;
+  occ->passive=0;
 }
 
 /* destruct a sem_conocc_t */
 void static sem_conocc_destruct(sem_conocc_t *con) {
   alist_free(con->args);
+  if (con->occn) free(con->occn);
 }
 
 /* initialize a sem_conocc_t */
@@ -668,6 +671,17 @@ int static sem_conocc_generate(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 				r.pos=alist_len(rule->out[1]);
 			} else {
 				r.pos=alist_len(rule->head[type]);
+				if (in->occn) {
+				    printf("occn: <%s>\n",in->occn);
+				    if (!strcmp(in->occn,"passive")) {
+					n1.passive=1;
+					n1.occn=NULL;
+				    } else {
+					n1.occn=copy_string(in->occn);
+				    }
+				} else {
+				    n1.occn=NULL;
+				}
 			}
 			alist_add(cons->occ,r);
 			for (int s=0; s<alist_len(tok->args); s++) {

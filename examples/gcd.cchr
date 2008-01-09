@@ -7,7 +7,7 @@
 cchr {
   constraint gcd(uint64_t) option(fmt,"gcd(%llu)",$1);
 
-  triv @ gcd(0ULL) <=> true;
+  triv @ gcd(0ULL)#passive <=> true;
   dec @ gcd(N) \ gcd(M) <=> M>=N | uint64_t V=M-N, /*{printf("[val=%i]\n",(int)V);},*/ gcd(V);
 }
 

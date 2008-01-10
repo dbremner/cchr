@@ -1,4 +1,4 @@
-CC := gcc -Wall -Wno-unused -pipe -std=c99 -march=nocona -m32
+CC := gcc -Wall -Wno-unused -pipe -std=gnu99 -march=nocona -m32
 DEFS :=
 
 MODE := normal
@@ -158,6 +158,11 @@ ram.p: ram.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o ram.a ram.c
 	time ./ram.a 3400
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o ram.p ram.c
+
+blur.c: blur.cchr bin/cchr Makefile
+	bin/cchr blur.cchr
+blur: blur.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -Wno-trigraphs -o blur blur.c
 
 
 dijkstra.c: dijkstra.cchr bin/cchr Makefile

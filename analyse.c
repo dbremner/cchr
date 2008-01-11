@@ -672,7 +672,6 @@ int static sem_conocc_generate(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 			} else {
 				r.pos=alist_len(rule->head[type]);
 				if (in->occn) {
-				    printf("occn: <%s>\n",in->occn);
 				    if (!strcmp(in->occn,"passive")) {
 					n1.passive=1;
 					n1.occn=NULL;

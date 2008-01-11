@@ -325,7 +325,7 @@ double static gio_score(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio) {
   return ret;
 }
 
-void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int *used, int done, gio_t *out, double *score) {
+void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int *used, int done, gio_t *out, double *score, int rnd) {
   int sizeK=alist_len(rule->head[SEM_RULE_LEVEL_KEPT]);
   int sizeR=alist_len(rule->head[SEM_RULE_LEVEL_REM]);
   if (done==sizeK+sizeR) {
@@ -342,16 +342,31 @@ void static gio_iterate(sem_cchr_t *chr, sem_rule_t *rule, uint32_t *order, int 
     }
     return;
   }
-  int k=0;
-  for (int p=0; p<2; p++) {
-    for (int s=0; s<(p?sizeR:sizeK); s++) {
-      if (!used[k]) {
-        used[k]=1;
-	order[done]=s+(p<<31);
-	gio_iterate(chr,rule,order,used,done+1,out,score);
-	used[k]=0;
+  if (rnd) {
+    int max=sizeR+sizeK-done;
+    int r=rand()%max;
+    int p=0;
+    do {
+      while (p<sizeR+sizeK && used[p]) p++;
+      if (r==0) break;
+      p++; r--;
+    } while(1);
+    used[p]=1;
+    order[done]=(p>=sizeK ? ((p-sizeK) | (1 << 31)) : p);
+    gio_iterate(chr,rule,order,used,done+1,out,score,rnd);
+    used[p]=0;
+  } else {
+    int k=0;
+    for (int p=0; p<2; p++) {
+      for (int s=0; s<(p?sizeR:sizeK); s++) {
+        if (!used[k]) {
+          used[k]=1;
+	  order[done]=s+(p<<31);
+	  gio_iterate(chr,rule,order,used,done+1,out,score,rnd);
+	  used[k]=0;
+        }
+        k++;
       }
-      k++;
     }
   }
 }
@@ -371,7 +386,13 @@ void gio_generate(sem_cchr_t *chr, sem_rule_t *rule, gio_t *gio, int activ) {
   order[0]=activ;
   double score=0.0;
   gio_init(gio);
-  gio_iterate(chr,rule,order,used,1,gio,&score);
+  if (size>8) {
+    for (int i=0; i<10000; i++) {
+      gio_iterate(chr,rule,order,used,1,gio,&score,1);
+    }
+  } else {
+    gio_iterate(chr,rule,order,used,1,gio,&score,0);
+  }
   free(used);
   free(order);
   return;

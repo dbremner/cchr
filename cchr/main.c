@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#include <time.h>
 
 #include "parsestr.h"
 #include "semtree.h"
@@ -149,6 +151,7 @@ int process_file(FILE *in, output_t *out, output_t *outh, int *line, char *innam
 int main(int argc, char *argv[])
 {
 	setbuf(stdout,NULL);
+	srand(time(NULL) ^ getpid());
 	int ok=1;
 	timing_t totaltime;
 	timing_start(&totaltime);

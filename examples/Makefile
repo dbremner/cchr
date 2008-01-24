@@ -120,6 +120,15 @@ fib_topdown.c: fib_topdown.cchr bin/cchr Makefile
 fib_topdown: fib_topdown.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -o fib_topdown fib_topdown.c
 
+chapeau.c: chapeau.cchr bin/cchr Makefile
+	bin/cchr chapeau.cchr
+chapeau: chapeau.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o chapeau chapeau.c
+chapeau.prep.c: chapeau.c ../cchr_csm.h Makefile
+	cpp -P $(DEFS) <chapeau.c | indent -kr -l127 >chapeau.prep.c
+chapeau.prep: chapeau.prep.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o chapeau.prep chapeau.prep.c
+
 tak.c: tak.cchr bin/cchr Makefile
 	bin/cchr tak.cchr
 

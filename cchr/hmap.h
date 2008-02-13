@@ -30,7 +30,7 @@
   key_t static inline * hmap_t ## _next(hmap_t *hm, key_t *key); \
   key_t static inline * hmap_t ## _ufirst(hmap_t *hm); \
   key_t static inline * hmap_t ## _unext(hmap_t *hm, key_t *key); \
-  void inline hmap_t ## _stop(hmap_t *hm, key_t *key); \
+  void static inline hmap_t ## _stop(hmap_t *hm, key_t *key); \
   val_t static inline * hmap_t ## _valptr(hmap_t *hm, key_t *key); \
   void static hmap_t ## _addall(hmap_t *to, hmap_t *from); \
   void static hmap_t ## _free(hmap_t *hm); \

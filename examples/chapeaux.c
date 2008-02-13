@@ -61,7 +61,19 @@ int ggd(int a,int b) {
   } while(1);
 }
 
-void analyse(int accepted,int received) {
+void printmask(int id,int mask) {
+  int dc[5]={0,0,0,0,0};
+  int ms[5]={0,0,0,0,0};
+  for (int i=0; i<5; i++) {
+    dc[i]=(id)%6;
+    id /= 6;
+    ms[i]=!((mask)%2);
+    mask /= 2;
+  }
+  printf("[%s%s %s%s %s%s %s%s %s%s]",ms[0] ? "#" : "",names[dc[0]],ms[1] ? "#" : "",names[dc[1]],ms[2] ? "#" : "",names[dc[2]],ms[3] ? "#" : "",names[dc[3]],ms[4] ? "#" : "",names[dc[4]]);
+}
+
+void analyse(int accepted,int received, int *mask, int *num, int *den) {
   int degree=poss[accepted].worse;
   int dice[5]={0,0,0,0,0};
   int dc[5]={0,0,0,0,0};
@@ -69,9 +81,9 @@ void analyse(int accepted,int received) {
     dice[i]=(received)%6;
     received /= 6;
   }
-  double best=-1;
-  int bestm=-1,bestb=-1,bestt=-1;
-  for (int m=0; m<=31; m++) {
+  int bestm=0,bestb=7776-degree-poss[accepted].equal,bestt=7776;
+  double best=(1.0*bestb)/bestt;
+  for (int m=31; m>=1; m--) {
     int tot=0;
     int better=0;
     for (dc[0]=((m&1) ? dice[0] : 0); dc[0] <= ((m&1) ? dice[0] : 5); dc[0]++)  {
@@ -95,7 +107,9 @@ void analyse(int accepted,int received) {
     }
   }
   int g=ggd(bestb,bestt);
-  printf("[%s%s,%s%s,%s%s,%s%s,%s%s]: %i/%i (%g%%)\n",(bestm&1)?" ":"#",names[dice[0]],(bestm&2)?" ":"#",names[dice[1]],(bestm&4)?" ":"#",names[dice[2]],(bestm&8)?" ":"#",names[dice[3]],(bestm&16)?" ":"#",names[dice[4]],bestb/g,bestt/g,(100.0*bestb)/bestt);
+  *mask=bestm;
+  *num=bestb/g;
+  *den=bestt/g;
 }
 
 int parsestr(char *c) {
@@ -132,6 +146,21 @@ int main(int argc, char **argv) {
   int accept=parsestr(s1);
   double chs=chance_for_better_than(accept);
   printf("you have %g%% chance to throw better from scratch\n",100.0*chs);
+  int mask=0,num=0,den=0;
+  double mch=2.0;
+  int wid=0,wms=0;
+  for (int rc=0; rc<7776; rc++) {
+    analyse(accept,rc,&mask,&num,&den);
+    double chs=(1.0*num)/den;
+    if (chs<mch) {
+      mch=chs;
+      wid=rc;
+      wms=mask;
+    }
+  }
+  printf("Worst-case scenario: %g%% with ",100*mch);
+  printmask(wid,wms);
+  printf("\n");
   printf("you have received: ");
   if (argc>2) {
     s2=argv[2];
@@ -140,6 +169,9 @@ int main(int argc, char **argv) {
     s2=fgets(c,256,stdin);
   }
   int received=parsestr(s2);
-  analyse(accept,received);
+  analyse(accept,received,&mask,&num,&den);
+  printf("Chance for throwing better: %g%% (%i/%i) with ",(100.0*num)/den,num,den);
+  printmask(received,mask); 
+  printf("\n");
   return 0;
 }

@@ -24,19 +24,19 @@ Q: leq(F,R), leq(R,U), leq(U,E), leq(E,H), leq(H,W), leq(W,I), leq(I,R),
     leq(R,T), leq(T,H).
 A: H = E, I = E, R = E, T = E, U = E, W = E, leq(F,E).
 */
-:- module(leq, [test/1, leq/2]).
+:- module(leq, [test/1,leq/2]).
 :- use_module(library(chr)).
-:- chr_option(debug,off).
-:- chr_option(optimize,full).
-:- chr_option(check_guard_bindings,off).
+chr_option(debug,off).
+chr_option(optimize,off).
+chr_option(check_guard_bindings,off).
 
 
 %% Deprecated syntax used for SICStus 3.x
 %handler leq.
-%constraints leq/2.
+constraints leq/2.
 
 %% Syntax for SWI / SICStus 4.x
-:- chr_constraint leq/2.
+%:- chr_constraint leq/2.
 
 
 reflexivity  @ leq(X,X) <=> true.
@@ -52,4 +52,3 @@ buildlist(A,1) :- A=[_].
 buildlist(A,L) :- A=[_|B], L1 is L-1, buildlist(B,L1).
 
 test(N) :- buildlist(A,N), testcycle(A).
-

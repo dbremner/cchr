@@ -1,11 +1,11 @@
 CC := gcc -Wall -Wno-unused -pipe -std=gnu99 -march=nocona -m32
 DEFS :=
 
-MODE := normal
+#MODE := normal
 #MODE := libgc
 #MODE := debug
 #MODE := gdb
-#MODE := debugopt
+MODE := debugopt
 #MODE := efence
 
 ifeq ($(MODE),debugopt)
@@ -167,6 +167,17 @@ ram.p: ram.c ../cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o ram.a ram.c
 	time ./ram.a 3400
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o ram.p ram.c
+
+ram_fib.prep.c: ram_fib.c ../cchr_csm.h Makefile
+	cpp -P $(DEFS) <ram_fib.c | indent -kr -l127 >ram_fib.prep.c
+ram_fib.c: ram_fib.cchr bin/cchr Makefile
+	bin/cchr ram_fib.cchr
+ram_fib: ram_fib.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o ram_fib ram_fib.c
+ram_fib.p: ram_fib.c ../cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o ram_fib.a ram_fib.c
+	time ./ram_fib.a 200
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o ram_fib.p ram_fib.c
 
 blur.c: blur.cchr bin/cchr Makefile
 	bin/cchr blur.cchr

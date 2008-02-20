@@ -16,31 +16,31 @@ cchr {
 	constraint initmem(int) option(fmt,"initmem(%i)",$1);
 	
 	// add value of register B to register A
-	iAdd @ prog(L,L1,ADD,B,A), mem(B,Y) \ mem(A,X), prog_counter(L) <=> mem(A,X+Y), prog_counter(L1);
+	iAdd @ prog(L,L1,ADD,B,A)#passive, mem(B,Y)#passive \ mem(A,X)#passive, prog_counter(L) <=> mem(A,X+Y), prog_counter(L1);
 	// subtract value of register B from register A
-	iSub @ prog(L,L1,SUB,B,A), mem(B,Y) \ mem(A,X), prog_counter(L) <=> mem(A,X-Y), prog_counter(L1);
+	iSub @ prog(L,L1,SUB,B,A)#passive, mem(B,Y)#passive \ mem(A,X)#passive, prog_counter(L) <=> mem(A,X-Y), prog_counter(L1);
 	// multiply register A with value of register B
-	iMul @ prog(L,L1,MULT,B,A), mem(B,Y) \ mem(A,X), prog_counter(L) <=> mem(A,X*Y), prog_counter(L1);
+	iMul @ prog(L,L1,MULT,B,A)#passive, mem(B,Y)#passive \ mem(A,X)#passive, prog_counter(L) <=> mem(A,X*Y), prog_counter(L1);
 	// divide register A by value of register B
-	iDiv @ prog(L,L1,DIV,B,A), mem(B,Y) \ mem(A,X), prog_counter(L) <=> mem(A,X/Y), prog_counter(L1);
+	iDiv @ prog(L,L1,DIV,B,A)#passive, mem(B,Y)#passive \ mem(A,X)#passive, prog_counter(L) <=> mem(A,X/Y), prog_counter(L1);
 
 	// put the value in register B in register A
-	iMove @ prog(L,L1,MOVE,B,A), mem(B,X) \ mem(A,_), prog_counter(L) <=> mem(A,X), prog_counter(L1);
+	iMove @ prog(L,L1,MOVE,B,A)#passive, mem(B,X)#passive \ mem(A,_)#passive, prog_counter(L) <=> mem(A,X), prog_counter(L1);
 	// put the value in register <value in register B> in register A
-	iIMove @ prog(L,L1,I_MOVE,B,A), mem(B,C), mem(C,X) \ mem(A,_), prog_counter(L) <=> mem(A,X), prog_counter(L1);
+	iIMove @ prog(L,L1,I_MOVE,B,A)#passive, mem(B,C)#passive, mem(C,X)#passive \ mem(A,_)#passive, prog_counter(L) <=> mem(A,X), prog_counter(L1);
 	// put the value in register B in register <value in register A>
-	iMoveI @ prog(L,L1,MOVE_I,B,A), mem(B,X), mem(A,C) \ mem(C,_), prog_counter(L) <=> mem(C,X), prog_counter(L1);
+	iMoveI @ prog(L,L1,MOVE_I,B,A)#passive, mem(B,X)#passive, mem(A,C)#passive \ mem(C,_)#passive, prog_counter(L) <=> mem(C,X), prog_counter(L1);
 
 	// put the value B in register A        -> redundant if consts are in init mem
-	iConst @ prog(L,L1,CONST,B,A) \ mem(A,_), prog_counter(L) <=> mem(A,B), prog_counter(L1);
+	iConst @ prog(L,L1,CONST,B,A)#passive \ mem(A,_)#passive, prog_counter(L) <=> mem(A,B), prog_counter(L1);
 
 	// unconditional jump to label A
-	iJump @ prog(L,_L1,Instr,_,A) \ prog_counter(L) <=> Instr == JUMP | prog_counter(A);
+	iJump @ prog(L,_L1,JUMP,_,A)#passive \ prog_counter(L) <=> prog_counter(A);
 	// jump to label A if register R is zero, otherwise continue
-	iCjump1 @ prog(L,_L1,CJUMP,R,A), mem(R,X) \ prog_counter(L) <=> X == 0 | prog_counter(A);
-	iCjump2 @ prog(L,L1,CJUMP,R,_A), mem(R,X) \ prog_counter(L) <=> X != 0 | prog_counter(L1);
+	iCjump1 @ prog(L,_L1,CJUMP,R,A)#passive, mem(R,X)#passive \ prog_counter(L) <=> X == 0 | prog_counter(A);
+	iCjump2 @ prog(L,L1,CJUMP,R,_A)#passive, mem(R,X)#passive \ prog_counter(L) <=> X != 0 | prog_counter(L1);
 	// halt
-	iHalt @ prog(L,_L1,Instr,_,_) \ prog_counter(L) <=> Instr == HALT | true;
+	iHalt @ prog(L,_L1,HALT,_,_)#passive \ prog_counter(L) <=> true;
 
 	// invalid instruction
 	error @ prog_counter(_L) <=> {printf("eeeeik! error!!!\n");};

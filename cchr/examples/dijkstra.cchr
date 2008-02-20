@@ -19,20 +19,20 @@ cchr {
   constraint extract_min(int* , int*);
   constraint insert(int,int), decr_or_ins(int,int);
   constraint mark(int), decr(int,int), ch2rt(int), decr5(int, int, int, int, int), item(int, int, int, int, int);
-  constraint min(int,int), findmin();
+  constraint min(int,int), findmin(int);
   
   insert        @ insert(I,K) <=> item(I,K,0,0,FALSE), min(I,K);
 
   keep_min      @ min(_,A) \ min(_,B) <=> A <= B | true;
 
-  extr          @ extract_min(X,Y), min(I,K), item(I,_,_,_,_) <=> ch2rt(I), findmin(), {*(X)=I; *(Y)=K;};
+  extr          @ extract_min(X,Y), min(I,K), item(I,_,_,_,_) <=> ch2rt(I), findmin(0), {*(X)=I; *(Y)=K;};
   extr_empty    @ extract_min(X,Y) <=> {*(X)=0; *(Y)=0;};
 
   c2r           @ ch2rt(I) \ item(C,K,R,I,_) <=> item(C,K,R,0,FALSE);
   c2r_done      @ ch2rt(_I) <=> true;
 
-  find_min      @ findmin(), item(I,K,_,0,_) ==> min(I,K);
-  found_min     @ findmin() <=> true;
+  find_min      @ findmin(_), item(I,K,_,0,_) ==> min(I,K);
+  found_min     @ findmin(_) <=> true;
 
   same_rank     @ item(I1,K1,R,0,_), item(I2,K2,R,0,_) <=> K1 <= K2 | item(I2,K2,R,I1,FALSE), item(I1,K1,R+1,0,FALSE);
 
@@ -55,9 +55,9 @@ cchr {
 
   /* dijkstra part */
   
-  constraint edge(int,int,int) fmt("edge(%i,%i,%i)",$1,$2,$3), dijkstra(int) fmt("dijkstra(%i)",$1);
-  constraint scan(int,int) fmt("scan(%i,%i)",$1,$2), relabel(int,int) fmt("relabel(%i,%i)",$1,$2);
-  constraint distance(int,int) fmt("distance(%i,%i)",$1,$2);
+  constraint edge(int,int,int) option(fmt,"edge(%i,%i,%i)",$1,$2,$3), dijkstra(int) option(fmt,"dijkstra(%i)",$1);
+  constraint scan(int,int) option(fmt,"scan(%i,%i)",$1,$2), relabel(int,int) option(fmt,"relabel(%i,%i)",$1,$2);
+  constraint distance(int,int) option(fmt,"distance(%i,%i)",$1,$2);
   
   start_scanning @ dijkstra(A) <=> scan(A,0);
   stop_scanning  @ scan(0,_A) <=> true;

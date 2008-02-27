@@ -1127,6 +1127,33 @@ void static sem_logicals(sem_cchr_t *out,logical_t *log) {
   vt->log_ground=sem_cchr_gettype(out,log->cb);
 }
 
+void static analysis_neverstored(sem_cchr_t *cchr,int con) {
+  sem_constr_t *cons=alist_ptr(cchr->cons,con);
+//  printf("- doing never stored for %s/%i\n",cons->name,alist_len(cons->types));
+  for (int i=0; i<alist_len(cons->occ); i++) {
+    sem_ruleocc_t *ro=alist_ptr(cons->occ,i);
+    sem_rule_t *r=alist_ptr(cchr->rules,ro->rule);
+//    printf("  - occ %i: rule %s, occ %i (%s)\n",i,r->name,ro->pos,ro->type == SEM_RULE_LEVEL_KEPT ? "kept" : "rem");
+    if (ro->type == SEM_RULE_LEVEL_KEPT) return;
+    if (ro->type == SEM_RULE_LEVEL_REM) {
+      if (alist_len(r->out[0])==0) {
+        /* found a never stored, make all partner-constraints passive */
+        for (int j=0; j<alist_len(cons->occ); j++) {
+          sem_ruleocc_t *pro=alist_ptr(cons->occ,j);
+          sem_rule_t *pr=alist_ptr(cchr->rules,pro->rule);
+          for (int h=0; h<2; h++) {
+            for (int k=0; k<alist_len(pr->head[h]); k++) {
+              sem_conocc_t *pco=alist_ptr(pr->head[h],k);
+              if (pco->constr != con) pco->passive=1;
+            }
+          }
+        }
+        return;
+      }
+    }
+  }
+}
+
 /* generate a semantic form (sem_cchr_t) of the syntax tree (cchr_t) */
 int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   sem_cchr_init(out);
@@ -1146,6 +1173,10 @@ int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   for (int i=0; i<alist_len(in->rules); i++) {
   	if (!sem_rule_generate(out,alist_ptr(in->rules,i))) ok=0;
   }
+  /* analyses */
   sugar_log_analyse(out);
+  for (int i=0; i<alist_len(out->cons); i++) {
+  	analysis_neverstored(out,i);
+  }
   return ok;
 }

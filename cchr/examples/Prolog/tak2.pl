@@ -21,7 +21,7 @@ Q: tak(18,12,6, R).
 A: R = 7.
 */
 
-:- module(tak, [tak/4]).
+:- module(tak, [tak/4, test/3]).
 :- use_module(library(chr)).
 :- chr_option(debug,off).                                                                                            
 :- chr_option(optimize,full).                                                                                        
@@ -43,3 +43,5 @@ tak(X,Y,Z,A) ==> X > Y |
         X1 is X-1, Y1 is Y-1, Z1 is Z-1,
         tak(X1,Y,Z,A1), tak(Y1,Z,X,A2), tak(Z1,X,Y,A3),
         tak(A1,A2,A3,A).
+
+test(X,Y,Z) :- tak(X,Y,Z,_).

@@ -1,11 +1,11 @@
 CC := gcc -Wall -Wno-unused -pipe -std=gnu99 -march=nocona -m32
 DEFS :=
 
-#MODE := normal
+MODE := normal
 #MODE := libgc
 #MODE := debug
 #MODE := gdb
-MODE := debugopt
+#MODE := debugopt
 #MODE := efence
 
 ifeq ($(MODE),debugopt)
@@ -60,6 +60,11 @@ gcd.p: gcd.c cchr_csm.h Makefile
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o gcd.a gcd.c
 	time ./gcd.a 1 200000000 >/dev/null
 	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o gcd.p gcd.c
+
+stack: stack.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -o stack stack.c
+stack.c: stack.cchr bin/cchr Makefile
+	bin/cchr stack.cchr
 
 
 primes: primes.c cchr_csm.h Makefile
@@ -156,6 +161,10 @@ gcd.prep.c: cchr_csm.h gcd.c Makefile
 
 dijkstra.prep.c: dijkstra.c ../cchr_csm.h Makefile
 	cpp -P $(DEFS) <dijkstra.c | indent -kr -l127 >dijkstra.prep.c
+dijkstra.p: dijkstra.c cchr_csm.h Makefile
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-generate -o dijkstra.a dijkstra.c
+	time ./dijkstra.a 5000 >/dev/null
+	$(CC) $(CFLAGS) $(LDFLAGS) -fprofile-use -o dijkstra.p dijkstra.c
 
 ram.prep.c: ram.c ../cchr_csm.h Makefile
 	cpp -P $(DEFS) <ram.c | indent -kr -l127 >ram.prep.c

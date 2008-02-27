@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "leq_cchr.h"
 
@@ -16,11 +17,34 @@ cchr {
   logical log_int_t int;
 
   chr_macro eq(log_int_t,log_int_t) log_int_t_testeq($1,$2);
+  chr_macro val(log_int_t) log_int_t_getval($1);
+  chr_macro set(log_int_t,log_int_t) log_int_t_seteq($1,$2);
+  chr_macro ground(log_int_t) log_int_t_hasval($1,$2);
   
   reflexivity @ leq(X,Y) <=> eq(X,Y) | true;
-  antisymmetry @ leq(X1,Y1), leq(Y2,X2) <=> eq(X1,X2),eq(Y1,Y2) | {log_int_t_seteq(X1,Y1);};
+  antisymmetry @ leq(X1,Y1), leq(Y2,X2) <=> eq(X1,X2),eq(Y1,Y2) | {set(X1,Y1);};
   idempotence @ leq(X1,Y1) \ leq(X2,Y2) <=> eq(X1,X2),eq(Y1,Y2) | true;
   transitivity @ leq(X,Y1), leq(Y2,Z) ==> eq(Y1,Y2) | leq(X,Z);
+}
+
+void test3(void) {
+  cchr_runtime_init();
+  log_int_t a=log_int_t_create(), b=log_int_t_create(), c=log_int_t_create();
+  cchr_add_leq_2(a,b); cchr_add_leq_2(b,c);
+  cchr_add_leq_2(c,a);
+  int nLeqs=0;
+  cchr_consloop(j,leq_2,{
+    nLeqs++;
+  });
+  assert(nLeqs==0);
+  assert(log_int_t_testeq(a,b));
+  assert(log_int_t_testeq(b,c));
+  assert(log_int_t_testeq(c,a));
+  /*** */
+  cchr_runtime_free();
+  log_int_t_destruct(a);
+  log_int_t_destruct(b);
+  log_int_t_destruct(c);
 }
 
 void test(int size) {
@@ -41,6 +65,7 @@ void test(int size) {
 
 
 int main(int argc, char** argv) {
+//  test3();
   int n=argc>1 ? strtol(argv[1],NULL,0) : 100;
   test(n);
   return 0;

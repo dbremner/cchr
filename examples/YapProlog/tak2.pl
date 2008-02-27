@@ -32,6 +32,9 @@ option(check_guard_bindings,off).
 %handler tak.
 constraints tak/4.
 
+option(mode,tak(+,+,+,?)).
+option(type_declaration,tak(int,int,int,int)).
+
 %% Syntax for SWI / SICStus 4.x
 %:- chr_constraint
 %    tak(+int,+int,+int, ?int).

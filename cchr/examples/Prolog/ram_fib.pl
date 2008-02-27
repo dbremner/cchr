@@ -66,27 +66,19 @@ A: mem(a,0), mem(b,3), mem(r,5),
 
 :- module(ram_simulator, [mem/2, prog/4, prog_counter/1, test/1]).
 :- use_module(library(chr)).
-
-option(debug,off).                                                                                            
-option(optimize,full).                                                                                        
-option(check_guard_bindings,off).                                                                             
+:- chr_option(debug,off).                                                                                            
+:- chr_option(optimize,full).                                                                                        
+:- chr_option(check_guard_bindings,off).                                                                             
 
 %% Deprecated syntax used for SICStus 3.x
 %handler ram_simulator.
-constraints mem/2, prog/4, prog_counter/1.
-option(mode,mem(+,?)).
-option(mode,prog(+,+,+,?)).
-option(mode,prog_counter(?)).
-
-option(type_declaration,mem(int,int)).
-option(type_declaration,prog(int,any,int,int)).
-option(type_declaration,prog_counter(int)).
+%constraints mem/2, prog/4, prog_counter/1.
 
 %% Syntax for SWI / SICStus 4.x
-% :- chr_constraint 
-%    mem(+int,?int), 
-%    prog(+int,+any,+int,?int), 
-%    prog_counter(?int).
+:- chr_constraint 
+    mem(+int,?int), 
+    prog(+int,+any,+int,?int), 
+    prog_counter(?int).
 
 mem(A,_), mem(A,_) <=> fail.
 prog(L,_,_,_), prog(L,_,_,_) <=> fail.

@@ -134,13 +134,13 @@ typedef enum  {
 				(var1)->_type=LOGICAL_NODE_TYPE_VAL; \
 				(var1)->_data.root.val=(var2)->_data.root.val; /* this value is moved to parent */ \
 			} \
-			cb##_destrtag(var2); \
 			(var1)->_refcount++; /* its parent's refcount increased */ \
 			(var2)->_type=LOGICAL_NODE_TYPE_NONROOT; /* child becomes type NONROOT */ \
 			(var2)->_data.nonroot.par=var1; /* its parent is set */ \
 			LOG_DEBUG(fprintf(stderr,"[seteq refc: (%s) #%i=%i #%i=%i]\n",#out,var1->_id,var1->_refcount,var2->_id,var2->_refcount);) \
 			if ((var1)->_data.root.rank==(var2)->_data.root.rank) (var1)->_data.root.rank++; /* rank increase if necessary */ \
-			cb##_changed(var1); \
+			cb##_changed(var2); \
+			cb##_destrtag(var2); \
 		} \
 	} \
 	void static INLINE out##_destruct(out var) { \

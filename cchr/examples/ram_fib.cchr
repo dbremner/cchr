@@ -55,7 +55,6 @@ cchr {
 }
 
 int main(int argc, char **argv) {
-  for (int i=0; i<10; i++) {
   cchr_runtime_init();
   int N=(argc>1 ? (int)strtol(argv[1],NULL,0) : 100);
   int mem[]={0,8,9,10,N,1,0,0,-1,1};
@@ -81,6 +80,5 @@ int main(int argc, char **argv) {
   cchr_add_prog_counter_1(1);
 //  cchr_consloop(j,mem_2,{printf("mem(%i)=%i\n",cchr_consarg(j,mem_2,1),cchr_consarg(j,mem_2,2));});
   cchr_runtime_free();
-  }
   return 0;
 }

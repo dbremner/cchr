@@ -1138,13 +1138,19 @@ void static analysis_neverstored(sem_cchr_t *cchr,int con) {
     if (ro->type == SEM_RULE_LEVEL_REM) {
       if (alist_len(r->out[0])==0) {
         /* found a never stored, make all partner-constraints passive */
+//        printf("(never stored: rule %s, %s constraint %i)\n",r->name,ro->type==SEM_RULE_LEVEL_KEPT ? "kept" : "removed",ro->pos);
         for (int j=0; j<alist_len(cons->occ); j++) {
           sem_ruleocc_t *pro=alist_ptr(cons->occ,j);
           sem_rule_t *pr=alist_ptr(cchr->rules,pro->rule);
-          for (int h=0; h<2; h++) {
-            for (int k=0; k<alist_len(pr->head[h]); k++) {
-              sem_conocc_t *pco=alist_ptr(pr->head[h],k);
-              if (pco->constr != con) pco->passive=1;
+          if (pro->type == SEM_RULE_LEVEL_KEPT || pro->type == SEM_RULE_LEVEL_REM) {
+            for (int h=0; h<2; h++) {
+              for (int k=0; k<alist_len(pr->head[h]); k++) {
+                sem_conocc_t *pco=alist_ptr(pr->head[h],k);
+                if (pco->constr != con) {
+                  pco->passive=1;
+//                  printf("  (never stored: making passive in: rule %s, %s constraint %i)\n",pr->name,h==SEM_RULE_LEVEL_KEPT ? "kept" : "removed",k);
+                }
+              }
             }
           }
         }

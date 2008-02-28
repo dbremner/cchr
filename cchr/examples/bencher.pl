@@ -4,16 +4,24 @@ use strict;
 
 $!=1;
 
+#my %tests = (
+#  c =>    { leq => [100], tak2 => [500,450,405], ram_fib => [200000] },
+#  cchr => { dijkstra => [16384], leq => [100], tak2 => [500,450,405], ram_fib => [200000] },
+#  swi =>  { dijkstra => [16384], leq => [100], tak2 => [500,450,405], ram_fib => [200000] },
+#  yap =>  { dijkstra => [16384], leq => [100], tak2 => [500,450,405], ram_fib => [200000] }
+#);
+
+
 my %tests = (
-  c =>    {                      leq => [100], tak2 => [500,450,405], ram_fib => [200000] },
-  cchr => { dijkstra => [16384], leq => [100], tak2 => [500,450,405], ram_fib => [200000] },
-#  swi =>  { dijkstra => [16384], leq => [100], tak2 => [500,450,405] },
-#  yap =>  { dijkstra => [16384], leq => [100], tak2 => [500,450,405] },
+  c =>    { ram_fib => [25000] },
+  cchr => { ram_fib => [25000] },
+  swi =>  { ram_fib => [25000] },
+  yap =>  { ram_fib => [25000] }
 );
 
-my $minruns=5;
-my $maxruns=1000;
-my $acc=0.01;
+my $minruns=20;
+my $maxruns=30000;
+my $acc=0.001;
 
 sub stati {
   my $n=0;

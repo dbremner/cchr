@@ -74,9 +74,9 @@ option(check_guard_bindings,off).
 %% Deprecated syntax used for SICStus 3.x
 %handler ram_simulator.
 constraints mem/2, prog/4, prog_counter/1.
-option(mode,mem(+,?)).
-option(mode,prog(+,+,+,?)).
-option(mode,prog_counter(?)).
+option(mode,mem(+,+)).
+option(mode,prog(+,+,+,+)).
+option(mode,prog_counter(+)).
 
 option(type_declaration,mem(int,int)).
 option(type_declaration,prog(int,any,int,int)).

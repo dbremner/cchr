@@ -76,9 +76,9 @@ A: mem(a,0), mem(b,3), mem(r,5),
 
 %% Syntax for SWI / SICStus 4.x
 :- chr_constraint 
-    mem(+int,?int), 
-    prog(+int,+any,+int,?int), 
-    prog_counter(?int).
+    mem(+int,+int), 
+    prog(+int,+any,+int,+int), 
+    prog_counter(+int).
 
 mem(A,_), mem(A,_) <=> fail.
 prog(L,_,_,_), prog(L,_,_,_) <=> fail.

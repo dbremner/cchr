@@ -72,6 +72,7 @@ typedef struct {
 /* a (variable) type definition */
 typedef struct {
   char *name;
+  char *equality; /* implicit equality check function; eq(X,Y) is default */
   int log_ground; /* ground type */
   alist_declare(sem_typeocc_t,log_idx);
 } sem_vartype_t;

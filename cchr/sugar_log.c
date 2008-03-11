@@ -7,7 +7,7 @@
 #include "output.h"
 
 /* apply syntactic sugar (automatic generation of contraint-specific add/kill/init/destr hooks for logicals) */
-void static apply_sugar(sem_cchr_t *out, int cid) {
+void static apply_post_sugar(sem_cchr_t *out, int cid) {
   sem_constr_t *con=alist_ptr(out->cons,cid);
   for (int i=0; i<alist_len(con->types); i++) {
     int type=alist_get(con->types,i);
@@ -100,9 +100,30 @@ void static apply_sugar(sem_cchr_t *out, int cid) {
   }
 }
 
-int sugar_log_analyse(sem_cchr_t *cchr) {
+void static apply_pre_sugar(sem_cchr_t *out, int cid) {
+  sem_constr_t *con=alist_ptr(out->cons,cid);
+  for (int i=0; i<alist_len(con->types); i++) {
+    int type=alist_get(con->types,i);
+    if (type>=0) {
+      sem_vartype_t *typ=alist_ptr(out->types,type);
+      if (typ->log_ground>=0) { /* logical */
+        /* set equality function for logicals */
+        typ->equality=make_message("%s_testeq",typ->name);
+      }
+    }
+  }
+}
+
+int sugar_log_pre_analyse(sem_cchr_t *cchr) {
   for (int i=0; i<alist_len(cchr->cons); i++) {
-    apply_sugar(cchr,i);
+    apply_pre_sugar(cchr,i);
+  }
+  return 0;
+}
+
+int sugar_log_post_analyse(sem_cchr_t *cchr) {
+  for (int i=0; i<alist_len(cchr->cons); i++) {
+    apply_post_sugar(cchr,i);
   }
   return 0;
 }

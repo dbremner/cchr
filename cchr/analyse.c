@@ -57,6 +57,7 @@ char *copy_string(const char *in) {
 
 void static sem_vartype_init(sem_vartype_t *vt,char *name) {
   vt->name=copy_string(name);
+  vt->equality=NULL;
   vt->log_ground=-1;
   alist_init(vt->log_idx);
 }
@@ -64,6 +65,10 @@ void static sem_vartype_init(sem_vartype_t *vt,char *name) {
 void static sem_vartype_destruct(sem_vartype_t *vt) {
   free(vt->name);
   vt->name=NULL;
+  if (vt->equality) {
+    free(vt->equality);
+    vt->equality=NULL;
+  }
   alist_free(vt->log_idx);
 }
 
@@ -77,6 +82,14 @@ int sem_cchr_gettype(sem_cchr_t *cchr,char *type) {
   sem_vartype_init(&nw,type);
   alist_add(cchr->types,nw);
   return alist_len(cchr->types)-1;
+}
+
+void sem_cchr_init_base_types(sem_cchr_t *cchr) {
+  static char *basetypes[]={"int","signed int","unsigned int","short int","unsigned short int","signed short int","short","unsigned short","signed short","long int","unsigned long int","signed long int","long","unsigned long","signed long","size_t","void*","void *","int *","int*","char","unsigned char","signed char","char*","char *"};
+  for (int i=0; i<sizeof(basetypes)/sizeof(basetypes[0]); i++) {
+    int t=sem_cchr_gettype(cchr,basetypes[i]);
+    alist_ptr(cchr->types,t)->equality=copy_string("eq_primitive");
+  }
 }
 
 /* initialize a sem_constr_t */
@@ -710,7 +723,7 @@ int static sem_conocc_generate(sem_rule_t *rule,sem_cchr_t *cchr,expr_t *in,int 
 
 /* complete the HNF form (splitting duplicate variables) */
 /* requires assign to have completed */
-int static sem_rule_hnf(sem_rule_t *rule) {
+int static sem_rule_hnf(sem_cchr_t *cchr,sem_rule_t *rule) {
 	for (int j=0; j<alist_len(rule->vt.vars); j++) {
 		sem_var_t *var=alist_ptr(rule->vt.vars,j);
 		int bnd=var->occ[SEM_RULE_LEVEL_KEPT]+var->occ[SEM_RULE_LEVEL_REM];
@@ -736,14 +749,22 @@ int static sem_rule_hnf(sem_rule_t *rule) {
 								sem_expr_t ne;
 								sem_expr_init(&ne);
 								sem_exprpart_t nep;
-								sem_exprpart_init_var(&nep,j);
+                                                                char *fn=alist_ptr(cchr->types,var->type)->equality;
+								if (fn==NULL) fn="eq";
+								sem_exprpart_init_fun(&nep,copy_string(fn));
+								sem_expr_t ne2;
+								sem_exprpart_t nep2;
+								sem_expr_init(&ne2);
+								sem_exprpart_init_var(&nep2,nv);
+								alist_add(ne2.parts,nep2);
+								alist_add(nep.data.fun.args,ne2);
+								sem_expr_init(&ne2);
+								sem_exprpart_init_var(&nep2,j);
+								alist_add(ne2.parts,nep2);
+								alist_add(nep.data.fun.args,ne2);
 								alist_add(ne.parts,nep);
-								sem_exprpart_init_lit(&nep,copy_string("=="));
-								alist_add(ne.parts,nep);
-								sem_exprpart_init_var(&nep,nv);
-								alist_add(ne.parts,nep);
-								sem_out_t out;
-								sem_out_init_expr(&out,&ne,0);
+                                                                sem_out_t out;
+                                                                sem_out_init_expr(&out,&ne,0);
 								alist_add(rule->out[0],out);
 								alist_get(rule->vt.vars,nv).occ[p]++; /* replacement variable instead of double one */
 								alist_get(rule->vt.vars,j).occ[p]--;
@@ -1029,7 +1050,7 @@ int static sem_rule_generate(sem_cchr_t *out,rule_t *in) {
 	sem_rule_assign(out,&n);
 	sem_rule_expand(out,&n);
 	sem_rule_assign(out,&n);
-	if (doret && sem_rule_hnf(&n)) {
+	if (doret && sem_rule_hnf(out,&n)) {
 		sem_rule_related(out,&n);
 		alist_add(out->rules,n);
 		sem_rule_fill_deps(out,&n);
@@ -1163,10 +1184,12 @@ void static analysis_neverstored(sem_cchr_t *cchr,int con) {
 /* generate a semantic form (sem_cchr_t) of the syntax tree (cchr_t) */
 int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   sem_cchr_init(out);
+  sem_cchr_init_base_types(out);
   int ok=1;
   for (int i=0; i<alist_len(in->logicals); i++) {
 	sem_logicals(out,alist_ptr(in->logicals,i));
   }
+  sugar_log_pre_analyse(out);
   for (int i=0; i<alist_len(in->exts); i++) {
     alist_add(out->exts,copy_string(alist_get(in->exts,i)));
   }
@@ -1180,7 +1203,7 @@ int sem_generate_cchr(sem_cchr_t *out,cchr_t *in) {
   	if (!sem_rule_generate(out,alist_ptr(in->rules,i))) ok=0;
   }
   /* analyses */
-  sugar_log_analyse(out);
+  sugar_log_post_analyse(out);
   for (int i=0; i<alist_len(out->cons); i++) {
   	analysis_neverstored(out,i);
   }

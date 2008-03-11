@@ -845,6 +845,7 @@ hmap_header(int,cchr_id_t,cchr_htdc_t);
 
 #define alt(expr,...) (expr)
 #define eq(v1,v2) ((sizeof((v1)) == sizeof((v2))) && !memcmp(&(v1),&(v2),sizeof((v1))))
+#define eq_primitive(v1,v2) ((v1)==(v2))
 
 /****** real declarations *****/
 

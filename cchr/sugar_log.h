@@ -4,7 +4,8 @@
 #include "semtree.h"
 #include "output.h"
 
-int sugar_log_analyse(sem_cchr_t *cchr);
+int sugar_log_pre_analyse(sem_cchr_t *cchr);
+int sugar_log_post_analyse(sem_cchr_t *cchr);
 int sugar_log_codegen(sem_cchr_t *cchr, output_t *code, output_t *header);
 
 #endif

@@ -210,15 +210,12 @@ int static gio_test_idxeq(sem_cchr_t *chr,sem_rule_t *rule, int cot, int rem, se
 	    int varid=alist_get(e[k]->parts,0).data.var;
 	    sem_var_t *var=alist_ptr(rule->vt.vars,varid);
 	    sem_vartype_t *vtype=alist_ptr(chr->types,var->type);
-	    char *lecf=NULL;
-	    if (vtype->log_ground>=0) {
-	      lecf=make_message("%s_testeq",vtype->name);
-	    }
-            if (!strcmp(ep->data.fun.name,"eq") || (lecf && !strcmp(ep->data.fun.name,lecf))) {
+            char *lecf=vtype->equality;
+            if (lecf == NULL) lecf="eq";
+            if (lecf && !strcmp(ep->data.fun.name,lecf)) {
 	      int ret=(gio_test_idxeq_var(chr,cot,rem,gioe,var,e[1-k],0,-1));
 	      if (ret) {if (lecf) free(lecf); return ret;}
 	    }
-	    if (lecf) free(lecf);
 	  }
         }
       }

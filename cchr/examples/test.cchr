@@ -3,9 +3,7 @@
 #include <stdlib.h>
 
 cchr {
-  macro plop(int,int) printf("%i=%i\n",$1,$2);
-  
-  constraint heh(int,int);
-  
-  kwak @ heh(M1,M2) \ heh(M3,M4) <=> { plop(M1,M2) };
+  constraint useless(uint32_t,uint32_t);
+ 
+  useless(X,X) <=> true;
 }

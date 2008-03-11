@@ -4,8 +4,8 @@ DEFS :=
 MODE := normal
 #MODE := libgc
 #MODE := debug
-#MODE := gdb
 #MODE := debugopt
+#MODE := gdb
 #MODE := efence
 
 ifeq ($(MODE),debugopt)

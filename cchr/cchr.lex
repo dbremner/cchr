@@ -40,7 +40,7 @@ void strip_sl(char *c);
 %option bison-locations
 %option reentrant
 
-%x BCOMMENT
+%X BCOMMENT
 %X LCOMMENT
 %X STRING
 %X CHAR
@@ -63,10 +63,11 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 "/*"              BEGIN(BCOMMENT);
 <BCOMMENT>"*/"    BEGIN(INITIAL);
 <BCOMMENT><<EOF>> yyerror("EOF in comment",yyscanner);
-<BCOMMENT>.       {}
+<BCOMMENT>.       /* */
+<BCOMMENT>"\n"    /* */
 
 "//"              BEGIN(LCOMMENT);
-<LCOMMENT>.       {}
+<LCOMMENT>.       /* */
 <LCOMMENT>"\n"	  BEGIN(INITIAL);
 
 "\""			  BEGIN(STRING); LIT_RETURN(TOK_BSTRING);
@@ -108,7 +109,7 @@ real              ({i}\.{i}?|{i}?\.{i}){exponent}?
 {identifier}      LIT_RETURN(TOK_SYMB)
 {identifier}{white_space}"@"	  {strip_sl(yytext); LIT_RETURN(TOK_SYMBAT); }
 
-{white_space}     /* do nothing */
+{white_space}     /* nothing */
 
 .                 SET_LLOC; return TOK_ERROR;
 

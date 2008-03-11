@@ -212,9 +212,10 @@ int static gio_test_idxeq(sem_cchr_t *chr,sem_rule_t *rule, int cot, int rem, se
 	    sem_vartype_t *vtype=alist_ptr(chr->types,var->type);
             char *lecf=vtype->equality;
             if (lecf == NULL) lecf="eq";
+//            fprintf(stderr,"[eq test on type %s: expect %s, have %s]\n",vtype->name,lecf,ep->data.fun.name);
             if (lecf && !strcmp(ep->data.fun.name,lecf)) {
 	      int ret=(gio_test_idxeq_var(chr,cot,rem,gioe,var,e[1-k],0,-1));
-	      if (ret) {if (lecf) free(lecf); return ret;}
+	      if (ret) return ret;
 	    }
 	  }
         }

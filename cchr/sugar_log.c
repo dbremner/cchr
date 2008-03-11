@@ -100,22 +100,53 @@ void static apply_post_sugar(sem_cchr_t *out, int cid) {
   }
 }
 
-void static apply_pre_sugar(sem_cchr_t *out, int cid) {
-  sem_constr_t *con=alist_ptr(out->cons,cid);
-  for (int i=0; i<alist_len(con->types); i++) {
-    int type=alist_get(con->types,i);
-    if (type>=0) {
-      sem_vartype_t *typ=alist_ptr(out->types,type);
-      if (typ->log_ground>=0) { /* logical */
-        /* set equality function for logicals */
-        typ->equality=make_message("%s_testeq",typ->name);
+void static apply_pre_sugar(sem_cchr_t *out, int vid) {
+  sem_vartype_t *typ=alist_ptr(out->types,vid);
+  struct {
+    char *macro;
+    char *function;
+    int arg[2];
+    int swap;
+  } list[] = {
+    {"telleq","seteq",{0,0},0},
+    {"telleq","setval",{0,1},0},
+    {"telleq","setval",{1,0},1},
+    {"ground","hasval",{0,-1},0},
+    {"value","getval",{0,-1},0}
+  };
+  if (typ->log_ground>=0) { /* logical */
+    typ->equality=make_message("%s_testeq",typ->name);
+    
+    for (int i=0; i<sizeof(list)/sizeof(list[0]); i++) {
+      sem_macro_t mac;
+      sem_macro_init(&mac);
+      mac.name=make_message(list[i].macro);
+      if (list[i].arg[0]>=0) alist_add(mac.types,list[i].arg[0] ? typ->log_ground : vid);
+      if (list[i].arg[1]>=0) alist_add(mac.types,list[i].arg[1] ? typ->log_ground : vid);
+      sem_exprpart_t sep;
+      sem_exprpart_init_fun(&sep,make_message("%s_%s",typ->name,list[i].function));
+      sem_expr_t sepe;
+      sem_exprpart_t sepep;
+      if (list[i].arg[0]>=0) {
+        sem_expr_init(&sepe);
+        sem_exprpart_init_var(&sepep,list[i].swap ? 1 : 0);
+        alist_add(sepe.parts,sepep);
+        alist_add(sep.data.fun.args,sepe);
       }
+      if (list[i].arg[1]>=0) {
+        sem_expr_init(&sepe);
+        sem_exprpart_init_var(&sepep,list[i].swap ? 0 : 1);
+        alist_add(sepe.parts,sepep);
+        alist_add(sep.data.fun.args,sepe);
+      }
+      alist_add(mac.def.parts,sep);
+      alist_add(out->macros,mac);
     }
   }
 }
 
 int sugar_log_pre_analyse(sem_cchr_t *cchr) {
-  for (int i=0; i<alist_len(cchr->cons); i++) {
+  for (int i=0; i<alist_len(cchr->types); i++) {
     apply_pre_sugar(cchr,i);
   }
   return 0;

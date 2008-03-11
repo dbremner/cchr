@@ -171,7 +171,7 @@ void sem_expr_destruct(sem_expr_t *expr) {
 }
 
 /* initialize a sem_macro_t */
-void static sem_macro_init(sem_macro_t *macro) {
+void sem_macro_init(sem_macro_t *macro) {
   macro->name=NULL;
   alist_init(macro->types);
   sem_expr_init(&(macro->def));
